@@ -39,8 +39,8 @@ if (!valid) return c.json({ error: 'Invalid credentials' }, 401)
 const token = jwt.sign(
     { userId: user.id, username: user.username },
     process.env.JWT_SECRET!,
-    { expiresIn: 60 * 60 * 24 * 7 }
-    )
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+)
 
 return c.json({ token, user: { id: user.id, email: user.email, username: user.username } })
 })
