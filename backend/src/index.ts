@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import * as Sentry from '@sentry/node'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { db } from './db.js'
@@ -7,6 +8,13 @@ import { authMiddleware } from './middleware/auth.js'
 import type { AppVariables } from './types.js'
 import { predictionsRouter } from './routes/predictions.js'
 import { cors } from 'hono/cors'
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV || 'development',
+  enabled: !!process.env.SENTRY_DSN,
+  tracesSampleRate: 0.5,
+})
 
 const app = new Hono<{ Variables: AppVariables }>()
 
