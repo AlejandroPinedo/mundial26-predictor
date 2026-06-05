@@ -1,0 +1,17 @@
+{
+  "name": "Mundial26 Predictor",
+  "short_name": "Mundial26",
+  "description": "Predice los marcadores del Mundial 2026",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
