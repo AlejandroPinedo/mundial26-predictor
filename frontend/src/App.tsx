@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
@@ -11,15 +12,24 @@ import LandingPage from './pages/LandingPage'
 import ProfilePage from './pages/ProfilePage'
 import GroupsPage from './pages/GroupsPage'
 import GroupLeaderboardPage from './pages/GroupLeaderboardPage'
+import RulesPage from './pages/RulesPage'
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: { background: '#1f2937', color: '#fff', border: '1px solid #374151' },
+            success: { iconTheme: { primary: '#facc15', secondary: '#111827' } },
+          }}
+        />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/rules" element={<RulesPage />} />
           <Route path="/matches" element={<ProtectedRoute><MatchesPage /></ProtectedRoute>} />
           <Route path="/my" element={<ProtectedRoute><MyPredictionsPage /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />

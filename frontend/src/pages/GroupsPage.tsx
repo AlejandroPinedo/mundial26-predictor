@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Navbar from '../components/Navbar'
 
@@ -15,8 +16,7 @@ export default function GroupsPage() {
   const [groups, setGroups] = useState<Group[]>([])
   const [newName, setNewName] = useState('')
   const [joinCode, setJoinCode] = useState('')
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function loadGroups() {
     const d = await apiFetch('/groups/my')
@@ -27,32 +27,39 @@ export default function GroupsPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
+    if (!newName.trim()) { toast.error('Ingresa un nombre para el grupo'); return }
+    setLoading(true)
     try {
       const d = await apiFetch('/groups', {
         method: 'POST',
         body: JSON.stringify({ name: newName }),
       })
-      setMessage(`Grupo creado. Código de invitación: ${d.group.invite_code}`)
+      toast.success(`Grupo creado. Código: ${d.group.invite_code}`)
       setNewName('')
       loadGroups()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al crear grupo')
+      toast.error(err instanceof Error ? err.message : 'Error al crear grupo')
+    } finally {
+      setLoading(false)
     }
   }
 
   async function handleJoin(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
+    if (!joinCode.trim()) { toast.error('Ingresa un código de invitación'); return }
+    setLoading(true)
     try {
       await apiFetch('/groups/join', {
         method: 'POST',
         body: JSON.stringify({ inviteCode: joinCode }),
       })
+      toast.success('Te uniste al grupo')
       setJoinCode('')
       loadGroups()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al unirse')
+      toast.error(err instanceof Error ? err.message : 'Error al unirse')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -71,8 +78,8 @@ export default function GroupsPage() {
               value={newName}
               onChange={e => setNewName(e.target.value)}
             />
-            <button type="submit"
-              className="w-full bg-yellow-400 text-gray-950 font-bold py-2 rounded-lg hover:bg-yellow-300 text-sm">
+            <button type="submit" disabled={loading}
+              className="w-full bg-yellow-400 text-gray-950 font-bold py-2 rounded-lg hover:bg-yellow-300 text-sm disabled:opacity-50">
               Crear
             </button>
           </form>
@@ -86,27 +93,21 @@ export default function GroupsPage() {
               onChange={e => setJoinCode(e.target.value.toUpperCase())}
               maxLength={6}
             />
-            <button type="submit"
-              className="w-full bg-gray-700 text-white font-bold py-2 rounded-lg hover:bg-gray-600 text-sm">
+            <button type="submit" disabled={loading}
+              className="w-full bg-gray-700 text-white font-bold py-2 rounded-lg hover:bg-gray-600 text-sm disabled:opacity-50">
               Unirse
             </button>
           </form>
         </div>
 
-        {message && (
-          <div className="bg-green-900/40 border border-green-700 rounded-xl p-4 mb-6">
-            <p className="text-green-400 text-sm">{message}</p>
-          </div>
-        )}
-        {error && <p className="text-red-400 mb-4 text-sm">{error}</p>}
-
         <div className="flex flex-col gap-3">
-          {groups.length === 0 && (
-            <p className="text-gray-600 text-center py-8">
-              No perteneces a ningún grupo todavía.
-            </p>
-          )}
-          {groups.map(group => (
+          {groups.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-4xl mb-3">👥</p>
+              <p className="text-gray-400 font-bold mb-1">Sin grupos todavía</p>
+              <p className="text-gray-600 text-sm">Crea uno o únete con un código de invitación</p>
+            </div>
+          ) : groups.map(group => (
             <button key={group.id}
               onClick={() => navigate(`/groups/${group.id}`)}
               className="bg-gray-900 rounded-xl p-4 text-left hover:bg-gray-800 transition">
