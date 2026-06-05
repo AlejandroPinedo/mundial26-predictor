@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 
 export default function LoginPage() {
   const { login } = useAuth()
-  const navigate = useNavigate()
+  const navigate = useNavigate()                                                                                    
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
 
@@ -14,7 +14,7 @@ export default function LoginPage() {
     try {
       const data = await apiFetch('/auth/login', {
         method: 'POST',
-        body: JSON.stringify(form),
+        body: JSON.stringify(form),                                                                                 
       })
       login(data.token, data.user)
       navigate('/matches')
@@ -38,7 +38,7 @@ export default function LoginPage() {
           <input
             className="bg-gray-800 text-white px-4 py-2 rounded-lg"
             type="password" placeholder="Password"
-            value={form.password}
+            value={form.password}                                                                                   
             onChange={e => setForm({ ...form, password: e.target.value })}
           />
           <button
@@ -46,7 +46,7 @@ export default function LoginPage() {
             type="submit"
           >
             Entrar
-          </button>
+          </button>                                                                                                 
         </form>
         <p className="text-gray-400 mt-4 text-center">
           ¿No tienes cuenta?{' '}
