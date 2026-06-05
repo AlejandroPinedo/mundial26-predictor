@@ -16,13 +16,15 @@ type Stats = {
 export default function ProfilePage() {
   const { user } = useAuth()
   const [stats, setStats] = useState<Stats | null>(null)
+  const [rank, setRank] = useState<string | null>(null)
+  const [totalPlayers, setTotalPlayers] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
   const [changingPw, setChangingPw] = useState(false)
 
   useEffect(() => {
     apiFetch('/predictions/stats')
-      .then(d => setStats(d.stats))
+      .then(d => { setStats(d.stats); setRank(d.rank); setTotalPlayers(d.totalPlayers) })
       .finally(() => setLoading(false))
   }, [])
 
@@ -66,6 +68,11 @@ export default function ProfilePage() {
           <div>
             <h1 className="text-2xl font-bold">{user?.username}</h1>
             <p className="text-gray-500">{user?.email}</p>
+            {rank && totalPlayers && (
+              <p className="text-yellow-400 text-sm font-bold mt-1">
+                #{rank} de {totalPlayers} jugadores
+              </p>
+            )}
           </div>
         </div>
 

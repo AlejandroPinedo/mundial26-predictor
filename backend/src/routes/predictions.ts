@@ -99,19 +99,37 @@ predictionsRouter.get('/leaderboard', async (c) => {
     return c.json({ updated: preds.rows.length })
   })
   
-  predictionsRouter.get('/stats', authMiddleware, async (c) => {
-    const userId = c.get('userId')
+predictionsRouter.get('/stats', authMiddleware, async (c) => {
+  const userId = c.get('userId')
 
-    const result = await db.query(
-      `SELECT
-        COUNT(*) as total_predictions,
-        COALESCE(SUM(points), 0) as total_points,
-        SUM(CASE WHEN points = 3 THEN 1 ELSE 0 END) as exact_scores,
-        SUM(CASE WHEN points >= 1 THEN 1 ELSE 0 END) as correct_results,
-        SUM(CASE WHEN points IS NOT NULL THEN 1 ELSE 0 END) as played
-       FROM predictions WHERE user_id = $1`,
-      [userId]
-    )
-  
-    return c.json({ stats: result.rows[0] })
+  const statsResult = await db.query(
+    `SELECT
+      COUNT(*) as total_predictions,
+      COALESCE(SUM(points), 0) as total_points,
+      SUM(CASE WHEN points = 3 THEN 1 ELSE 0 END) as exact_scores,
+      SUM(CASE WHEN points >= 1 THEN 1 ELSE 0 END) as correct_results,
+      SUM(CASE WHEN points IS NOT NULL THEN 1 ELSE 0 END) as played
+     FROM predictions WHERE user_id = $1`,
+    [userId]
+  )
+
+  const rankResult = await db.query(
+    `SELECT COUNT(*) + 1 as rank
+     FROM (
+       SELECT user_id, COALESCE(SUM(points), 0) as pts
+       FROM predictions GROUP BY user_id
+     ) sub
+     WHERE sub.pts > (
+       SELECT COALESCE(SUM(points), 0) FROM predictions WHERE user_id = $1
+     )`,
+    [userId]
+  )
+
+  const totalPlayersResult = await db.query('SELECT COUNT(*) as total FROM users')
+
+  return c.json({
+    stats: statsResult.rows[0],
+    rank: rankResult.rows[0].rank,
+    totalPlayers: totalPlayersResult.rows[0].total
   })
+})
