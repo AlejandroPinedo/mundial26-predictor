@@ -24,6 +24,12 @@ predictionsRouter.post('/', authMiddleware, async (c) => {
   const match = await db.query('SELECT * FROM matches WHERE id = $1', [matchId])
   if (!match.rows[0]) return c.json({ error: 'Match not found' }, 404)
 
+    const matchRow = match.rows[0]
+    const kickoff = new Date(matchRow.match_date)
+    if (new Date() > kickoff) {
+        return c.json({ error: 'Este partido ya comenzó — no puedes modificar tu predicción' }, 400)
+    }
+
   const result = await db.query(
     `INSERT INTO predictions (user_id, match_id, predicted_home, predicted_away)
      VALUES ($1, $2, $3, $4)
@@ -91,4 +97,21 @@ predictionsRouter.get('/leaderboard', async (c) => {
     }
 
     return c.json({ updated: preds.rows.length })
+  })
+  
+  predictionsRouter.get('/stats', authMiddleware, async (c) => {
+    const userId = c.get('userId')
+
+    const result = await db.query(
+      `SELECT
+        COUNT(*) as total_predictions,
+        COALESCE(SUM(points), 0) as total_points,
+        SUM(CASE WHEN points = 3 THEN 1 ELSE 0 END) as exact_scores,
+        SUM(CASE WHEN points >= 1 THEN 1 ELSE 0 END) as correct_results,
+        SUM(CASE WHEN points IS NOT NULL THEN 1 ELSE 0 END) as played
+       FROM predictions WHERE user_id = $1`,
+      [userId]
+    )
+  
+    return c.json({ stats: result.rows[0] })
   })
