@@ -13,6 +13,7 @@ export default function Navbar() {
         <Link to="/matches" className="text-gray-300 hover:text-white text-sm">Partidos</Link>
         <Link to="/my" className="text-gray-300 hover:text-white text-sm">Mis predicciones</Link>
         <Link to="/leaderboard" className="text-gray-300 hover:text-white text-sm">Ranking</Link>
+        <Link to="/profile" className="text-gray-300 hover:text-white text-sm">Perfil</Link>
         {user?.isAdmin && (
           <Link to="/admin" className="text-orange-400 hover:text-orange-300 text-sm font-bold">
             Admin
