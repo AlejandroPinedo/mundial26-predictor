@@ -61,11 +61,13 @@ import { Link } from 'react-router-dom'
               Jugar gratis
             </Link>
             <Link to="/login"
-              className="border border-gray-700 text-gray-300 font-bold px-8 py-3 rounded-xl text-lg hover:border-gray-500 transition 
-  text-center">
+              className="border border-gray-700 text-gray-300 font-bold px-8 py-3 rounded-xl text-lg hover:border-gray-500 transition text-center">
               Iniciar sesión
             </Link>
           </div>
+          <Link to="/rules" className="text-gray-600 hover:text-gray-400 text-sm mt-4 transition">
+            ¿Cómo funciona? →
+          </Link>
         </div>
 
         <div className="grid grid-cols-3 gap-px bg-gray-800 border-t border-gray-800">
