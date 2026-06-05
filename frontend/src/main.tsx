@@ -8,7 +8,13 @@ Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   environment: import.meta.env.MODE,
   enabled: !!import.meta.env.VITE_SENTRY_DSN,
-  tracesSampleRate: 0.5,
+  integrations: [
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration(),
+  ],
+  tracesSampleRate: 1.0,
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
 })
 
 createRoot(document.getElementById('root')!).render(
