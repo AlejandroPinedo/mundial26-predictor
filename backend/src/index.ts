@@ -6,8 +6,13 @@ import { authRouter } from './routes/auth.js'
 import { authMiddleware } from './middleware/auth.js'
 import type { AppVariables } from './types.js'
 import { predictionsRouter } from './routes/predictions.js'
+import { cors } from 'hono/cors'
 
 const app = new Hono<{ Variables: AppVariables }>()
+
+app.use('/*', cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+}))
 
 app.get('/', (c) => {
   return c.json({ message: 'Mundial26 API running', status: 'ok' })
