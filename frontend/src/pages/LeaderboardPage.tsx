@@ -16,9 +16,10 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    apiFetch('/predictions/leaderboard')
-      .then(d => setLeaderboard(d.leaderboard))
-      .finally(() => setLoading(false))
+    const load = () => apiFetch('/predictions/leaderboard').then(d => setLeaderboard(d.leaderboard))
+    load().finally(() => setLoading(false))
+    const interval = setInterval(load, 30_000)
+    return () => clearInterval(interval)
   }, [])
 
   return (
