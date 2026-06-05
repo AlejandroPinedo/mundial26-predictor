@@ -65,26 +65,30 @@ predictionsRouter.get('/leaderboard', async (c) => {
     return c.json({ leaderboard: result.rows })
   })
 
-predictionsRouter.post('/admin/result', authMiddleware, async (c) => {
+  predictionsRouter.post('/admin/result', authMiddleware, async (c) => {
+    const userId = c.get('userId')
+  
+    const userResult = await db.query('SELECT is_admin FROM users WHERE id = $1', [userId])
+    if (!userResult.rows[0]?.is_admin) {
+      return c.json({ error: 'Unauthorized' }, 403)
+    }
+
     const { matchId, homeScore, awayScore } = await c.req.json()
 
     await db.query(
-    'UPDATE matches SET home_score = $1, away_score = $2 WHERE id = $3',
-    [homeScore, awayScore, matchId]
+      'UPDATE matches SET home_score = $1, away_score = $2 WHERE id = $3',                                             
+      [homeScore, awayScore, matchId]
     )
 
-    const preds = await db.query(
-    'SELECT * FROM predictions WHERE match_id = $1',
-    [matchId]
-    )
-
+    const preds = await db.query('SELECT * FROM predictions WHERE match_id = $1', [matchId])
+  
     for (const pred of preds.rows) {
-    const points = calculatePoints(
+      const points = calculatePoints(
         { home: pred.predicted_home, away: pred.predicted_away },
         { home: homeScore, away: awayScore }
-    )
-    await db.query('UPDATE predictions SET points = $1 WHERE id = $2', [points, pred.id])
+      )
+      await db.query('UPDATE predictions SET points = $1 WHERE id = $2', [points, pred.id])
     }
 
     return c.json({ updated: preds.rows.length })
-})
+  })

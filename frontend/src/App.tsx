@@ -6,6 +6,7 @@ import RegisterPage from './pages/RegisterPage'
 import MatchesPage from './pages/MatchesPage'
 import MyPredictionsPage from './pages/MyPredictionsPage'
 import LeaderboardPage from './pages/LeaderboardPage'
+import AdminPage from './pages/AdminPage'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/my" element={<ProtectedRoute><MyPredictionsPage /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/matches" />} />
+          <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
