@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/AuthContext'                                                                     
 
 export default function Navbar() {
   const { user, logout } = useAuth()
@@ -10,11 +10,16 @@ export default function Navbar() {
         Mundial26 ⚽
       </Link>
       <div className="flex gap-6 items-center">
-        <Link to="/matches" className="text-gray-300 hover:text-white">Partidos</Link>
-        <Link to="/my" className="text-gray-300 hover:text-white">Mis predicciones</Link>
-        <Link to="/leaderboard" className="text-gray-300 hover:text-white">Ranking</Link>
-        <span className="text-gray-500">|</span>
-        <span className="text-gray-400">{user?.username}</span>
+        <Link to="/matches" className="text-gray-300 hover:text-white text-sm">Partidos</Link>
+        <Link to="/my" className="text-gray-300 hover:text-white text-sm">Mis predicciones</Link>
+        <Link to="/leaderboard" className="text-gray-300 hover:text-white text-sm">Ranking</Link>
+        {user?.isAdmin && (
+          <Link to="/admin" className="text-orange-400 hover:text-orange-300 text-sm font-bold">
+            Admin
+          </Link>
+        )}
+        <span className="text-gray-700">|</span>
+        <span className="text-gray-400 text-sm">{user?.username}</span>
         <button onClick={logout} className="text-red-400 hover:text-red-300 text-sm">
           Salir
         </button>
