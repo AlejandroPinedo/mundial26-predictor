@@ -40,13 +40,21 @@ authRouter.post('/login', async (c) => {
     const valid = await bcrypt.compare(password, user.password_hash)
     if (!valid) return c.json({ error: 'Invalid credentials' }, 401)
 
-    const token = jwt.sign(                                                                                          
-      { userId: user.id, username: user.username },
-      process.env.JWT_SECRET!,
-      { expiresIn: 60 * 60 * 24 * 7 }
-    )
-
-    return c.json({ token, user: { id: user.id, email: user.email, username: user.username } })                      
+    const token = jwt.sign(
+        { userId: user.id, username: user.username, isAdmin: user.is_admin },
+        process.env.JWT_SECRET!,
+        { expiresIn: 60 * 60 * 24 * 7 }
+        )
+    
+    return c.json({
+    token,
+    user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        isAdmin: user.is_admin
+    }
+    })                
   } catch {
     return c.json({ error: 'Login failed' }, 500)
   }

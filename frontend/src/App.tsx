@@ -7,6 +7,7 @@ import MatchesPage from './pages/MatchesPage'
 import MyPredictionsPage from './pages/MyPredictionsPage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import AdminPage from './pages/AdminPage'
+import LandingPage from './pages/LandingPage'
 
 export default function App() {
   return (
@@ -18,8 +19,9 @@ export default function App() {
           <Route path="/matches" element={<ProtectedRoute><MatchesPage /></ProtectedRoute>} />
           <Route path="/my" element={<ProtectedRoute><MyPredictionsPage /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/matches" />} />
+          <Route path="*" element={<Navigate to="/" />} />
           <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+          <Route path="/" element={<LandingPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
