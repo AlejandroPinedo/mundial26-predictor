@@ -5,6 +5,7 @@ import { db } from './db.js'
 import { authRouter } from './routes/auth.js'
 import { authMiddleware } from './middleware/auth.js'
 import type { AppVariables } from './types.js'
+import { predictionsRouter } from './routes/predictions.js'
 
 const app = new Hono<{ Variables: AppVariables }>()
 
@@ -22,6 +23,8 @@ app.get('/db-check', async (c) => {
 })
 
 app.route('/auth', authRouter)
+
+app.route('/predictions', predictionsRouter)
 
 app.get('/me', authMiddleware, async (c) => {
   const userId = c.get('userId')
