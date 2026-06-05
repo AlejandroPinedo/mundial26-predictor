@@ -30,6 +30,7 @@ export default function Navbar() {
           <Link to="/my" className="text-gray-300 hover:text-white text-sm">Mis predicciones</Link>
           <Link to="/leaderboard" className="text-gray-300 hover:text-white text-sm">Ranking</Link>
           <Link to="/profile" className="text-gray-300 hover:text-white text-sm">Perfil</Link>
+          <Link to="/groups" className="text-gray-300 hover:text-white text-sm">Grupos</Link>
           {user?.isAdmin && (
             <Link to="/admin" className="text-orange-400 hover:text-orange-300 text-sm font-bold">Admin</Link>
           )}
@@ -45,6 +46,7 @@ export default function Navbar() {
           <Link to="/my" onClick={() => setOpen(false)} className="text-gray-300 hover:text-white">Mis predicciones</Link>
           <Link to="/leaderboard" onClick={() => setOpen(false)} className="text-gray-300 hover:text-white">Ranking</Link>
           <Link to="/profile" onClick={() => setOpen(false)} className="text-gray-300 hover:text-white">Perfil</Link>
+          <Link to="/groups" onClick={() => setOpen(false)} className="text-gray-300 hover:text-white">Grupos</Link>
           {user?.isAdmin && (
             <Link to="/admin" onClick={() => setOpen(false)} className="text-orange-400 font-bold">Admin</Link>
           )}
