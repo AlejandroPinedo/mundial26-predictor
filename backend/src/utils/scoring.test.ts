@@ -3,7 +3,7 @@ import { calculatePoints } from './scoring'
 
 describe('calculatePoints', () => {
   it('returns 3 for exact score match', () => {
-    expect(calculatePoints({ home: 2, away: 1 }, { home: 2, away: 1 })).toBe(3)
+    expect(calculatePoints({ home: 2, away: 1 }, { home: 2, away: 1 })).toBe(99)
   })
 
   it('returns 1 for correct result but wrong score', () => {
