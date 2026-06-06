@@ -18,6 +18,7 @@ import GroupLeaderboardPage from './pages/GroupLeaderboardPage'
 import AdminPage from './pages/AdminPage'
 import BracketPage from './pages/BracketPage'
 import TeamsPage from './pages/TeamsPage'
+import CalendarPage from './pages/CalendarPage'
 
 function Protected({ children }: { children: React.ReactNode }) {
   return (
@@ -54,6 +55,7 @@ export default function App() {
             <Route path="/admin" element={<Protected><AdminPage /></Protected>} />
             <Route path="/bracket" element={<Protected><BracketPage /></Protected>} />
             <Route path="/teams" element={<Protected><TeamsPage /></Protected>} />
+            <Route path="/calendar" element={<Protected><CalendarPage /></Protected>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </BrowserRouter>

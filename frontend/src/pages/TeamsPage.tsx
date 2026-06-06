@@ -93,7 +93,7 @@ export default function TeamsPage() {
                 <div className="flex flex-col gap-2">
                   {teams.map(team => (
                     <div key={team} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-800 transition">
-                      <span className="text-2xl">{getFlag(team)}</span>
+                      <span className="text-2xl no-invert">{getFlag(team)}</span>
                       <span className="font-medium text-sm">{team}</span>
                     </div>
                   ))}
@@ -114,7 +114,7 @@ export default function TeamsPage() {
 function TeamCard({ team }: { team: string }) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex flex-col items-center gap-2 hover:border-gray-700 transition">
-      <span className="text-4xl">{getFlag(team)}</span>
+      <span className="text-4xl no-invert">{getFlag(team)}</span>
       <span className="text-xs font-bold text-center leading-tight">{team}</span>
     </div>
   )

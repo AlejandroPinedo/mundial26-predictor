@@ -90,39 +90,43 @@ function Slot({
   size?: 'sm' | 'lg'
 }) {
   const h = size === 'lg' ? 'h-10' : 'h-8'
-  const w = size === 'lg' ? 'w-36' : 'w-32'
+  const w = size === 'lg' ? 'w-36' : 'w-full'
   const cls = correct
-    ? 'bg-green-800/60 border-green-600 text-green-300'
+    ? 'bg-green-500/10 text-green-400 font-semibold'
     : wrong
-    ? 'bg-gray-900/40 border-gray-700 text-gray-600 line-through'
+    ? 'text-gray-500 line-through opacity-50'
     : highlight
-    ? 'bg-yellow-400/20 border-yellow-400/60 text-yellow-300 font-bold shadow-[0_0_8px_rgba(250,204,21,0.15)]'
+    ? 'bg-yellow-400/15 text-yellow-400 font-bold'
     : team
-    ? 'bg-gray-800 border-gray-600 text-white hover:border-gray-400 cursor-pointer'
-    : 'bg-gray-900 border-dashed border-gray-800 text-gray-500'
+    ? 'text-white hover:bg-gray-800/80 cursor-pointer'
+    : 'text-gray-500 font-light'
 
   return (
     <button
       onClick={onClick}
       disabled={!team}
-      className={`${w} ${h} flex items-center gap-1.5 px-2 rounded border text-xs font-medium transition truncate ${cls}`}
+      className={`${w} ${h} flex items-center gap-1.5 px-2 rounded-lg text-xs transition-all duration-200 truncate ${cls}`}
     >
       {team ? (
-        <><span className="text-base leading-none flex-shrink-0">{getFlag(team)}</span><span className="truncate">{team}</span></>
+        <>
+          <span className="text-base leading-none flex-shrink-0 no-invert">{getFlag(team)}</span>
+          <span className="truncate flex-1 text-left">{team}</span>
+          {highlight && <span className="text-[10px] text-yellow-400 ml-auto select-none">✓</span>}
+        </>
       ) : (
-        <span className="text-gray-500 mx-auto text-[10px] uppercase font-bold tracking-wider">{placeholder}</span>
+        <span className="text-gray-650 mx-auto text-[9px] uppercase font-bold tracking-wider">{placeholder}</span>
       )}
     </button>
   )
 }
 
-// ── Match component (2 slots + connector line) ─────────────────────────────────
 function Match({
   top, bottom, topPlaceholder = '?', bottomPlaceholder = '?',
   isTopHighlighted = false, isBottomHighlighted = false,
   isTopCorrect = false, isBottomCorrect = false,
   isTopWrong = false, isBottomWrong = false,
-  onTopClick, onBottomClick, linePos, connectRight = true, connectLeft = false
+  onTopClick, onBottomClick, linePos, connectRight = true, connectLeft = false,
+  round, label
 }: {
   top: string | null; bottom: string | null
   topPlaceholder?: string; bottomPlaceholder?: string
@@ -131,50 +135,58 @@ function Match({
   isTopWrong?: boolean; isBottomWrong?: boolean
   onTopClick?: () => void; onBottomClick?: () => void
   linePos: 'top' | 'bottom' | 'center'; connectRight?: boolean; connectLeft?: boolean
+  round: 'round32' | 'round16' | 'quarter' | 'semi'
+  label: string
 }) {
+  let ext = 0
+  if (round === 'round32') ext = 8
+  else if (round === 'round16') ext = 53.5
+  else if (round === 'quarter') ext = 144.5
+
   return (
     <div className="flex items-center">
       {connectLeft && (
-        <div className="relative w-5 h-[66px]">
+        <div className="relative w-4 h-[75px]">
           {linePos === 'center' ? (
-            <>
-              <div className="absolute top-[33px] left-0 w-full border-b border-gray-700" />
-              <div className="absolute top-[16px] bottom-[16px] left-0 border-l border-gray-700" />
-            </>
+            <div className="absolute top-[37.5px] left-0 w-full border-b border-gray-800" />
           ) : linePos === 'top' ? (
             <>
-              <div className="absolute top-[16px] left-0 w-full border-b border-gray-700" />
-              <div className="absolute top-[16px] bottom-0 left-0 border-l border-gray-700" />
+              <div className="absolute top-[19px] left-0 w-full border-b border-gray-800" />
+              <div className="absolute top-[19px] bottom-0 left-0 border-l border-gray-800" />
             </>
           ) : (
             <>
-              <div className="absolute bottom-[16px] left-0 w-full border-b border-gray-700" />
-              <div className="absolute top-0 bottom-[16px] left-0 border-l border-gray-700" />
+              <div className="absolute bottom-[19px] left-0 w-full border-b border-gray-800" />
+              <div className="absolute top-0 bottom-[19px] left-0 border-l border-gray-800" />
             </>
           )}
         </div>
       )}
-      <div className="flex flex-col">
-        <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
-        <div className="h-px w-full bg-gray-800 my-0.5" />
-        <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
+      
+      <div className="relative w-36 bg-gray-900/40 backdrop-blur-sm border border-gray-850/80 rounded-xl p-1 shadow-lg hover:border-yellow-400/20 hover:bg-gray-900/60 transition-all duration-300 flex flex-col gap-0.5">
+        <div className="absolute -top-2.5 left-2 px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-[8px] text-gray-500 font-bold rounded uppercase tracking-wider leading-none select-none">
+          {label}
+        </div>
+        <div className="pt-1 flex flex-col gap-0.5">
+          <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
+          <div className="h-px bg-gray-800/40 mx-2" />
+          <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
+        </div>
       </div>
+
       {connectRight && (
-        <div className="relative w-5 h-[66px]">
+        <div className="relative w-4 h-[75px]">
           {linePos === 'center' ? (
-            <>
-              <div className="absolute top-[33px] right-0 w-full border-b border-gray-700" />
-              <div className="absolute top-[16px] bottom-[16px] right-0 border-r border-gray-700" />
-            </>
+            <div className="absolute top-[37.5px] right-0 w-full border-b border-gray-800" />
           ) : linePos === 'top' ? (
             <>
-              <div className="absolute top-[16px] right-0 w-full border-b border-gray-700" />
-              <div className="absolute top-[16px] bottom-0 right-0 border-r border-gray-700" />
+              <div className="absolute bottom-[19px] right-0 border-r border-gray-800" style={{ top: -ext, bottom: 19 }} />
+              <div className="absolute right-0 w-full border-b border-gray-800" style={{ top: -ext }} />
             </>
           ) : (
             <>
-              <div className="absolute bottom-[16px] right-0 w-full border-b border-gray-700" />
-              <div className="absolute top-0 bottom-[16px] right-0 border-r border-gray-700" />
+              <div className="absolute top-[19px] right-0 border-r border-gray-800" style={{ top: 19, bottom: -ext }} />
+              <div className="absolute right-0 w-full border-b border-gray-800" style={{ bottom: -ext }} />
             </>
           )}
         </div>
@@ -183,7 +195,6 @@ function Match({
   )
 }
 
-// ── Winner slot with left/right connector ─────────────────────────────────────────
 function WinnerSlot({
   team, placeholder = '?', onClick, connectLeft = true, connectRight = false,
   highlight = false, correct = false, wrong = false
@@ -194,9 +205,11 @@ function WinnerSlot({
 }) {
   return (
     <div className="flex items-center">
-      {connectLeft && <div className="w-5 border-b border-gray-700" />}
-      <Slot team={team} placeholder={placeholder} onClick={onClick} highlight={highlight} correct={correct} wrong={wrong} />
-      {connectRight && <div className="w-5 border-b border-gray-700" />}
+      {connectLeft && <div className="w-4 border-b border-gray-800" />}
+      <div className="w-32 bg-gray-900/40 backdrop-blur-sm border border-gray-850/80 rounded-xl p-1 shadow-lg hover:border-yellow-400/20 hover:bg-gray-900/60 transition-all duration-300">
+        <Slot team={team} placeholder={placeholder} onClick={onClick} highlight={highlight} correct={correct} wrong={wrong} />
+      </div>
+      {connectRight && <div className="w-4 border-b border-gray-800" />}
     </div>
   )
 }
@@ -478,20 +491,36 @@ export default function BracketPage() {
           </div>
         ) : (
           <div className="overflow-x-auto pb-6 border border-gray-900 rounded-2xl bg-gray-950/50 backdrop-blur-sm shadow-inner scrollbar-thin scrollbar-thumb-gray-800">
-            <div className="inline-flex items-center gap-0 py-6 min-w-max px-6">
+            <div className="inline-flex flex-col py-6 min-w-max px-6">
               
-              {/* 1. R32 LEFT */}
-              <div className="flex flex-col gap-4 py-0">
-                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider text-center mb-2">Dieciseisavos (L)</p>
-                {r32L_Indices.map((idx, index) => {
-                  const match = r32Matchups[idx] || { home: null, away: null, label: `M${73 + idx}` }
-                  const targetSlot = R32_TO_R16_SLOT[idx]
-                  const isTopSelected = !!match.home && predictions.round16[targetSlot] === match.home
-                  const isBottomSelected = !!match.away && predictions.round16[targetSlot] === match.away
-                  return (
-                    <div key={`r32l-${idx}`} className="flex flex-col">
-                      <span className="text-[9px] text-gray-600 font-bold mb-1 ml-1">{match.label || `M${73 + idx}`}</span>
+              {/* Column Headers Row */}
+              <div className="flex items-center gap-0 border-b border-gray-950/40 pb-4 mb-6 text-center select-none font-bold">
+                <div className="w-[160px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Dieciseisavos (L)</p></div>
+                <div className="w-[176px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Octavos (L)</p></div>
+                <div className="w-[176px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Cuartos (L)</p></div>
+                <div className="w-[176px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Semifinal (L)</p></div>
+                <div className="w-[160px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Finalista (L)</p></div>
+                <div className="w-[192px]"><p className="text-yellow-400 text-[10.5px] uppercase tracking-wider">Campeón</p></div>
+                <div className="w-[160px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Finalista (R)</p></div>
+                <div className="w-[176px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Semifinal (R)</p></div>
+                <div className="w-[176px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Cuartos (R)</p></div>
+                <div className="w-[176px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Octavos (R)</p></div>
+                <div className="w-[160px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Dieciseisavos (R)</p></div>
+              </div>
+
+              {/* Bracket Grid */}
+              <div className="flex items-center gap-0">
+                
+                {/* 1. R32 LEFT */}
+                <div className="flex flex-col gap-4 py-0 w-[160px] items-start">
+                  {r32L_Indices.map((idx, index) => {
+                    const match = r32Matchups[idx] || { home: null, away: null, label: `M${73 + idx}` }
+                    const targetSlot = R32_TO_R16_SLOT[idx]
+                    const isTopSelected = !!match.home && predictions.round16[targetSlot] === match.home
+                    const isBottomSelected = !!match.away && predictions.round16[targetSlot] === match.away
+                    return (
                       <Match
+                        key={`r32l-${idx}`}
                         top={match.home} bottom={match.away}
                         topPlaceholder="?" bottomPlaceholder="?"
                         isTopHighlighted={isTopSelected} isBottomHighlighted={isBottomSelected}
@@ -499,219 +528,24 @@ export default function BracketPage() {
                         onBottomClick={() => advanceTeam('round32', idx, match.away)}
                         linePos={index % 2 === 0 ? 'bottom' : 'top'}
                         connectRight={true} connectLeft={false}
+                        round="round32"
+                        label={match.label || `M${73 + idx}`}
                       />
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* 2. R16 LEFT */}
-              <div className="flex flex-col gap-[98px] py-[41px]">
-                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider text-center mb-[47px]">Octavos (L)</p>
-                {r16L_Indices.map((idx, index) => {
-                  const top = predictions.round16[2 * idx]
-                  const bottom = predictions.round16[2 * idx + 1]
-                  const targetSlot = idx
-                  const isTopSelected = !!top && predictions.quarter[targetSlot] === top
-                  const isBottomSelected = !!bottom && predictions.quarter[targetSlot] === bottom
-                  return (
-                    <div key={`r16l-${idx}`} className="flex flex-col">
-                      <span className="text-[9px] text-gray-600 font-bold mb-1 ml-6">M{89 + idx}</span>
-                      <Match
-                        top={top}
-                        bottom={bottom}
-                        topPlaceholder={getPlaceholder('round16', 2 * idx)}
-                        bottomPlaceholder={getPlaceholder('round16', 2 * idx + 1)}
-                        isTopHighlighted={isTopSelected}
-                        isBottomHighlighted={isBottomSelected}
-                        isTopCorrect={isCorrect('round16', 2 * idx, top)}
-                        isBottomCorrect={isCorrect('round16', 2 * idx + 1, bottom)}
-                        isTopWrong={isWrong('round16', 2 * idx, top)}
-                        isBottomWrong={isWrong('round16', 2 * idx + 1, bottom)}
-                        onTopClick={() => advanceTeam('round16', 2 * idx, top)}
-                        onBottomClick={() => advanceTeam('round16', 2 * idx + 1, bottom)}
-                        linePos={index % 2 === 0 ? 'bottom' : 'top'}
-                        connectLeft={true} connectRight={true}
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* 3. QF LEFT */}
-              <div className="flex flex-col gap-[262px] py-[123px]">
-                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider text-center mb-[129px]">Cuartos (L)</p>
-                {qfL_Indices.map((idx, index) => {
-                  const top = predictions.quarter[2 * idx]
-                  const bottom = predictions.quarter[2 * idx + 1]
-                  const targetSlot = idx
-                  const isTopSelected = !!top && predictions.semi[targetSlot] === top
-                  const isBottomSelected = !!bottom && predictions.semi[targetSlot] === bottom
-                  return (
-                    <div key={`qfl-${idx}`} className="flex flex-col">
-                      <span className="text-[9px] text-gray-600 font-bold mb-1 ml-6">M{97 + idx}</span>
-                      <Match
-                        top={top}
-                        bottom={bottom}
-                        topPlaceholder={getPlaceholder('quarter', 2 * idx)}
-                        bottomPlaceholder={getPlaceholder('quarter', 2 * idx + 1)}
-                        isTopHighlighted={isTopSelected}
-                        isBottomHighlighted={isBottomSelected}
-                        isTopCorrect={isCorrect('quarter', 2 * idx, top)}
-                        isBottomCorrect={isCorrect('quarter', 2 * idx + 1, bottom)}
-                        isTopWrong={isWrong('quarter', 2 * idx, top)}
-                        isBottomWrong={isWrong('quarter', 2 * idx + 1, bottom)}
-                        onTopClick={() => advanceTeam('quarter', 2 * idx, top)}
-                        onBottomClick={() => advanceTeam('quarter', 2 * idx + 1, bottom)}
-                        linePos={index % 2 === 0 ? 'bottom' : 'top'}
-                        connectLeft={true} connectRight={true}
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* 4. SEMIFINAL LEFT */}
-              <div className="flex flex-col py-[287px]">
-                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider text-center mb-[293px]">Semifinal (L)</p>
-                <span className="text-[9px] text-gray-600 font-bold mb-1 ml-6">M101</span>
-                <Match
-                  top={sfL_top}
-                  bottom={sfL_bottom}
-                  topPlaceholder={getPlaceholder('semi', 0)}
-                  bottomPlaceholder={getPlaceholder('semi', 1)}
-                  isTopHighlighted={isSfL_topSelected}
-                  isBottomHighlighted={isSfL_bottomSelected}
-                  isTopCorrect={isCorrect('semi', 0, sfL_top)}
-                  isBottomCorrect={isCorrect('semi', 1, sfL_bottom)}
-                  isTopWrong={isWrong('semi', 0, sfL_top)}
-                  isBottomWrong={isWrong('semi', 1, sfL_bottom)}
-                  onTopClick={() => advanceTeam('semi', 0, sfL_top)}
-                  onBottomClick={() => advanceTeam('semi', 1, sfL_bottom)}
-                  linePos="center"
-                  connectLeft={true} connectRight={true}
-                />
-              </div>
-
-              {/* 5. FINALIST LEFT */}
-              <div className="flex flex-col py-[304px]">
-                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider text-center mb-[310px]">Finalista (L)</p>
-                <WinnerSlot
-                  team={finalistL}
-                  placeholder={getPlaceholder('finalist', 0)}
-                  highlight={isFinalistLSelected}
-                  correct={isCorrect('finalist', 0, finalistL)}
-                  wrong={isWrong('finalist', 0, finalistL)}
-                  connectLeft={true} connectRight={true}
-                  onClick={() => advanceTeam('finalist', 0, finalistL)}
-                />
-              </div>
-
-              {/* 6. CHAMPION CENTER */}
-              <div className="flex flex-col items-center justify-center px-6 py-[280px]">
-                <div className="flex flex-col items-center p-6 bg-gray-900/30 border border-gray-800/80 rounded-3xl backdrop-blur-md shadow-2xl">
-                  <p className="text-yellow-400 text-[10px] font-bold uppercase tracking-wider mb-3">Campeón del Mundo</p>
-                  <Slot
-                    team={champion}
-                    placeholder="CAMPEÓN"
-                    size="lg"
-                    correct={isCorrect('champion', 0, champion)}
-                    wrong={isWrong('champion', 0, champion)}
-                  />
-                  {champion ? (
-                    <div className="flex flex-col items-center mt-4 animate-bounce">
-                      <p className="text-4xl">🏆</p>
-                    </div>
-                  ) : (
-                    <div className="h-10 w-10 flex items-center justify-center mt-4 text-gray-700">
-                      🏆
-                    </div>
-                  )}
+                    )
+                  })}
                 </div>
-              </div>
 
-              {/* 7. FINALIST RIGHT */}
-              <div className="flex flex-col py-[304px]">
-                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider text-center mb-[310px]">Finalista (R)</p>
-                <WinnerSlot
-                  team={finalistR}
-                  placeholder={getPlaceholder('finalist', 1)}
-                  highlight={isFinalistRSelected}
-                  correct={isCorrect('finalist', 1, finalistR)}
-                  wrong={isWrong('finalist', 1, finalistR)}
-                  connectLeft={true} connectRight={true}
-                  onClick={() => advanceTeam('finalist', 1, finalistR)}
-                />
-              </div>
-
-              {/* 8. SEMIFINAL RIGHT */}
-              <div className="flex flex-col py-[287px]">
-                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider text-center mb-[293px]">Semifinal (R)</p>
-                <span className="text-[9px] text-gray-600 font-bold mb-1 ml-6">M102</span>
-                <Match
-                  top={sfR_top}
-                  bottom={sfR_bottom}
-                  topPlaceholder={getPlaceholder('semi', 2)}
-                  bottomPlaceholder={getPlaceholder('semi', 3)}
-                  isTopHighlighted={isSfR_topSelected}
-                  isBottomHighlighted={isSfR_bottomSelected}
-                  isTopCorrect={isCorrect('semi', 2, sfR_top)}
-                  isBottomCorrect={isCorrect('semi', 3, sfR_bottom)}
-                  isTopWrong={isWrong('semi', 2, sfR_top)}
-                  isBottomWrong={isWrong('semi', 3, sfR_bottom)}
-                  onTopClick={() => advanceTeam('semi', 2, sfR_top)}
-                  onBottomClick={() => advanceTeam('semi', 3, sfR_bottom)}
-                  linePos="center"
-                  connectLeft={true} connectRight={true}
-                />
-              </div>
-
-              {/* 9. QF RIGHT */}
-              <div className="flex flex-col gap-[262px] py-[123px]">
-                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider text-center mb-[129px]">Cuartos (R)</p>
-                {qfR_Indices.map((idx, index) => {
-                  const top = predictions.quarter[2 * idx]
-                  const bottom = predictions.quarter[2 * idx + 1]
-                  const targetSlot = idx
-                  const isTopSelected = !!top && predictions.semi[targetSlot] === top
-                  const isBottomSelected = !!bottom && predictions.semi[targetSlot] === bottom
-                  return (
-                    <div key={`qfr-${idx}`} className="flex flex-col">
-                      <span className="text-[9px] text-gray-600 font-bold mb-1 ml-6">M{97 + idx}</span>
+                {/* 2. R16 LEFT */}
+                <div className="flex flex-col gap-[107px] py-[45.5px] w-[176px] items-start">
+                  {r16L_Indices.map((idx, index) => {
+                    const top = predictions.round16[2 * idx]
+                    const bottom = predictions.round16[2 * idx + 1]
+                    const targetSlot = idx
+                    const isTopSelected = !!top && predictions.quarter[targetSlot] === top
+                    const isBottomSelected = !!bottom && predictions.quarter[targetSlot] === bottom
+                    return (
                       <Match
-                        top={top}
-                        bottom={bottom}
-                        topPlaceholder={getPlaceholder('quarter', 2 * idx)}
-                        bottomPlaceholder={getPlaceholder('quarter', 2 * idx + 1)}
-                        isTopHighlighted={isTopSelected}
-                        isBottomHighlighted={isBottomSelected}
-                        isTopCorrect={isCorrect('quarter', 2 * idx, top)}
-                        isBottomCorrect={isCorrect('quarter', 2 * idx + 1, bottom)}
-                        isTopWrong={isWrong('quarter', 2 * idx, top)}
-                        isBottomWrong={isWrong('quarter', 2 * idx + 1, bottom)}
-                        onTopClick={() => advanceTeam('quarter', 2 * idx, top)}
-                        onBottomClick={() => advanceTeam('quarter', 2 * idx + 1, bottom)}
-                        linePos={index % 2 === 0 ? 'bottom' : 'top'}
-                        connectLeft={true} connectRight={true}
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* 10. R16 RIGHT */}
-              <div className="flex flex-col gap-[98px] py-[41px]">
-                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider text-center mb-[47px]">Octavos (R)</p>
-                {r16R_Indices.map((idx, index) => {
-                  const top = predictions.round16[2 * idx]
-                  const bottom = predictions.round16[2 * idx + 1]
-                  const targetSlot = idx
-                  const isTopSelected = !!top && predictions.quarter[targetSlot] === top
-                  const isBottomSelected = !!bottom && predictions.quarter[targetSlot] === bottom
-                  return (
-                    <div key={`r16r-${idx}`} className="flex flex-col">
-                      <span className="text-[9px] text-gray-600 font-bold mb-1 ml-6">M{89 + idx}</span>
-                      <Match
+                        key={`r16l-${idx}`}
                         top={top}
                         bottom={bottom}
                         topPlaceholder={getPlaceholder('round16', 2 * idx)}
@@ -726,24 +560,212 @@ export default function BracketPage() {
                         onBottomClick={() => advanceTeam('round16', 2 * idx + 1, bottom)}
                         linePos={index % 2 === 0 ? 'bottom' : 'top'}
                         connectLeft={true} connectRight={true}
+                        round="round16"
+                        label={`M${89 + idx}`}
                       />
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
 
-              {/* 11. R32 RIGHT */}
-              <div className="flex flex-col gap-4 py-0">
-                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-wider text-center mb-2">Dieciseisavos (R)</p>
-                {r32R_Indices.map((idx, index) => {
-                  const match = r32Matchups[idx] || { home: null, away: null, label: `M${73 + idx}` }
-                  const targetSlot = R32_TO_R16_SLOT[idx]
-                  const isTopSelected = !!match.home && predictions.round16[targetSlot] === match.home
-                  const isBottomSelected = !!match.away && predictions.round16[targetSlot] === match.away
-                  return (
-                    <div key={`r32r-${idx}`} className="flex flex-col">
-                      <span className="text-[9px] text-gray-600 font-bold mb-1 ml-1">{match.label || `M${73 + idx}`}</span>
+                {/* 3. QF LEFT */}
+                <div className="flex flex-col gap-[289px] py-[136.5px] w-[176px] items-start">
+                  {qfL_Indices.map((idx, index) => {
+                    const top = predictions.quarter[2 * idx]
+                    const bottom = predictions.quarter[2 * idx + 1]
+                    const targetSlot = idx
+                    const isTopSelected = !!top && predictions.semi[targetSlot] === top
+                    const isBottomSelected = !!bottom && predictions.semi[targetSlot] === bottom
+                    return (
                       <Match
+                        key={`qfl-${idx}`}
+                        top={top}
+                        bottom={bottom}
+                        topPlaceholder={getPlaceholder('quarter', 2 * idx)}
+                        bottomPlaceholder={getPlaceholder('quarter', 2 * idx + 1)}
+                        isTopHighlighted={isTopSelected}
+                        isBottomHighlighted={isBottomSelected}
+                        isTopCorrect={isCorrect('quarter', 2 * idx, top)}
+                        isBottomCorrect={isCorrect('quarter', 2 * idx + 1, bottom)}
+                        isTopWrong={isWrong('quarter', 2 * idx, top)}
+                        isBottomWrong={isWrong('quarter', 2 * idx + 1, bottom)}
+                        onTopClick={() => advanceTeam('quarter', 2 * idx, top)}
+                        onBottomClick={() => advanceTeam('quarter', 2 * idx + 1, bottom)}
+                        linePos={index % 2 === 0 ? 'bottom' : 'top'}
+                        connectLeft={true} connectRight={true}
+                        round="quarter"
+                        label={`M${97 + idx}`}
+                      />
+                    )
+                  })}
+                </div>
+
+                {/* 4. SEMIFINAL LEFT */}
+                <div className="flex flex-col py-[318.5px] w-[176px] items-start">
+                  <Match
+                    top={sfL_top}
+                    bottom={sfL_bottom}
+                    topPlaceholder={getPlaceholder('semi', 0)}
+                    bottomPlaceholder={getPlaceholder('semi', 1)}
+                    isTopHighlighted={isSfL_topSelected}
+                    isBottomHighlighted={isSfL_bottomSelected}
+                    isTopCorrect={isCorrect('semi', 0, sfL_top)}
+                    isBottomCorrect={isCorrect('semi', 1, sfL_bottom)}
+                    isTopWrong={isWrong('semi', 0, sfL_top)}
+                    isBottomWrong={isWrong('semi', 1, sfL_bottom)}
+                    onTopClick={() => advanceTeam('semi', 0, sfL_top)}
+                    onBottomClick={() => advanceTeam('semi', 1, sfL_bottom)}
+                    linePos="center"
+                    connectLeft={true} connectRight={true}
+                    round="semi"
+                    label="M101"
+                  />
+                </div>
+
+                {/* 5. FINALIST LEFT */}
+                <div className="flex flex-col py-[340px] w-[160px]">
+                  <WinnerSlot
+                    team={finalistL}
+                    placeholder={getPlaceholder('finalist', 0)}
+                    highlight={isFinalistLSelected}
+                    correct={isCorrect('finalist', 0, finalistL)}
+                    wrong={isWrong('finalist', 0, finalistL)}
+                    connectLeft={true} connectRight={true}
+                    onClick={() => advanceTeam('finalist', 0, finalistL)}
+                  />
+                </div>
+
+                {/* 6. CHAMPION CENTER */}
+                <div className="flex flex-col items-center justify-center px-6 py-[271px] w-[192px] flex-shrink-0">
+                  <div className="flex flex-col items-center p-6 bg-gray-900/30 border border-gray-800/80 rounded-3xl backdrop-blur-md shadow-2xl">
+                    <p className="text-yellow-400 text-[10px] font-bold uppercase tracking-wider mb-3">Campeón del Mundo</p>
+                    <Slot
+                      team={champion}
+                      placeholder="CAMPEÓN"
+                      size="lg"
+                      correct={isCorrect('champion', 0, champion)}
+                      wrong={isWrong('champion', 0, champion)}
+                    />
+                    {champion ? (
+                      <div className="flex flex-col items-center mt-4 animate-bounce">
+                        <p className="text-4xl no-invert">🏆</p>
+                      </div>
+                    ) : (
+                      <div className="h-10 w-10 flex items-center justify-center mt-4 text-gray-700 no-invert">
+                        🏆
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 7. FINALIST RIGHT */}
+                <div className="flex flex-col py-[340px] w-[160px] items-end">
+                  <WinnerSlot
+                    team={finalistR}
+                    placeholder={getPlaceholder('finalist', 1)}
+                    highlight={isFinalistRSelected}
+                    correct={isCorrect('finalist', 1, finalistR)}
+                    wrong={isWrong('finalist', 1, finalistR)}
+                    connectLeft={true} connectRight={true}
+                    onClick={() => advanceTeam('finalist', 1, finalistR)}
+                  />
+                </div>
+
+                {/* 8. SEMIFINAL RIGHT */}
+                <div className="flex flex-col py-[318.5px] w-[176px] items-end">
+                  <Match
+                    top={sfR_top}
+                    bottom={sfR_bottom}
+                    topPlaceholder={getPlaceholder('semi', 2)}
+                    bottomPlaceholder={getPlaceholder('semi', 3)}
+                    isTopHighlighted={isSfR_topSelected}
+                    isBottomHighlighted={isSfR_bottomSelected}
+                    isTopCorrect={isCorrect('semi', 2, sfR_top)}
+                    isBottomCorrect={isCorrect('semi', 3, sfR_bottom)}
+                    isTopWrong={isWrong('semi', 2, sfR_top)}
+                    isBottomWrong={isWrong('semi', 3, sfR_bottom)}
+                    onTopClick={() => advanceTeam('semi', 2, sfR_top)}
+                    onBottomClick={() => advanceTeam('semi', 3, sfR_bottom)}
+                    linePos="center"
+                    connectLeft={true} connectRight={true}
+                    round="semi"
+                    label="M102"
+                  />
+                </div>
+
+                {/* 9. QF RIGHT */}
+                <div className="flex flex-col gap-[289px] py-[136.5px] w-[176px] items-end">
+                  {qfR_Indices.map((idx, index) => {
+                    const top = predictions.quarter[2 * idx]
+                    const bottom = predictions.quarter[2 * idx + 1]
+                    const targetSlot = idx
+                    const isTopSelected = !!top && predictions.semi[targetSlot] === top
+                    const isBottomSelected = !!bottom && predictions.semi[targetSlot] === bottom
+                    return (
+                      <Match
+                        key={`qfr-${idx}`}
+                        top={top}
+                        bottom={bottom}
+                        topPlaceholder={getPlaceholder('quarter', 2 * idx)}
+                        bottomPlaceholder={getPlaceholder('quarter', 2 * idx + 1)}
+                        isTopHighlighted={isTopSelected}
+                        isBottomHighlighted={isBottomSelected}
+                        isTopCorrect={isCorrect('quarter', 2 * idx, top)}
+                        isBottomCorrect={isCorrect('quarter', 2 * idx + 1, bottom)}
+                        isTopWrong={isWrong('quarter', 2 * idx, top)}
+                        isBottomWrong={isWrong('quarter', 2 * idx + 1, bottom)}
+                        onTopClick={() => advanceTeam('quarter', 2 * idx, top)}
+                        onBottomClick={() => advanceTeam('quarter', 2 * idx + 1, bottom)}
+                        linePos={index % 2 === 0 ? 'bottom' : 'top'}
+                        connectLeft={true} connectRight={true}
+                        round="quarter"
+                        label={`M${97 + idx}`}
+                      />
+                    )
+                  })}
+                </div>
+
+                {/* 10. R16 RIGHT */}
+                <div className="flex flex-col gap-[107px] py-[45.5px] w-[176px] items-end">
+                  {r16R_Indices.map((idx, index) => {
+                    const top = predictions.round16[2 * idx]
+                    const bottom = predictions.round16[2 * idx + 1]
+                    const targetSlot = idx
+                    const isTopSelected = !!top && predictions.quarter[targetSlot] === top
+                    const isBottomSelected = !!bottom && predictions.quarter[targetSlot] === bottom
+                    return (
+                      <Match
+                        key={`r16r-${idx}`}
+                        top={top}
+                        bottom={bottom}
+                        topPlaceholder={getPlaceholder('round16', 2 * idx)}
+                        bottomPlaceholder={getPlaceholder('round16', 2 * idx + 1)}
+                        isTopHighlighted={isTopSelected}
+                        isBottomHighlighted={isBottomSelected}
+                        isTopCorrect={isCorrect('round16', 2 * idx, top)}
+                        isBottomCorrect={isCorrect('round16', 2 * idx + 1, bottom)}
+                        isTopWrong={isWrong('round16', 2 * idx, top)}
+                        isBottomWrong={isWrong('round16', 2 * idx + 1, bottom)}
+                        onTopClick={() => advanceTeam('round16', 2 * idx, top)}
+                        onBottomClick={() => advanceTeam('round16', 2 * idx + 1, bottom)}
+                        linePos={index % 2 === 0 ? 'bottom' : 'top'}
+                        connectLeft={true} connectRight={true}
+                        round="round16"
+                        label={`M${89 + idx}`}
+                      />
+                    )
+                  })}
+                </div>
+
+                {/* 11. R32 RIGHT */}
+                <div className="flex flex-col gap-4 py-0 w-[160px] items-end">
+                  {r32R_Indices.map((idx, index) => {
+                    const match = r32Matchups[idx] || { home: null, away: null, label: `M${73 + idx}` }
+                    const targetSlot = R32_TO_R16_SLOT[idx]
+                    const isTopSelected = !!match.home && predictions.round16[targetSlot] === match.home
+                    const isBottomSelected = !!match.away && predictions.round16[targetSlot] === match.away
+                    return (
+                      <Match
+                        key={`r32r-${idx}`}
                         top={match.home} bottom={match.away}
                         topPlaceholder="?" bottomPlaceholder="?"
                         isTopHighlighted={isTopSelected} isBottomHighlighted={isBottomSelected}
@@ -751,12 +773,14 @@ export default function BracketPage() {
                         onBottomClick={() => advanceTeam('round32', idx, match.away)}
                         linePos={index % 2 === 0 ? 'bottom' : 'top'}
                         connectLeft={true} connectRight={false}
+                        round="round32"
+                        label={match.label || `M${73 + idx}`}
                       />
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
 
+              </div>
             </div>
           </div>
         )}
