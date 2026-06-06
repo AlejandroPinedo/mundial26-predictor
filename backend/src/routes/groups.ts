@@ -93,15 +93,16 @@ groupsRouter.get('/:id/leaderboard', authMiddleware, async (c) => {
      LEFT JOIN (
        SELECT bp.user_id, SUM(
          CASE bp.round
-           WHEN 'quarter' THEN 1
-           WHEN 'semi' THEN 3
-           WHEN 'finalist' THEN 5
+           WHEN 'round16' THEN 1
+           WHEN 'quarter' THEN 2
+           WHEN 'semi' THEN 4
+           WHEN 'finalist' THEN 6
            WHEN 'champion' THEN 10
            ELSE 0
          END
        ) as points
        FROM bracket_predictions bp
-       JOIN bracket_results br ON bp.round = br.round AND bp.team = br.team
+       JOIN bracket_results br ON bp.round = br.round AND (bp.team = br.team OR split_part(bp.team, ':', 2) = br.team)
        GROUP BY bp.user_id
      ) bp ON u.id = bp.user_id
      WHERE gm.group_id = $1
