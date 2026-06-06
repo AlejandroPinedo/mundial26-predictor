@@ -347,7 +347,6 @@ export default function CalendarPage() {
                       const isSaved = pred !== undefined && String(pred.predicted_home) === input.home && String(pred.predicted_away) === input.away
 
                       // Points display
-                      const hasPoints = pred?.points !== null && pred?.points !== undefined
                       const pts = pred?.points ?? 0
 
                       return (
