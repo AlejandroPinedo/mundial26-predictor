@@ -6,6 +6,15 @@ interface NavbarProps {
   unpredicted?: number
 }
 
+function Badge({ count }: { count: number }) {
+  return (
+    <span className="inline-flex items-center justify-center bg-red-500 text-white font-black leading-none rounded-full"
+      style={{ fontSize: 10, minWidth: 18, height: 18, padding: '0 4px' }}>
+      {count > 9 ? '9+' : count}
+    </span>
+  )
+}
+
 export default function Navbar({ unpredicted = 0 }: NavbarProps) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -30,16 +39,13 @@ export default function Navbar({ unpredicted = 0 }: NavbarProps) {
         </button>
 
         <div className="hidden md:flex gap-5 items-center">
-          <Link to="/matches" className="relative text-gray-300 hover:text-white text-sm transition">
+          <Link to="/matches" className="flex items-center gap-1.5 text-gray-300 hover:text-white text-sm transition">
             Partidos
-            {unpredicted > 0 && (
-              <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                {unpredicted > 9 ? '9+' : unpredicted}
-              </span>
-            )}
+            {unpredicted > 0 && <Badge count={unpredicted} />}
           </Link>
           <Link to="/my" className="text-gray-300 hover:text-white text-sm transition">Predicciones</Link>
           <Link to="/leaderboard" className="text-gray-300 hover:text-white text-sm transition">Ranking</Link>
+          <Link to="/bracket" className="text-gray-300 hover:text-white text-sm transition">Playoff</Link>
           <Link to="/groups" className="text-gray-300 hover:text-white text-sm transition">Grupos</Link>
           <Link to="/profile" className="text-gray-300 hover:text-white text-sm transition">Perfil</Link>
           {user?.isAdmin && (
@@ -63,6 +69,7 @@ export default function Navbar({ unpredicted = 0 }: NavbarProps) {
           </Link>
           <Link to="/my" onClick={() => setOpen(false)} className="text-gray-300 hover:text-white">Predicciones</Link>
           <Link to="/leaderboard" onClick={() => setOpen(false)} className="text-gray-300 hover:text-white">Ranking</Link>
+          <Link to="/bracket" onClick={() => setOpen(false)} className="text-gray-300 hover:text-white">Playoff</Link>
           <Link to="/groups" onClick={() => setOpen(false)} className="text-gray-300 hover:text-white">Grupos</Link>
           <Link to="/profile" onClick={() => setOpen(false)} className="text-gray-300 hover:text-white">Perfil</Link>
           {user?.isAdmin && (

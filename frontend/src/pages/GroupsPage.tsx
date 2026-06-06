@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
-import Navbar from '../components/Navbar'
+
 
 type Group = {
   id: string
@@ -65,7 +65,7 @@ export default function GroupsPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <Navbar />
+      
       <div className="max-w-2xl mx-auto p-6">
         <h1 className="text-2xl font-bold text-yellow-400 mb-6">Mis Grupos</h1>
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
-import Navbar from '../components/Navbar'
+
 
 type Match = {
   id: string
@@ -55,7 +55,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <Navbar />
+      
       <div className="max-w-2xl mx-auto p-6">
         <h1 className="text-2xl font-bold text-yellow-400 mb-6">Panel de Admin</h1>
 
