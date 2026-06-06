@@ -66,12 +66,12 @@ export default function GroupsPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       
-      <div className="max-w-2xl mx-auto p-6">
-        <h1 className="text-2xl font-bold text-yellow-400 mb-6">Mis Grupos</h1>
+      <div className="max-w-5xl mx-auto p-6">
+        <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-yellow-400 mb-6">Mis Grupos</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-          <form onSubmit={handleCreate} className="bg-gray-900 rounded-xl p-5">
-            <h2 className="font-bold mb-3">Crear grupo</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <form onSubmit={handleCreate} className="bg-gray-900 rounded-xl p-5 border border-gray-800">
+            <h2 className="font-barlow font-bold uppercase tracking-wider text-lg text-yellow-400/90 mb-3">Crear grupo</h2>
             <input
               className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg mb-3 text-sm"
               placeholder="Nombre del grupo"
@@ -84,8 +84,8 @@ export default function GroupsPage() {
             </button>
           </form>
 
-          <form onSubmit={handleJoin} className="bg-gray-900 rounded-xl p-5">
-            <h2 className="font-bold mb-3">Unirse con código</h2>
+          <form onSubmit={handleJoin} className="bg-gray-900 rounded-xl p-5 border border-gray-800">
+            <h2 className="font-barlow font-bold uppercase tracking-wider text-lg text-yellow-400/90 mb-3">Unirse con código</h2>
             <input
               className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg mb-3 text-sm uppercase tracking-widest"
               placeholder="Ej: ABC123"

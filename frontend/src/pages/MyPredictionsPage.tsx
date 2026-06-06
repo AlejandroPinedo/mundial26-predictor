@@ -52,9 +52,9 @@ export default function MyPredictionsPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       
-      <div className="max-w-2xl mx-auto p-6">
+      <div className="max-w-5xl mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-yellow-400">Mis Predicciones</h1>
+          <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-yellow-400">Mis Predicciones</h1>
           {predictions.length > 0 && (
             <div className="flex items-center gap-3">
               <span className="text-yellow-400 font-bold">{totalPoints} pts</span>

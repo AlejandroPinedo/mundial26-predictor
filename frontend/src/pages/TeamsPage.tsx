@@ -58,11 +58,11 @@ export default function TeamsPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <div className="max-w-5xl mx-auto p-4 md:p-8">
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-yellow-400">Equipos 🌍</h1>
-            <p className="text-gray-500 text-sm">{allTeams.length} selecciones del Mundial 2026</p>
+            <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-yellow-400">Equipos 🌍</h1>
+            <p className="text-gray-400 text-sm">{allTeams.length} selecciones del Mundial 2026</p>
           </div>
           <div className="sm:ml-auto flex gap-2">
             <button onClick={() => setView('groups')}
