@@ -8,6 +8,7 @@ import { authMiddleware } from './middleware/auth.js'
 import type { AppVariables } from './types.js'
 import { predictionsRouter } from './routes/predictions.js'
 import { groupsRouter } from './routes/groups.js'
+import { bracketRouter } from './routes/bracket.js'
 import { cors } from 'hono/cors'
 
 Sentry.init({
@@ -40,6 +41,7 @@ app.route('/auth', authRouter)
 
 app.route('/predictions', predictionsRouter)
 app.route('/groups', groupsRouter)
+app.route('/bracket', bracketRouter)
 
 app.get('/me', authMiddleware, async (c) => {
   const userId = c.get('userId')
