@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
-import Navbar from '../components/Navbar'
 import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
 
@@ -87,7 +86,7 @@ export default function MatchesPage() {
     .filter(m => m.group_name === activeGroup)
     .sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime())
   const nextMatch = matches.find(m => m.home_score === null && now < new Date(m.match_date))
-  const unpredicted = matches.filter(m => m.home_score === null && now < new Date(m.match_date) && !predictions[m.id]).length
+  // unpredicted count is handled by AppShell globally
 
   function getDeadlineWarning(match_date: string) {
     const diff = new Date(match_date).getTime() - now.getTime()
@@ -100,8 +99,7 @@ export default function MatchesPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <Navbar unpredicted={unpredicted} />
-      <div className="max-w-2xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto p-4 md:p-8">
 
         {nextMatch && (
           <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400/20 to-yellow-600/10 border border-yellow-400/30 rounded-2xl p-5 mb-6">
@@ -129,7 +127,7 @@ export default function MatchesPage() {
           </div>
         )}
 
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto py-2 mb-4 scrollbar-hide">
           {groups.map(g => {
             const groupUnpredicted = matches.filter(m =>
               m.group_name === g && m.home_score === null &&
@@ -137,12 +135,13 @@ export default function MatchesPage() {
             ).length
             return (
               <button key={g} onClick={() => setActiveGroup(g)}
-                className={`relative px-4 py-1.5 rounded-full text-sm font-bold transition flex-shrink-0 ${
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold transition flex-shrink-0 ${
                   activeGroup === g ? 'bg-yellow-400 text-gray-950' : 'bg-gray-800 text-gray-400 hover:text-white'
                 }`}>
                 Grupo {g}
                 {groupUnpredicted > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                  <span className="inline-flex items-center justify-center bg-red-500 text-white font-black rounded-full flex-shrink-0"
+                    style={{ fontSize: 9, minWidth: 16, height: 16, padding: '0 3px' }}>
                     {groupUnpredicted}
                   </span>
                 )}

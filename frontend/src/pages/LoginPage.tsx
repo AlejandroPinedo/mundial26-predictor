@@ -20,7 +20,7 @@ export default function LoginPage() {
       })
       login(data.token, data.user)
       toast.success(`Bienvenido, ${data.user.username}!`)
-      navigate('/matches')
+      navigate('/home')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Error al iniciar sesión')
     } finally {

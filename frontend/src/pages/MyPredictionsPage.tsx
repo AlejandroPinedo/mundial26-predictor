@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
-import Navbar from '../components/Navbar'
+
 import Spinner from '../components/Spinner'
 import { getPointsBadge } from '../utils/points'
 
@@ -51,7 +51,7 @@ export default function MyPredictionsPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <Navbar />
+      
       <div className="max-w-2xl mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-yellow-400">Mis Predicciones</h1>
