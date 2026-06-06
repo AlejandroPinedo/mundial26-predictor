@@ -35,11 +35,11 @@ export default function GroupLeaderboardPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       
-      <div className="max-w-2xl mx-auto p-6">
+      <div className="max-w-5xl mx-auto p-6">
         {loading ? <Spinner /> : group && (
           <>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-yellow-400">{group.name}</h1>
+              <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-yellow-400">{group.name}</h1>
               <div className="flex items-center gap-4 mt-1">
                 <p className="text-gray-500 text-sm">
                   Código: <span className="text-yellow-400 font-mono font-bold">{group.invite_code}</span>

@@ -1,32 +1,35 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function RulesPage() {
+  const { user } = useAuth()
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <div className="max-w-2xl mx-auto p-6">
-        <Link to="/" className="text-yellow-400 text-sm hover:underline mb-6 inline-block">
+      <div className="max-w-4xl mx-auto p-6">
+        <Link to={user ? "/home" : "/"} className="text-yellow-400 text-sm hover:underline mb-6 inline-block font-semibold">
           ← Volver al inicio
         </Link>
 
-        <h1 className="text-3xl font-black text-yellow-400 mb-2">Cómo jugar</h1>
+        <h1 className="text-4xl font-barlow font-black uppercase tracking-wide text-yellow-400 mb-2">Cómo jugar</h1>
         <p className="text-gray-400 mb-8">Todo lo que necesitas saber para ganar.</p>
 
-        <div className="flex flex-col gap-6">
-          <div className="bg-gray-900 rounded-xl p-6">
-            <h2 className="text-xl font-bold mb-4">Sistema de puntos</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gray-900 rounded-xl p-6 md:col-span-2">
+            <h2 className="text-2xl font-barlow font-bold uppercase tracking-wider text-yellow-400/90 mb-4">Sistema de puntos</h2>
             <div className="flex flex-col gap-3">
               {[
-                { pts: '3', label: 'Marcador exacto', desc: 'Predijiste 2-1 y terminó 2-1', color: 'bg-green-700 text-green-200' },
-                { pts: '1', label: 'Resultado correcto', desc: 'Predijiste 2-1 y terminó 3-0 (ganó el mismo equipo)', color: 'bg-blue-700 text-blue-200' },
-                { pts: '0', label: 'Resultado incorrecto', desc: 'Te equivocaste en quién ganó', color: 'bg-gray-700 text-gray-300' },
+                { pts: '3', label: 'Marcador exacto', desc: 'Predijiste 2-1 y terminó 2-1', color: 'bg-green-700/80 text-green-100 border border-green-600' },
+                { pts: '1', label: 'Resultado correcto', desc: 'Predijiste 2-1 y terminó 3-0 (ganó el mismo equipo)', color: 'bg-blue-700/80 text-blue-100 border border-blue-600' },
+                { pts: '0', label: 'Resultado incorrecto', desc: 'Te equivocaste en quién ganó', color: 'bg-gray-700/80 text-gray-200 border border-gray-650' },
               ].map(({ pts, label, desc, color }) => (
                 <div key={label} className="flex items-start gap-4">
-                  <span className={`${color} text-2xl font-black px-3 py-1 rounded-lg min-w-12 text-center`}>
+                  <span className={`${color} text-2xl font-barlow font-black px-3 py-1 rounded-lg min-w-12 text-center`}>
                     {pts}
                   </span>
                   <div>
-                    <p className="font-bold">{label}</p>
-                    <p className="text-gray-500 text-sm">{desc}</p>
+                    <p className="font-bold text-base">{label}</p>
+                    <p className="text-gray-400 text-sm">{desc}</p>
                   </div>
                 </div>
               ))}
@@ -34,7 +37,7 @@ export default function RulesPage() {
           </div>
 
           <div className="bg-gray-900 rounded-xl p-6">
-            <h2 className="text-xl font-bold mb-4">Reglas importantes</h2>
+            <h2 className="text-2xl font-barlow font-bold uppercase tracking-wider text-yellow-400/90 mb-4">Reglas importantes</h2>
             <ul className="flex flex-col gap-3 text-gray-300">
               {[
                 'Debes predecir antes de que comience el partido — una vez que inicia, se bloquea tu predicción.',
@@ -52,7 +55,7 @@ export default function RulesPage() {
           </div>
 
           <div className="bg-gray-900 rounded-xl p-6">
-            <h2 className="text-xl font-bold mb-4">Grupos privados</h2>
+            <h2 className="text-2xl font-barlow font-bold uppercase tracking-wider text-yellow-400/90 mb-4">Grupos privados</h2>
             <p className="text-gray-400 text-sm mb-4">
               Compite con tus amigos en un ranking privado. Los puntos son los mismos del global — solo cambia que ves solo a tu grupo.
             </p>
@@ -65,13 +68,16 @@ export default function RulesPage() {
           </div>
         </div>
 
-        <div className="mt-8 text-center">
-          <Link to="/register"
-            className="bg-yellow-400 text-gray-950 font-black px-8 py-3 rounded-xl hover:bg-yellow-300 transition inline-block">
-            Jugar gratis
-          </Link>
-        </div>
+        {!user && (
+          <div className="mt-8 text-center">
+            <Link to="/register"
+              className="bg-yellow-400 text-gray-950 font-black px-8 py-3 rounded-xl hover:bg-yellow-300 transition inline-block font-barlow uppercase tracking-wider text-lg shadow-lg shadow-yellow-500/10">
+              Jugar gratis
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   )
 }
+
