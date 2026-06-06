@@ -60,12 +60,28 @@ predictionsRouter.get('/my', authMiddleware, async (c) => {
 
 predictionsRouter.get('/leaderboard', async (c) => {
     const result = await db.query(
-      `SELECT u.username,
-              COUNT(p.id) as total_predictions,
-              COALESCE(SUM(p.points), 0) as total_points
+      `SELECT 
+         u.username,
+         COUNT(p.id) as total_predictions,
+         COALESCE(SUM(p.points), 0) + COALESCE(bp.points, 0) as total_points
        FROM users u
        LEFT JOIN predictions p ON u.id = p.user_id
-       GROUP BY u.id, u.username
+       LEFT JOIN (
+         SELECT bp.user_id, SUM(
+           CASE bp.round
+             WHEN 'round16' THEN 1
+             WHEN 'quarter' THEN 2
+             WHEN 'semi' THEN 4
+             WHEN 'finalist' THEN 6
+             WHEN 'champion' THEN 10
+             ELSE 0
+           END
+         ) as points
+         FROM bracket_predictions bp
+         JOIN bracket_results br ON bp.round = br.round AND (bp.team = br.team OR split_part(bp.team, ':', 2) = br.team)
+         GROUP BY bp.user_id
+       ) bp ON u.id = bp.user_id
+       GROUP BY u.id, u.username, bp.points
        ORDER BY total_points DESC`
     )
     return c.json({ leaderboard: result.rows })
@@ -105,23 +121,55 @@ predictionsRouter.get('/stats', authMiddleware, async (c) => {
   const statsResult = await db.query(
     `SELECT
       COUNT(*) as total_predictions,
-      COALESCE(SUM(points), 0) as total_points,
-      SUM(CASE WHEN points = 3 THEN 1 ELSE 0 END) as exact_scores,
-      SUM(CASE WHEN points >= 1 THEN 1 ELSE 0 END) as correct_results,
-      SUM(CASE WHEN points IS NOT NULL THEN 1 ELSE 0 END) as played
-     FROM predictions WHERE user_id = $1`,
+      COALESCE(SUM(p.points), 0) + COALESCE((
+        SELECT SUM(
+          CASE bp.round
+            WHEN 'round16' THEN 1
+            WHEN 'quarter' THEN 2
+            WHEN 'semi' THEN 4
+            WHEN 'finalist' THEN 6
+            WHEN 'champion' THEN 10
+            ELSE 0
+          END
+        )
+        FROM bracket_predictions bp
+        JOIN bracket_results br ON bp.round = br.round AND (bp.team = br.team OR split_part(bp.team, ':', 2) = br.team)
+        WHERE bp.user_id = $1
+      ), 0) as total_points,
+      SUM(CASE WHEN p.points = 3 THEN 1 ELSE 0 END) as exact_scores,
+      SUM(CASE WHEN p.points >= 1 THEN 1 ELSE 0 END) as correct_results,
+      SUM(CASE WHEN p.points IS NOT NULL THEN 1 ELSE 0 END) as played
+     FROM predictions p WHERE p.user_id = $1`,
     [userId]
   )
 
   const rankResult = await db.query(
-    `SELECT COUNT(*) + 1 as rank
-     FROM (
-       SELECT user_id, COALESCE(SUM(points), 0) as pts
-       FROM predictions GROUP BY user_id
-     ) sub
-     WHERE sub.pts > (
-       SELECT COALESCE(SUM(points), 0) FROM predictions WHERE user_id = $1
-     )`,
+    `WITH user_points AS (
+       SELECT 
+         u.id as user_id,
+         COALESCE(SUM(p.points), 0) + COALESCE(bp.points, 0) as pts
+       FROM users u
+       LEFT JOIN predictions p ON u.id = p.user_id
+       LEFT JOIN (
+         SELECT bp.user_id, SUM(
+           CASE bp.round
+             WHEN 'round16' THEN 1
+             WHEN 'quarter' THEN 2
+             WHEN 'semi' THEN 4
+             WHEN 'finalist' THEN 6
+             WHEN 'champion' THEN 10
+             ELSE 0
+           END
+         ) as points
+         FROM bracket_predictions bp
+         JOIN bracket_results br ON bp.round = br.round AND (bp.team = br.team OR split_part(bp.team, ':', 2) = br.team)
+         GROUP BY bp.user_id
+       ) bp ON u.id = bp.user_id
+       GROUP BY u.id, bp.points
+     )
+     SELECT COUNT(*) + 1 as rank
+     FROM user_points
+     WHERE pts > (SELECT pts FROM user_points WHERE user_id = $1)`,
     [userId]
   )
 

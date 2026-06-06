@@ -86,12 +86,27 @@ groupsRouter.get('/:id/leaderboard', authMiddleware, async (c) => {
   const result = await db.query(
     `SELECT u.username,
             COUNT(p.id) as total_predictions,
-            COALESCE(SUM(p.points), 0) as total_points
+            COALESCE(SUM(p.points), 0) + COALESCE(bp.points, 0) as total_points
      FROM group_members gm
      JOIN users u ON gm.user_id = u.id
      LEFT JOIN predictions p ON u.id = p.user_id
+     LEFT JOIN (
+       SELECT bp.user_id, SUM(
+         CASE bp.round
+           WHEN 'round16' THEN 1
+           WHEN 'quarter' THEN 2
+           WHEN 'semi' THEN 4
+           WHEN 'finalist' THEN 6
+           WHEN 'champion' THEN 10
+           ELSE 0
+         END
+       ) as points
+       FROM bracket_predictions bp
+       JOIN bracket_results br ON bp.round = br.round AND (bp.team = br.team OR split_part(bp.team, ':', 2) = br.team)
+       GROUP BY bp.user_id
+     ) bp ON u.id = bp.user_id
      WHERE gm.group_id = $1
-     GROUP BY u.id, u.username
+     GROUP BY u.id, u.username, bp.points
      ORDER BY total_points DESC`,
     [groupId]
   )
