@@ -25,7 +25,7 @@ export default function BottomNav({ unpredicted = 0 }: Props) {
                 isActive ? 'text-yellow-400' : 'text-gray-500 hover:text-gray-300'
               }`
             }>
-            <span className="relative text-xl leading-none">
+            <span className="relative text-xl leading-none no-invert">
               {item.icon}
               {item.to === '/matches' && unpredicted > 0 && (
                 <span className="absolute -top-1 -right-1 inline-flex items-center justify-center bg-red-500 text-white font-black rounded-full"
