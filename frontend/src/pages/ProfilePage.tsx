@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
-import Navbar from '../components/Navbar'
+
 import Spinner from '../components/Spinner'
 import { useAuth } from '../context/AuthContext'
 
@@ -59,7 +59,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <Navbar />
+      
       <div className="max-w-2xl mx-auto p-6">
         <div className="flex items-center gap-4 mb-8">
           <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center text-gray-950 text-2xl font-black">
