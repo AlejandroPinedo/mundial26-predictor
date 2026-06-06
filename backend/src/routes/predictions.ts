@@ -69,15 +69,16 @@ predictionsRouter.get('/leaderboard', async (c) => {
        LEFT JOIN (
          SELECT bp.user_id, SUM(
            CASE bp.round
-             WHEN 'quarter' THEN 1
-             WHEN 'semi' THEN 3
-             WHEN 'finalist' THEN 5
+             WHEN 'round16' THEN 1
+             WHEN 'quarter' THEN 2
+             WHEN 'semi' THEN 4
+             WHEN 'finalist' THEN 6
              WHEN 'champion' THEN 10
              ELSE 0
            END
          ) as points
          FROM bracket_predictions bp
-         JOIN bracket_results br ON bp.round = br.round AND bp.team = br.team
+         JOIN bracket_results br ON bp.round = br.round AND (bp.team = br.team OR split_part(bp.team, ':', 2) = br.team)
          GROUP BY bp.user_id
        ) bp ON u.id = bp.user_id
        GROUP BY u.id, u.username, bp.points
@@ -123,15 +124,16 @@ predictionsRouter.get('/stats', authMiddleware, async (c) => {
       COALESCE(SUM(p.points), 0) + COALESCE((
         SELECT SUM(
           CASE bp.round
-            WHEN 'quarter' THEN 1
-            WHEN 'semi' THEN 3
-            WHEN 'finalist' THEN 5
+            WHEN 'round16' THEN 1
+            WHEN 'quarter' THEN 2
+            WHEN 'semi' THEN 4
+            WHEN 'finalist' THEN 6
             WHEN 'champion' THEN 10
             ELSE 0
           END
         )
         FROM bracket_predictions bp
-        JOIN bracket_results br ON bp.round = br.round AND bp.team = br.team
+        JOIN bracket_results br ON bp.round = br.round AND (bp.team = br.team OR split_part(bp.team, ':', 2) = br.team)
         WHERE bp.user_id = $1
       ), 0) as total_points,
       SUM(CASE WHEN p.points = 3 THEN 1 ELSE 0 END) as exact_scores,
@@ -151,15 +153,16 @@ predictionsRouter.get('/stats', authMiddleware, async (c) => {
        LEFT JOIN (
          SELECT bp.user_id, SUM(
            CASE bp.round
-             WHEN 'quarter' THEN 1
-             WHEN 'semi' THEN 3
-             WHEN 'finalist' THEN 5
+             WHEN 'round16' THEN 1
+             WHEN 'quarter' THEN 2
+             WHEN 'semi' THEN 4
+             WHEN 'finalist' THEN 6
              WHEN 'champion' THEN 10
              ELSE 0
            END
          ) as points
          FROM bracket_predictions bp
-         JOIN bracket_results br ON bp.round = br.round AND bp.team = br.team
+         JOIN bracket_results br ON bp.round = br.round AND (bp.team = br.team OR split_part(bp.team, ':', 2) = br.team)
          GROUP BY bp.user_id
        ) bp ON u.id = bp.user_id
        GROUP BY u.id, bp.points

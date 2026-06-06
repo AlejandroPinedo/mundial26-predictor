@@ -6,13 +6,15 @@ import type { AppVariables } from '../types.js'
 export const bracketRouter = new Hono<{ Variables: AppVariables }>()
 
 const ROUND_POINTS: Record<string, number> = {
-  quarter: 1,
-  semi: 3,
-  finalist: 5,
+  round16: 1,
+  quarter: 2,
+  semi: 4,
+  finalist: 6,
   champion: 10,
 }
 
 const ROUND_SLOTS: Record<string, number> = {
+  round16: 16,
   quarter: 8,
   semi: 4,
   finalist: 2,
@@ -47,7 +49,13 @@ bracketRouter.get('/my', authMiddleware, async (c) => {
     'SELECT round, team FROM bracket_predictions WHERE user_id = $1 ORDER BY round, team',
     [userId]
   )
-  const predictions: Record<string, string[]> = { quarter: [], semi: [], finalist: [], champion: [] }
+  const predictions: Record<string, string[]> = {
+    round16: [],
+    quarter: [],
+    semi: [],
+    finalist: [],
+    champion: []
+  }
   for (const row of result.rows) {
     if (predictions[row.round]) predictions[row.round].push(row.team)
   }
@@ -56,7 +64,13 @@ bracketRouter.get('/my', authMiddleware, async (c) => {
 
 bracketRouter.get('/results', async (c) => {
   const result = await db.query('SELECT round, team FROM bracket_results ORDER BY round, team')
-  const results: Record<string, string[]> = { quarter: [], semi: [], finalist: [], champion: [] }
+  const results: Record<string, string[]> = {
+    round16: [],
+    quarter: [],
+    semi: [],
+    finalist: [],
+    champion: []
+  }
   for (const row of result.rows) {
     if (results[row.round]) results[row.round].push(row.team)
   }
