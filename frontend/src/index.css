@@ -8,3 +8,7 @@ html.light video,
 html.light .no-invert {
   filter: invert(1) hue-rotate(180deg);
 }
+
+.no-invert {
+  display: inline-block;
+}

@@ -62,10 +62,10 @@ export default function HomePage() {
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-yellow-600/5 rounded-full translate-y-8 -translate-x-8 blur-3xl" />
           <div className="relative">
             <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 rounded-full px-3 py-1 text-yellow-400 text-xs font-bold mb-4 uppercase tracking-wider">
-              🏆 USA · CANADA · MÉXICO 2026
+              <span className="no-invert">🏆</span> USA · CANADA · MÉXICO 2026
             </div>
             <h1 className="text-3xl md:text-4xl font-black mb-2">
-              Bienvenido, <span className="text-yellow-400">{user?.username}</span> 👋
+              Bienvenido, <span className="text-yellow-400">{user?.username}</span> <span className="no-invert">👋</span>
             </h1>
             <p className="text-gray-400 mb-6 max-w-lg">
               Predice los marcadores, compite con amigos y demuestra que la tienes clara.
@@ -82,7 +82,7 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/30 rounded-2xl px-4 py-2 mb-6">
-                <span className="text-yellow-400 font-bold">🏆 ¡El torneo ya comenzó!</span>
+                <span className="text-yellow-400 font-bold"><span className="no-invert">🏆</span> ¡El torneo ya comenzó!</span>
               </div>
             )}
 
@@ -107,7 +107,7 @@ export default function HomePage() {
           ].map(stat => (
             <Link key={stat.label} to={stat.to}
               className="bg-gray-900 border border-gray-800 rounded-2xl p-4 hover:border-gray-700 transition">
-              <div className="text-2xl mb-1">{stat.icon}</div>
+              <div className="text-2xl mb-1 no-invert">{stat.icon}</div>
               <div className="text-2xl font-black text-white">{stat.value}</div>
               <div className="text-gray-500 text-xs">{stat.label}</div>
             </Link>
@@ -175,12 +175,12 @@ export default function HomePage() {
                   className="bg-gray-950 border border-gray-800 rounded-xl p-3 hover:border-gray-700 transition">
                   <div className="flex justify-between items-center mb-2">
                     <div className="text-center flex-1">
-                      <div className="text-xl">{getFlag(m.home_team)}</div>
+                      <div className="text-xl no-invert">{getFlag(m.home_team)}</div>
                       <div className="text-xs font-bold truncate">{m.home_team}</div>
                     </div>
                     <div className="text-gray-600 text-xs px-2">vs</div>
                     <div className="text-center flex-1">
-                      <div className="text-xl">{getFlag(m.away_team)}</div>
+                      <div className="text-xl no-invert">{getFlag(m.away_team)}</div>
                       <div className="text-xs font-bold truncate">{m.away_team}</div>
                     </div>
                   </div>

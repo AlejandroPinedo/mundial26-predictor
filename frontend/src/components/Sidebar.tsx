@@ -13,6 +13,7 @@ export default function Sidebar({ unpredicted = 0 }: Props) {
 
   const main = [
     { to: '/home', icon: '🏠', label: 'Inicio' },
+    { to: '/calendar', icon: '📅', label: 'Calendario' },
     { to: '/matches', icon: '⚽', label: 'Partidos', badge: unpredicted },
     { to: '/bracket', icon: '🏆', label: 'Bracket' },
     { to: '/leaderboard', icon: '📊', label: 'Ranking' },
@@ -31,7 +32,7 @@ export default function Sidebar({ unpredicted = 0 }: Props) {
     <aside className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-56 bg-gray-900 border-r border-gray-800 z-50">
       <div className="p-4 border-b border-gray-800">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">⚽</span>
+          <span className="text-2xl no-invert">⚽</span>
           <div>
             <p className="font-black text-yellow-400 text-sm leading-none">Mundial26</p>
             <p className="text-gray-600 text-xs">Predictor</p>
@@ -49,7 +50,7 @@ export default function Sidebar({ unpredicted = 0 }: Props) {
                   : 'text-gray-400 hover:text-white hover:bg-gray-800'
               }`
             }>
-            <span className="text-base w-5 text-center relative">
+            <span className="text-base w-5 text-center relative no-invert">
               {item.icon}
               {item.badge && item.badge > 0 && (
                 <span className="absolute -top-1 -right-1 inline-flex items-center justify-center bg-red-500 text-white font-black rounded-full"
@@ -66,7 +67,7 @@ export default function Sidebar({ unpredicted = 0 }: Props) {
       <div className="p-3 border-t border-gray-800 flex flex-col gap-1">
         <button onClick={toggle}
           className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-400 hover:text-white hover:bg-gray-800 transition w-full">
-          <span className="w-5 text-center">{theme === 'dark' ? '☀️' : '🌙'}</span>
+          <span className="w-5 text-center no-invert">{theme === 'dark' ? '☀️' : '🌙'}</span>
           <span>{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>
         </button>
         {bottom.map(item => (
@@ -76,13 +77,13 @@ export default function Sidebar({ unpredicted = 0 }: Props) {
                 isActive ? 'bg-yellow-400/15 text-yellow-400' : 'text-gray-400 hover:text-white hover:bg-gray-800'
               }`
             }>
-            <span className="text-base w-5 text-center">{item.icon}</span>
+            <span className="text-base w-5 text-center no-invert">{item.icon}</span>
             <span className="truncate">{item.label}</span>
           </NavLink>
         ))}
         <button onClick={() => { logout(); navigate('/') }}
           className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition w-full">
-          <span className="w-5 text-center">🚪</span>
+          <span className="w-5 text-center no-invert">🚪</span>
           <span>Salir</span>
         </button>
       </div>

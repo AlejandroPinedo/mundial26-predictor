@@ -45,7 +45,7 @@ function StandingsTable({ teams }: { teams: TeamStats[] }) {
                   <span className={idx < 2 ? 'text-green-400' : idx === 2 ? 'text-blue-400' : ''}>{idx + 1}</span>
                 </td>
                 <td className="py-2.5 flex items-center gap-1.5 font-medium truncate">
-                  <span className="text-lg flex-shrink-0">{getFlag(t.team)}</span>
+                  <span className="text-lg flex-shrink-0 no-invert">{getFlag(t.team)}</span>
                   <span className="truncate max-w-[110px]">{t.team}</span>
                 </td>
                 <td className="py-2.5 text-center text-gray-400">{t.mp}</td>
@@ -93,7 +93,7 @@ function BestThirdsModal({ thirds, onClose }: { thirds: ThirdPlaceStats[]; onClo
                   </td>
                   <td className="py-2.5 text-gray-400 font-bold text-center">Grupo {t.group}</td>
                   <td className="py-2.5 flex items-center gap-1.5 font-medium truncate">
-                    <span className="text-lg flex-shrink-0">{getFlag(t.team)}</span>
+                    <span className="text-lg flex-shrink-0 no-invert">{getFlag(t.team)}</span>
                     <span className="truncate max-w-[120px]">{t.team}</span>
                   </td>
                   <td className="py-2.5 text-center text-gray-400">{t.mp}</td>
@@ -218,7 +218,7 @@ export default function MatchesPage() {
             <p className="text-yellow-400 text-xs font-bold uppercase tracking-widest mb-3">⚡ Próximo partido</p>
             <div className="flex justify-between items-center">
               <div className="text-center">
-                <p className="text-2xl mb-1">{getFlag(nextMatch.home_team)}</p>
+                <p className="text-2xl mb-1 no-invert">{getFlag(nextMatch.home_team)}</p>
                 <p className="font-bold text-sm">{nextMatch.home_team}</p>
               </div>
               <div className="text-center px-4">
@@ -231,7 +231,7 @@ export default function MatchesPage() {
                 <p className="text-gray-600 text-xs">Grupo {nextMatch.group_name}</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl mb-1">{getFlag(nextMatch.away_team)}</p>
+                <p className="text-2xl mb-1 no-invert">{getFlag(nextMatch.away_team)}</p>
                 <p className="font-bold text-sm">{nextMatch.away_team}</p>
               </div>
             </div>
@@ -239,7 +239,7 @@ export default function MatchesPage() {
         )}
 
         <div className="flex justify-between items-center mb-4 gap-2 flex-wrap">
-          <h1 className="text-2xl font-bold text-yellow-400">Partidos y Tablas ⚽</h1>
+          <h1 className="text-2xl font-bold text-yellow-400">Partidos y Tablas <span className="no-invert">⚽</span></h1>
           <button
             onClick={() => setShowThirds(true)}
             className="bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold px-4 py-1.5 rounded-xl hover:bg-blue-500/20 text-xs transition"
@@ -304,7 +304,7 @@ export default function MatchesPage() {
                       }`}>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2 flex-1">
-                          <span className="text-2xl">{getFlag(match.home_team)}</span>
+                          <span className="text-2xl no-invert">{getFlag(match.home_team)}</span>
                           <span className="font-bold text-sm truncate max-w-[120px]">{match.home_team}</span>
                         </div>
                         <div className="text-center px-2">
@@ -318,7 +318,7 @@ export default function MatchesPage() {
                         </div>
                         <div className="flex items-center gap-2 flex-1 justify-end">
                           <span className="font-bold text-sm truncate max-w-[120px]">{match.away_team}</span>
-                          <span className="text-2xl">{getFlag(match.away_team)}</span>
+                          <span className="text-2xl no-invert">{getFlag(match.away_team)}</span>
                         </div>
                       </div>
 
@@ -329,7 +329,7 @@ export default function MatchesPage() {
                           })}
                         </p>
                         {deadline && !played && !started && (
-                          <span className={`text-xs font-bold ${deadline.color}`}>⏰ {deadline.label}</span>
+                          <span className={`text-xs font-bold ${deadline.color}`}><span className="no-invert">⏰</span> {deadline.label}</span>
                         )}
                       </div>
 
