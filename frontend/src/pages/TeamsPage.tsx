@@ -1,26 +1,60 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { apiFetch } from '../api/client'
+import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
 
-const TEAMS_BY_GROUP: Record<string, string[]> = {
-  'A': ['Estados Unidos', 'Panamá', 'Uruguay', 'Bolivia'],
-  'B': ['Argentina', 'Perú', 'Chile', 'Venezuela'],
-  'C': ['México', 'Ecuador', 'Colombia', 'Honduras'],
-  'D': ['Brasil', 'Japón', 'Paraguay', 'Nigeria'],
-  'E': ['Francia', 'Marruecos', 'Senegal', 'Australia'],
-  'F': ['España', 'Países Bajos', 'Corea del Sur', 'Jamaica'],
-  'G': ['Alemania', 'Portugal', 'Arabia Saudí', 'Costa Rica'],
-  'H': ['Inglaterra', 'Argelia', 'Suiza', 'Kenia'],
+type Match = {
+  home_team: string
+  away_team: string
+  group_name: string
 }
 
-const ALL_TEAMS = Object.values(TEAMS_BY_GROUP).flat()
-
 export default function TeamsPage() {
+  const [teamsByGroup, setTeamsByGroup] = useState<Record<string, string[]>>({})
+  const [allTeams, setAllTeams] = useState<string[]>([])
   const [search, setSearch] = useState('')
   const [view, setView] = useState<'groups' | 'all'>('groups')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    apiFetch('/predictions/matches')
+      .then((data: { matches: Match[] }) => {
+        const groups: Record<string, Set<string>> = {}
+        const uniqueTeams = new Set<string>()
+
+        for (const match of data.matches) {
+          if (!groups[match.group_name]) {
+            groups[match.group_name] = new Set()
+          }
+          groups[match.group_name].add(match.home_team)
+          groups[match.group_name].add(match.away_team)
+          uniqueTeams.add(match.home_team)
+          uniqueTeams.add(match.away_team)
+        }
+
+        const formattedGroups: Record<string, string[]> = {}
+        for (const [group, teamsSet] of Object.entries(groups)) {
+          formattedGroups[group] = Array.from(teamsSet).sort()
+        }
+
+        setTeamsByGroup(formattedGroups)
+        setAllTeams(Array.from(uniqueTeams).sort())
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
 
   const filtered = search
-    ? ALL_TEAMS.filter(t => t.toLowerCase().includes(search.toLowerCase()))
+    ? allTeams.filter(t => t.toLowerCase().includes(search.toLowerCase()))
     : null
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
+        <Spinner />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -28,7 +62,7 @@ export default function TeamsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-yellow-400">Equipos 🌍</h1>
-            <p className="text-gray-500 text-sm">48 selecciones del Mundial 2026</p>
+            <p className="text-gray-500 text-sm">{allTeams.length} selecciones del Mundial 2026</p>
           </div>
           <div className="sm:ml-auto flex gap-2">
             <button onClick={() => setView('groups')}
@@ -52,8 +86,8 @@ export default function TeamsPage() {
             {filtered.map(team => <TeamCard key={team} team={team} />)}
           </div>
         ) : view === 'groups' ? (
-          <div className="grid md:grid-cols-2 gap-4">
-            {Object.entries(TEAMS_BY_GROUP).map(([group, teams]) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(teamsByGroup).sort(([a], [b]) => a.localeCompare(b)).map(([group, teams]) => (
               <div key={group} className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
                 <h2 className="font-black text-yellow-400 text-sm mb-3 uppercase tracking-wider">Grupo {group}</h2>
                 <div className="flex flex-col gap-2">
@@ -69,7 +103,7 @@ export default function TeamsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {ALL_TEAMS.sort().map(team => <TeamCard key={team} team={team} />)}
+            {allTeams.map(team => <TeamCard key={team} team={team} />)}
           </div>
         )}
       </div>

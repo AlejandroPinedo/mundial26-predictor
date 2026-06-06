@@ -1,24 +1,28 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
-
 import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
 
-const ALL_TEAMS = [
+const FALLBACK_TEAMS = [
   'Alemania', 'Arabia Saudí', 'Argelia', 'Argentina', 'Australia',
-  'Austria', 'Bélgica', 'Bolivia', 'Brasil', 'Canadá', 'Chile',
-  'Colombia', 'Corea del Sur', 'Costa Rica', 'Costa de Marfil',
-  'Croacia', 'Ecuador', 'Egipto', 'Escocia', 'España',
-  'Estados Unidos', 'Francia', 'Ghana', 'Honduras', 'Inglaterra',
-  'Irak', 'Irán', 'Jamaica', 'Japón', 'Jordania', 'Kenia',
-  'Marruecos', 'México', 'Nigeria', 'Nueva Zelanda', 'Países Bajos',
-  'Panamá', 'Paraguay', 'Perú', 'Portugal', 'República Checa',
-  'Senegal', 'Sudáfrica', 'Suiza', 'Turquía', 'Túnez',
-  'Uruguay', 'Venezuela'
+  'Austria', 'Bélgica', 'Bosnia y Herzegovina', 'Brasil', 'Cabo Verde',
+  'Canadá', 'Catar', 'Colombia', 'Corea del Sur', 'Costa de Marfil',
+  'Croacia', 'Curazao', 'Ecuador', 'Egipto', 'Escocia', 'España',
+  'Estados Unidos', 'Francia', 'Ghana', 'Haití', 'Inglaterra',
+  'Irak', 'Irán', 'Japón', 'Jordania', 'Marruecos', 'México',
+  'Noruega', 'Nueva Zelanda', 'Panamá', 'Paraguay', 'Países Bajos',
+  'Portugal', 'República Checa', 'República Democrática del Congo',
+  'Senegal', 'Sudáfrica', 'Suecia', 'Suiza', 'Turquía', 'Túnez',
+  'Uruguay', 'Uzbekistán'
 ].sort()
 
 type Predictions = { quarter: string[]; semi: string[]; finalist: string[]; champion: string[] }
+
+type MatchData = {
+  home_team: string
+  away_team: string
+}
 
 // ── Slot component ─────────────────────────────────────────────────────────────
 function Slot({
@@ -59,14 +63,34 @@ function Slot({
 
 // ── Match component (2 slots + connector line) ─────────────────────────────────
 function Match({
-  top, bottom, onTopClick, onBottomClick, linePos, connectRight = true
+  top, bottom, onTopClick, onBottomClick, linePos, connectRight = true, connectLeft = false
 }: {
   top: string | null; bottom: string | null
   onTopClick?: () => void; onBottomClick?: () => void
-  linePos: 'top' | 'bottom'; connectRight?: boolean
+  linePos: 'top' | 'bottom' | 'center'; connectRight?: boolean; connectLeft?: boolean
 }) {
   return (
     <div className="flex items-center">
+      {connectLeft && (
+        <div className="relative w-5 h-[66px]">
+          {linePos === 'center' ? (
+            <>
+              <div className="absolute top-[33px] left-0 w-full border-b border-gray-600" />
+              <div className="absolute top-[16px] bottom-[16px] left-0 border-l border-gray-600" />
+            </>
+          ) : linePos === 'top' ? (
+            <>
+              <div className="absolute top-[16px] left-0 w-full border-b border-gray-600" />
+              <div className="absolute top-[16px] bottom-0 left-0 border-l border-gray-600" />
+            </>
+          ) : (
+            <>
+              <div className="absolute bottom-[16px] left-0 w-full border-b border-gray-600" />
+              <div className="absolute top-0 bottom-[16px] left-0 border-l border-gray-600" />
+            </>
+          )}
+        </div>
+      )}
       <div className="flex flex-col">
         <Slot team={top} onClick={onTopClick} />
         <div className="h-px w-full bg-gray-700 my-0.5" />
@@ -74,7 +98,12 @@ function Match({
       </div>
       {connectRight && (
         <div className="relative w-5 h-[66px]">
-          {linePos === 'top' ? (
+          {linePos === 'center' ? (
+            <>
+              <div className="absolute top-[33px] right-0 w-full border-b border-gray-600" />
+              <div className="absolute top-[16px] bottom-[16px] right-0 border-r border-gray-600" />
+            </>
+          ) : linePos === 'top' ? (
             <>
               <div className="absolute top-[16px] right-0 w-full border-b border-gray-600" />
               <div className="absolute top-[16px] bottom-0 right-0 border-r border-gray-600" />
@@ -153,24 +182,40 @@ function TeamPicker({
 export default function BracketPage() {
   const [predictions, setPredictions] = useState<Predictions>({ quarter: [], semi: [], finalist: [], champion: [] })
   const [results, setResults] = useState<Predictions>({ quarter: [], semi: [], finalist: [], champion: [] })
+  const [allTeams, setAllTeams] = useState<string[]>(FALLBACK_TEAMS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [picker, setPicker] = useState<{ round: string; slotIdx: number } | null>(null)
 
   useEffect(() => {
-    Promise.all([apiFetch('/bracket/my'), apiFetch('/bracket/results')])
-      .then(([m, r]) => { setPredictions(m.predictions); setResults(r.results) })
+    Promise.all([
+      apiFetch('/bracket/my'),
+      apiFetch('/bracket/results'),
+      apiFetch('/predictions/matches')
+    ])
+      .then(([m, r, matchesData]) => {
+        setPredictions(m.predictions)
+        setResults(r.results)
+        if (matchesData?.matches?.length > 0) {
+          const teams = new Set<string>()
+          for (const match of (matchesData.matches as MatchData[])) {
+            teams.add(match.home_team)
+            teams.add(match.away_team)
+          }
+          setAllTeams(Array.from(teams).sort())
+        }
+      })
       .finally(() => setLoading(false))
   }, [])
 
   function getPool(round: string) {
     const order = ['quarter', 'semi', 'finalist', 'champion']
     const idx = order.indexOf(round)
-    if (idx === 0) return ALL_TEAMS
+    if (idx === 0) return allTeams
     const prev = order[idx - 1]
     return predictions[prev as keyof Predictions]?.length > 0
       ? predictions[prev as keyof Predictions]
-      : ALL_TEAMS
+      : allTeams
   }
 
   function openPicker(round: string, slotIdx: number) {
@@ -271,32 +316,41 @@ export default function BracketPage() {
           <div className="overflow-x-auto pb-4">
             <div className="inline-flex items-center gap-0 min-w-max">
 
-              {/* QF LEFT (4 matches → 2 SF) */}
-              <div className="flex flex-col gap-4">
-                {[0, 1, 2, 3].map(i => (
+              {/* QF LEFT (2 matches → 2 SF slots) */}
+              <div className="flex flex-col gap-[50px] py-[0px]">
+                {[0, 1].map(i => (
                   <Match key={i}
                     top={q(i * 2)} bottom={q(i * 2 + 1)}
                     linePos={i % 2 === 0 ? 'bottom' : 'top'}
                     onTopClick={() => openPicker('quarter', i * 2)}
                     onBottomClick={() => openPicker('quarter', i * 2 + 1)}
+                    connectRight
                   />
                 ))}
               </div>
 
-              {/* SF LEFT (2 slots → 1 finalist) */}
+              {/* SF LEFT (1 match → 1 finalist slot) */}
               <div className="flex flex-col gap-[84px] py-[17px]">
-                {[0, 1].map(i => (
-                  <WinnerSlot key={i} team={s(i)}
-                    correct={isCorrect('semi', s(i))}
-                    wrong={!!isWrong('semi', s(i))}
+                {[0].map(() => (
+                  <WinnerSlot key="sf-l" team={s(0)}
+                    correct={isCorrect('semi', s(0))}
+                    wrong={!!isWrong('semi', s(0))}
                     connectLeft connectRight
-                    onClick={() => openPicker('semi', i)}
+                    onClick={() => openPicker('semi', 0)}
+                  />
+                ))}
+                {[0].map(() => (
+                  <WinnerSlot key="sf-l2" team={s(1)}
+                    correct={isCorrect('semi', s(1))}
+                    wrong={!!isWrong('semi', s(1))}
+                    connectLeft connectRight
+                    onClick={() => openPicker('semi', 1)}
                   />
                 ))}
               </div>
 
               {/* FINALIST LEFT */}
-              <div className="flex flex-col justify-center py-[68px]">
+              <div className="flex flex-col justify-center py-[75px]">
                 <WinnerSlot team={f(0)}
                   correct={isCorrect('finalist', f(0))}
                   wrong={!!isWrong('finalist', f(0))}
@@ -306,7 +360,7 @@ export default function BracketPage() {
               </div>
 
               {/* CHAMPION CENTER */}
-              <div className="flex flex-col items-center justify-center px-2 gap-2">
+              <div className="flex flex-col items-center justify-center px-2 py-[71px] gap-2">
                 <div className="w-5 border-b border-gray-600" />
                 <div className="flex flex-col items-center">
                   <p className="text-yellow-400 text-xs font-bold uppercase tracking-wider mb-2">Campeón</p>
@@ -321,7 +375,7 @@ export default function BracketPage() {
               </div>
 
               {/* FINALIST RIGHT */}
-              <div className="flex flex-col justify-center py-[68px]">
+              <div className="flex flex-col justify-center py-[75px]">
                 <WinnerSlot team={f(1)}
                   correct={isCorrect('finalist', f(1))}
                   wrong={!!isWrong('finalist', f(1))}
@@ -332,24 +386,33 @@ export default function BracketPage() {
 
               {/* SF RIGHT (2 slots) */}
               <div className="flex flex-col gap-[84px] py-[17px]">
-                {[2, 3].map(i => (
-                  <WinnerSlot key={i} team={s(i)}
-                    correct={isCorrect('semi', s(i))}
-                    wrong={!!isWrong('semi', s(i))}
+                {[0].map(() => (
+                  <WinnerSlot key="sf-r" team={s(2)}
+                    correct={isCorrect('semi', s(2))}
+                    wrong={!!isWrong('semi', s(2))}
                     connectLeft connectRight
-                    onClick={() => openPicker('semi', i)}
+                    onClick={() => openPicker('semi', 2)}
+                  />
+                ))}
+                {[0].map(() => (
+                  <WinnerSlot key="sf-r2" team={s(3)}
+                    correct={isCorrect('semi', s(3))}
+                    wrong={!!isWrong('semi', s(3))}
+                    connectLeft connectRight
+                    onClick={() => openPicker('semi', 3)}
                   />
                 ))}
               </div>
 
-              {/* QF RIGHT (4 matches) */}
-              <div className="flex flex-col gap-4">
-                {[4, 5, 6, 7].map(i => (
+              {/* QF RIGHT (2 matches) */}
+              <div className="flex flex-col gap-[50px] py-[0px]">
+                {[2, 3].map(i => (
                   <Match key={i}
-                    top={q(i)} bottom={i < 7 ? q(i + 1) : null}
+                    top={q(i * 2)} bottom={q(i * 2 + 1)}
                     linePos={i % 2 === 0 ? 'bottom' : 'top'}
-                    onTopClick={() => openPicker('quarter', i)}
-                    onBottomClick={() => openPicker('quarter', i < 7 ? i + 1 : i)}
+                    onTopClick={() => openPicker('quarter', i * 2)}
+                    onBottomClick={() => openPicker('quarter', i * 2 + 1)}
+                    connectLeft
                     connectRight={false}
                   />
                 ))}
