@@ -60,14 +60,14 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       
-      <div className="max-w-2xl mx-auto p-6">
+      <div className="max-w-5xl mx-auto p-6">
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center text-gray-950 text-2xl font-black">
+          <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center text-gray-950 text-3xl font-barlow font-black">
             {user?.username[0].toUpperCase()}
           </div>
           <div>
-            <h1 className="text-2xl font-bold">{user?.username}</h1>
-            <p className="text-gray-500">{user?.email}</p>
+            <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-yellow-400">{user?.username}</h1>
+            <p className="text-gray-400">{user?.email}</p>
             {rank && totalPlayers && (
               <p className="text-yellow-400 text-sm font-bold mt-1">
                 #{rank} de {totalPlayers} jugadores

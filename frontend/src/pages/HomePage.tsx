@@ -54,7 +54,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <div className="max-w-5xl mx-auto p-4 md:p-8">
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
 
         {/* Hero */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 p-6 md:p-10 mb-6">
@@ -64,8 +64,8 @@ export default function HomePage() {
             <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 rounded-full px-3 py-1 text-yellow-400 text-xs font-bold mb-4 uppercase tracking-wider">
               <span className="no-invert">🏆</span> USA · CANADA · MÉXICO 2026
             </div>
-            <h1 className="text-3xl md:text-4xl font-black mb-2">
-              Bienvenido, <span className="text-yellow-400">{user?.username}</span> <span className="no-invert">👋</span>
+            <h1 className="text-3xl md:text-5xl font-barlow font-black uppercase tracking-wide mb-2">
+               Bienvenido, <span className="text-yellow-400">{user?.username}</span> <span className="no-invert">👋</span>
             </h1>
             <p className="text-gray-400 mb-6 max-w-lg">
               Predice los marcadores, compite con amigos y demuestra que la tienes clara.

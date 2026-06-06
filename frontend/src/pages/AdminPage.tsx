@@ -56,11 +56,11 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       
-      <div className="max-w-2xl mx-auto p-6">
-        <h1 className="text-2xl font-bold text-yellow-400 mb-6">Panel de Admin</h1>
+      <div className="max-w-5xl mx-auto p-6">
+        <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-yellow-400 mb-6">Panel de Admin</h1>
 
         <form onSubmit={handleSubmit} className="bg-gray-900 rounded-xl p-6 mb-6">
-          <h2 className="font-bold mb-4">Cargar resultado</h2>
+          <h2 className="font-barlow font-bold uppercase tracking-wider text-yellow-400/90 mb-4">Cargar resultado</h2>
           <select
             className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg mb-4"
             value={selected}

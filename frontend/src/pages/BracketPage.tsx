@@ -126,7 +126,7 @@ function Match({
   isTopCorrect = false, isBottomCorrect = false,
   isTopWrong = false, isBottomWrong = false,
   onTopClick, onBottomClick, linePos, connectRight = true, connectLeft = false,
-  round, label
+  round, label, side = 'left'
 }: {
   top: string | null; bottom: string | null
   topPlaceholder?: string; bottomPlaceholder?: string
@@ -137,59 +137,97 @@ function Match({
   linePos: 'top' | 'bottom' | 'center'; connectRight?: boolean; connectLeft?: boolean
   round: 'round32' | 'round16' | 'quarter' | 'semi'
   label: string
+  side?: 'left' | 'right'
 }) {
   let ext = 0
-  if (round === 'round32') ext = 8
-  else if (round === 'round16') ext = 53.5
-  else if (round === 'quarter') ext = 144.5
+  if (round === 'round32') ext = 45.5
+  else if (round === 'round16') ext = 91
+  else if (round === 'quarter') ext = 182
+
+  const renderStub = (borderSide: 'left' | 'right') => {
+    const borderClass = borderSide === 'left' ? 'left-0 border-l' : 'right-0 border-r'
+    return (
+      <div className="relative w-4 h-[75px] flex-shrink-0">
+        {/* Center line */}
+        <div className="absolute top-[37.5px] left-0 w-full border-b border-gray-800" />
+        {/* Top slot line */}
+        <div className="absolute top-[19px] left-0 w-full border-b border-gray-800" />
+        {/* Bottom slot line */}
+        <div className="absolute bottom-[19px] left-0 w-full border-b border-gray-800" />
+        {/* Vertical connector */}
+        <div className={`absolute top-[19px] bottom-[19px] border-gray-800 ${borderClass}`} />
+      </div>
+    )
+  }
+
+  const renderStep = (borderSide: 'left' | 'right') => {
+    const borderClass = borderSide === 'left' ? 'left-0 border-l' : 'right-0 border-r'
+    if (linePos === 'center') {
+      return (
+        <div className="relative w-4 h-[75px] flex-shrink-0">
+          <div className="absolute top-[37.5px] left-0 w-full border-b border-gray-800" />
+        </div>
+      )
+    }
+
+    const isTop = linePos === 'top'
+    const topVal = isTop ? 37.5 - ext : 37.5
+    const heightVal = ext
+
+    return (
+      <div className="relative w-4 h-[75px] flex-shrink-0">
+        {/* Horizontal line from card center */}
+        <div className="absolute top-[37.5px] left-0 w-full border-b border-gray-800" />
+        {/* Vertical step line */}
+        <div
+          className={`absolute border-gray-800 ${borderClass}`}
+          style={{ top: `${topVal}px`, height: `${heightVal}px` }}
+        />
+        {/* Horizontal line to next round */}
+        <div
+          className="absolute left-0 w-full border-b border-gray-800"
+          style={{ top: `${isTop ? 37.5 - ext : 37.5 + ext}px` }}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="flex items-center">
-      {connectLeft && (
-        <div className="relative w-4 h-[75px]">
-          {linePos === 'center' ? (
-            <div className="absolute top-[37.5px] left-0 w-full border-b border-gray-800" />
-          ) : linePos === 'top' ? (
-            <>
-              <div className="absolute top-[19px] left-0 w-full border-b border-gray-800" />
-              <div className="absolute top-[19px] bottom-0 left-0 border-l border-gray-800" />
-            </>
-          ) : (
-            <>
-              <div className="absolute bottom-[19px] left-0 w-full border-b border-gray-800" />
-              <div className="absolute top-0 bottom-[19px] left-0 border-l border-gray-800" />
-            </>
-          )}
-        </div>
-      )}
-      
-      <div className="relative w-36 bg-gray-900/40 backdrop-blur-sm border border-gray-850/80 rounded-xl p-1 shadow-lg hover:border-yellow-400/20 hover:bg-gray-900/60 transition-all duration-300 flex flex-col gap-0.5">
-        <div className="absolute -top-2.5 left-2 px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-[8px] text-gray-500 font-bold rounded uppercase tracking-wider leading-none select-none">
-          {label}
-        </div>
-        <div className="pt-1 flex flex-col gap-0.5">
-          <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
-          <div className="h-px bg-gray-800/40 mx-2" />
-          <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
-        </div>
-      </div>
-
-      {connectRight && (
-        <div className="relative w-4 h-[75px]">
-          {linePos === 'center' ? (
-            <div className="absolute top-[37.5px] right-0 w-full border-b border-gray-800" />
-          ) : linePos === 'top' ? (
-            <>
-              <div className="absolute bottom-[19px] right-0 border-r border-gray-800" style={{ top: -ext, bottom: 19 }} />
-              <div className="absolute right-0 w-full border-b border-gray-800" style={{ top: -ext }} />
-            </>
-          ) : (
-            <>
-              <div className="absolute top-[19px] right-0 border-r border-gray-800" style={{ top: 19, bottom: -ext }} />
-              <div className="absolute right-0 w-full border-b border-gray-800" style={{ bottom: -ext }} />
-            </>
-          )}
-        </div>
+      {side === 'left' ? (
+        <>
+          {connectLeft && renderStub('left')}
+          
+          <div className="relative w-36 bg-gray-900/40 backdrop-blur-sm border border-gray-850/80 rounded-xl p-1 shadow-lg hover:border-yellow-400/20 hover:bg-gray-900/60 transition-all duration-300 flex flex-col gap-0.5">
+            <div className="absolute -top-2.5 left-2 px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-[8px] text-gray-500 font-bold rounded uppercase tracking-wider leading-none select-none">
+              {label}
+            </div>
+            <div className="pt-1 flex flex-col gap-0.5">
+              <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
+              <div className="h-px bg-gray-800/40 mx-2" />
+              <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
+            </div>
+          </div>
+          
+          {connectRight && renderStep('right')}
+        </>
+      ) : (
+        <>
+          {connectLeft && renderStep('left')}
+          
+          <div className="relative w-36 bg-gray-900/40 backdrop-blur-sm border border-gray-850/80 rounded-xl p-1 shadow-lg hover:border-yellow-400/20 hover:bg-gray-900/60 transition-all duration-300 flex flex-col gap-0.5">
+            <div className="absolute -top-2.5 left-2 px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-[8px] text-gray-500 font-bold rounded uppercase tracking-wider leading-none select-none">
+              {label}
+            </div>
+            <div className="pt-1 flex flex-col gap-0.5">
+              <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
+              <div className="h-px bg-gray-800/40 mx-2" />
+              <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
+            </div>
+          </div>
+          
+          {connectRight && renderStub('right')}
+        </>
       )}
     </div>
   )
@@ -454,7 +492,7 @@ export default function BracketPage() {
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">
+            <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">
               Bracket de Eliminación
             </h1>
             <p className="text-gray-400 text-sm mt-1">
@@ -530,6 +568,7 @@ export default function BracketPage() {
                         connectRight={true} connectLeft={false}
                         round="round32"
                         label={match.label || `M${73 + idx}`}
+                        side="left"
                       />
                     )
                   })}
@@ -562,6 +601,7 @@ export default function BracketPage() {
                         connectLeft={true} connectRight={true}
                         round="round16"
                         label={`M${89 + idx}`}
+                        side="left"
                       />
                     )
                   })}
@@ -594,6 +634,7 @@ export default function BracketPage() {
                         connectLeft={true} connectRight={true}
                         round="quarter"
                         label={`M${97 + idx}`}
+                        side="left"
                       />
                     )
                   })}
@@ -618,6 +659,7 @@ export default function BracketPage() {
                     connectLeft={true} connectRight={true}
                     round="semi"
                     label="M101"
+                    side="left"
                   />
                 </div>
 
@@ -689,6 +731,7 @@ export default function BracketPage() {
                     connectLeft={true} connectRight={true}
                     round="semi"
                     label="M102"
+                    side="right"
                   />
                 </div>
 
@@ -719,6 +762,7 @@ export default function BracketPage() {
                         connectLeft={true} connectRight={true}
                         round="quarter"
                         label={`M${97 + idx}`}
+                        side="right"
                       />
                     )
                   })}
@@ -751,6 +795,7 @@ export default function BracketPage() {
                         connectLeft={true} connectRight={true}
                         round="round16"
                         label={`M${89 + idx}`}
+                        side="right"
                       />
                     )
                   })}
@@ -775,6 +820,7 @@ export default function BracketPage() {
                         connectLeft={true} connectRight={false}
                         round="round32"
                         label={match.label || `M${73 + idx}`}
+                        side="right"
                       />
                     )
                   })}

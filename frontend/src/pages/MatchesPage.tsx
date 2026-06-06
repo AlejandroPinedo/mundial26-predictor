@@ -210,12 +210,12 @@ export default function MatchesPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <div className="max-w-5xl mx-auto p-4 md:p-8">
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
 
         {nextMatch && (
           <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400/20 to-yellow-600/10 border border-yellow-400/30 rounded-2xl p-5 mb-6">
             <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/5 rounded-full -translate-y-8 translate-x-8" />
-            <p className="text-yellow-400 text-xs font-bold uppercase tracking-widest mb-3">⚡ Próximo partido</p>
+            <p className="text-yellow-400 text-xs font-bold uppercase tracking-widest mb-3 font-barlow">⚡ Próximo partido</p>
             <div className="flex justify-between items-center">
               <div className="text-center">
                 <p className="text-2xl mb-1 no-invert">{getFlag(nextMatch.home_team)}</p>
@@ -228,7 +228,7 @@ export default function MatchesPage() {
                 <p className="text-white font-bold">
                   {new Date(nextMatch.match_date).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
                 </p>
-                <p className="text-gray-600 text-xs">Grupo {nextMatch.group_name}</p>
+                <p className="text-gray-650 text-xs">Grupo {nextMatch.group_name}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl mb-1 no-invert">{getFlag(nextMatch.away_team)}</p>
@@ -239,7 +239,7 @@ export default function MatchesPage() {
         )}
 
         <div className="flex justify-between items-center mb-4 gap-2 flex-wrap">
-          <h1 className="text-2xl font-bold text-yellow-400">Partidos y Tablas <span className="no-invert">⚽</span></h1>
+          <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-yellow-400">Partidos y Tablas <span className="no-invert">⚽</span></h1>
           <button
             onClick={() => setShowThirds(true)}
             className="bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold px-4 py-1.5 rounded-xl hover:bg-blue-500/20 text-xs transition"
