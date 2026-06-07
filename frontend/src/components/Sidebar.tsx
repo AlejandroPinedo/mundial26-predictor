@@ -17,6 +17,7 @@ export default function Sidebar({ unpredicted = 0 }: Props) {
     { to: '/matches', icon: '⚽', label: 'Partidos', badge: unpredicted },
     { to: '/bracket', icon: '🏆', label: 'Bracket' },
     { to: '/leaderboard', icon: '📊', label: 'Ranking' },
+    { to: '/stats', icon: '📈', label: 'Estadísticas' },
     { to: '/my', icon: '🎯', label: 'Mis predicciones' },
     { to: '/groups', icon: '👥', label: 'Grupos privados' },
     { to: '/teams', icon: '🌍', label: 'Equipos' },

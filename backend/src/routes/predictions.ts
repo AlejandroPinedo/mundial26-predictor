@@ -203,3 +203,64 @@ predictionsRouter.get('/user/:username', authMiddleware, async (c) => {
 
   return c.json({ username: userRes.rows[0].username, predictions: result.rows })
 })
+
+predictionsRouter.get('/global-insights', async (c) => {
+  const champRes = await db.query(
+    `SELECT team, COUNT(*)::int as count 
+     FROM bracket_predictions 
+     WHERE round = 'champion' 
+     GROUP BY team 
+     ORDER BY count DESC 
+     LIMIT 5`
+  )
+
+  const avgScoresRes = await db.query(
+    `SELECT 
+       ROUND(AVG(predicted_home), 2)::float as avg_home,
+       ROUND(AVG(predicted_away), 2)::float as avg_away
+     FROM predictions`
+  )
+
+  const popularScoresRes = await db.query(
+    `SELECT 
+       predicted_home, 
+       predicted_away, 
+       COUNT(*)::int as count
+     FROM predictions
+     GROUP BY predicted_home, predicted_away
+     ORDER BY count DESC
+     LIMIT 5`
+  )
+
+  const hotMatchesRes = await db.query(
+    `SELECT 
+       p.match_id,
+       m.home_team,
+       m.away_team,
+       m.match_date,
+       m.stage,
+       COUNT(p.id)::int as prediction_count
+     FROM predictions p
+     JOIN matches m ON p.match_id = m.id
+     GROUP BY p.match_id, m.home_team, m.away_team, m.match_date, m.stage
+     ORDER BY prediction_count DESC
+     LIMIT 5`
+  )
+
+  const totalPredsRes = await db.query('SELECT COUNT(*)::int as count FROM predictions')
+
+  const avgPointsRes = await db.query(
+    `SELECT ROUND(AVG(points), 2)::float as avg_points 
+     FROM predictions 
+     WHERE points IS NOT NULL`
+  )
+
+  return c.json({
+    mostPredictedChampions: champRes.rows,
+    averageScores: avgScoresRes.rows[0] || { avg_home: 0, avg_away: 0 },
+    popularScores: popularScoresRes.rows,
+    hotMatches: hotMatchesRes.rows,
+    totalPredictions: totalPredsRes.rows[0]?.count || 0,
+    averagePoints: avgPointsRes.rows[0]?.avg_points || 0
+  })
+})

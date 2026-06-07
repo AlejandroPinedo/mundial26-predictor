@@ -8,7 +8,7 @@ const items = [
   { to: '/matches', icon: '⚽', label: 'Partidos' },
   { to: '/bracket', icon: '🏆', label: 'Bracket' },
   { to: '/leaderboard', icon: '📊', label: 'Ranking' },
-  { to: '/stadiums', icon: '🏟️', label: 'Estadios' },
+  { to: '/stats', icon: '📈', label: 'Stats' },
   { to: '/profile', icon: '👤', label: 'Perfil' },
 ]
 
