@@ -20,8 +20,8 @@ import BracketPage from './pages/BracketPage'
 import TeamsPage from './pages/TeamsPage'
 import CalendarPage from './pages/CalendarPage'
 import StadiumsPage from './pages/StadiumsPage'
-import StadiumsPage from './pages/StadiumsPage'
 import ComparePage from './pages/ComparePage'
+
 
 function Protected({ children }: { children: React.ReactNode }) {
   return (

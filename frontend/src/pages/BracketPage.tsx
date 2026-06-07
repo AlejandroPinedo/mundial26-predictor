@@ -4,6 +4,8 @@ import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
 import { calculateRoundOf32 } from '../utils/standings'
+import { toPng } from 'html-to-image'
+import { useAuth } from '../context/AuthContext'
 
 type Predictions = {
   round16: (string | null)[]
@@ -254,6 +256,8 @@ function WinnerSlot({
 
 // ── Main BracketPage ─────────────────────────────────────────────────────────────
 export default function BracketPage() {
+  const { user } = useAuth()
+  const [exporting, setExporting] = useState(false)
   const [predictions, setPredictions] = useState<Predictions>({
     round16: Array(16).fill(null),
     quarter: Array(8).fill(null),
@@ -271,6 +275,40 @@ export default function BracketPage() {
   const [r32Matchups, setR32Matchups] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  const exportBracket = async () => {
+    const el = document.getElementById('bracket-grid')
+    if (!el) {
+      toast.error('No se encontró el contenedor del bracket')
+      return
+    }
+    setExporting(true)
+    const loadToast = toast.loading('Generando imagen del bracket...')
+    try {
+      const dataUrl = await toPng(el, {
+        cacheBust: true,
+        backgroundColor: '#030712', // bg-gray-950
+        style: {
+          transform: 'scale(1)',
+          borderRadius: '0px',
+        }
+      })
+      
+      const link = document.createElement('a')
+      link.download = `bracket-${user?.username || 'mundial26'}.png`
+      link.href = dataUrl
+      link.click()
+      
+      toast.dismiss(loadToast)
+      toast.success('¡Bracket descargado con éxito! 📸')
+    } catch (err) {
+      console.error('Error generating image:', err)
+      toast.dismiss(loadToast)
+      toast.error('Error al generar la imagen del bracket')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   useEffect(() => {
     Promise.all([
@@ -499,13 +537,23 @@ export default function BracketPage() {
               Completa las eliminatorias desde los Dieciseisavos (Round of 32) hasta coronar al Campeón del Mundo.
             </p>
           </div>
-          <button
-            onClick={saveAll}
-            disabled={saving}
-            className="bg-yellow-400 text-gray-950 font-bold px-6 py-2.5 rounded-xl hover:bg-yellow-300 active:scale-95 disabled:opacity-50 transition shadow-lg shadow-yellow-500/10 text-sm"
-          >
-            {saving ? 'Guardando...' : 'Guardar todo'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={exportBracket}
+              disabled={exporting || loading}
+              className="bg-gray-900 border border-gray-800 text-gray-300 hover:text-white font-bold px-4 py-2.5 rounded-xl hover:bg-gray-800 transition text-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              id="export-bracket-btn"
+            >
+              Descargar Bracket 📸
+            </button>
+            <button
+              onClick={saveAll}
+              disabled={saving}
+              className="bg-yellow-400 text-gray-950 font-bold px-6 py-2.5 rounded-xl hover:bg-yellow-300 active:scale-95 disabled:opacity-50 transition shadow-lg shadow-yellow-500/10 text-sm cursor-pointer"
+            >
+              {saving ? 'Guardando...' : 'Guardar todo'}
+            </button>
+          </div>
         </div>
 
         {/* Legend */}
@@ -529,7 +577,7 @@ export default function BracketPage() {
           </div>
         ) : (
           <div className="overflow-x-auto pb-6 border border-gray-900 rounded-2xl bg-gray-950/50 backdrop-blur-sm shadow-inner scrollbar-thin scrollbar-thumb-gray-800">
-            <div className="inline-flex flex-col py-6 min-w-max px-6">
+            <div id="bracket-grid" className="inline-flex flex-col py-6 min-w-max px-6 bg-gray-950">
               
               {/* Column Headers Row */}
               <div className="flex items-center gap-0 border-b border-gray-950/40 pb-4 mb-6 text-center select-none font-bold">
