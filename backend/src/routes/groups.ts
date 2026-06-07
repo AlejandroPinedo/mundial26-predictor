@@ -115,3 +115,59 @@ groupsRouter.get('/:id/leaderboard', authMiddleware, async (c) => {
 
   return c.json({ group: group.rows[0], leaderboard: result.rows })
 })
+
+groupsRouter.get('/:id/messages', authMiddleware, async (c) => {
+  const userId = c.get('userId')
+  const groupId = c.req.param('id')
+
+  // Verify user is a member of the group
+  const member = await db.query(
+    'SELECT id FROM group_members WHERE group_id = $1 AND user_id = $2',
+    [groupId, userId]
+  )
+  if (!member.rows[0]) return c.json({ error: 'No eres miembro de este grupo' }, 403)
+
+  const result = await db.query(
+    `SELECT gm.*, u.username
+     FROM group_messages gm
+     JOIN users u ON gm.user_id = u.id
+     WHERE gm.group_id = $1
+     ORDER BY gm.created_at ASC`,
+    [groupId]
+  )
+
+  return c.json({ messages: result.rows })
+})
+
+groupsRouter.post('/:id/messages', authMiddleware, async (c) => {
+  const userId = c.get('userId')
+  const groupId = c.req.param('id')
+  const { message } = await c.req.json()
+
+  if (!message?.trim()) {
+    return c.json({ error: 'El mensaje no puede estar vacío' }, 400)
+  }
+
+  // Verify user is a member of the group
+  const member = await db.query(
+    'SELECT id FROM group_members WHERE group_id = $1 AND user_id = $2',
+    [groupId, userId]
+  )
+  if (!member.rows[0]) return c.json({ error: 'No eres miembro de este grupo' }, 403)
+
+  const result = await db.query(
+    `INSERT INTO group_messages (group_id, user_id, message)
+     VALUES ($1, $2, $3)
+     RETURNING *`,
+    [groupId, userId, message.trim()]
+  )
+
+  // Get username to return it back to client
+  const userResult = await db.query('SELECT username FROM users WHERE id = $1', [userId])
+  const chatMessage = {
+    ...result.rows[0],
+    username: userResult.rows[0].username,
+  }
+
+  return c.json({ message: chatMessage }, 201)
+})

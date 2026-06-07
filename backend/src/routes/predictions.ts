@@ -181,3 +181,25 @@ predictionsRouter.get('/stats', authMiddleware, async (c) => {
     totalPlayers: totalPlayersResult.rows[0].total
   })
 })
+
+predictionsRouter.get('/user/:username', authMiddleware, async (c) => {
+  const username = c.req.param('username')
+
+  const userRes = await db.query('SELECT id, username FROM users WHERE username = $1', [username])
+  if (!userRes.rows[0]) {
+    return c.json({ error: 'Usuario no encontrado' }, 404)
+  }
+  const targetUserId = userRes.rows[0].id
+
+  const result = await db.query(
+    `SELECT p.*, m.home_team, m.away_team, m.match_date, m.stage,
+            m.home_score, m.away_score
+     FROM predictions p
+     JOIN matches m ON p.match_id = m.id
+     WHERE p.user_id = $1
+     ORDER BY m.match_date ASC`,
+    [targetUserId]
+  )
+
+  return c.json({ username: userRes.rows[0].username, predictions: result.rows })
+})

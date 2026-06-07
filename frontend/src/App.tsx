@@ -20,6 +20,8 @@ import BracketPage from './pages/BracketPage'
 import TeamsPage from './pages/TeamsPage'
 import CalendarPage from './pages/CalendarPage'
 import StadiumsPage from './pages/StadiumsPage'
+import StadiumsPage from './pages/StadiumsPage'
+import ComparePage from './pages/ComparePage'
 
 function Protected({ children }: { children: React.ReactNode }) {
   return (
@@ -58,6 +60,7 @@ export default function App() {
             <Route path="/teams" element={<Protected><TeamsPage /></Protected>} />
             <Route path="/calendar" element={<Protected><CalendarPage /></Protected>} />
             <Route path="/stadiums" element={<Protected><StadiumsPage /></Protected>} />
+            <Route path="/compare/:username" element={<Protected><ComparePage /></Protected>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </BrowserRouter>
