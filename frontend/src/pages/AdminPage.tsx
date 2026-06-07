@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 
-
 type Match = {
   id: string
   home_team: string
@@ -55,53 +54,109 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      
-      <div className="max-w-5xl mx-auto p-6">
-        <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-yellow-400 mb-6">Panel de Admin</h1>
+      <div className="max-w-4xl mx-auto p-4 md:p-8 font-sans">
+        
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-barlow font-black uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-yellow-550">
+            Panel de Administración 🔧
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">
+            Herramientas oficiales para registrar resultados y actualizar las clasificaciones en tiempo real.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-xl p-6 mb-6">
-          <h2 className="font-barlow font-bold uppercase tracking-wider text-yellow-400/90 mb-4">Cargar resultado</h2>
-          <select
-            className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg mb-4"
-            value={selected}
-            onChange={e => setSelected(e.target.value)}
-          >
-            <option value="">Selecciona un partido...</option>
-            {pending.map(m => (
-              <option key={m.id} value={m.id}>
-                {m.home_team} vs {m.away_team} — {new Date(m.match_date).toLocaleDateString('es')}
-              </option>
-            ))}
-          </select>
-          <div className="flex gap-4 mb-4">
-            <input type="number" min="0" placeholder="Local"
-              className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg text-center"
-              value={score.home}
-              onChange={e => setScore({ ...score, home: e.target.value })} />
-            <span className="text-gray-500 self-center text-xl">—</span>
-            <input type="number" min="0" placeholder="Visitante"
-              className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg text-center"
-              value={score.away}
-              onChange={e => setScore({ ...score, away: e.target.value })} />
-          </div>
-          <button type="submit" disabled={loading}
-            className="w-full bg-yellow-400 text-gray-950 font-bold py-2 rounded-lg hover:bg-yellow-300 disabled:opacity-50">
-            {loading ? 'Guardando...' : 'Guardar resultado'}
-          </button>
-        </form>
-
-        <h2 className="font-bold mb-3 text-gray-400">Resultados cargados ({played.length})</h2>
-        {played.length === 0 ? (
-          <p className="text-gray-600 text-center py-6">No hay resultados cargados todavía.</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {played.map(m => (
-              <div key={m.id} className="bg-gray-900 rounded-lg px-4 py-3 flex justify-between">
-                <span>{m.home_team} {m.home_score} — {m.away_score} {m.away_team}</span>
+        {/* Load Results Form Card */}
+        <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 mb-8 shadow-2xl relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-2.5 h-full bg-yellow-400" />
+          <h2 className="font-barlow font-black uppercase tracking-wider text-yellow-400 text-lg mb-4">
+            Cargar Resultado Oficial
+          </h2>
+          
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div>
+              <label className="text-[10px] text-gray-500 uppercase font-black tracking-wider block mb-1.5">Seleccionar Partido</label>
+              <select
+                className="w-full bg-gray-950 border border-gray-800 focus:border-yellow-400/50 text-white px-4 py-3 rounded-xl text-sm outline-none transition-colors"
+                value={selected}
+                onChange={e => setSelected(e.target.value)}
+              >
+                <option value="">Selecciona un partido pendiente...</option>
+                {pending.map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.home_team} vs {m.away_team} — {new Date(m.match_date).toLocaleDateString('es')}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] text-gray-500 uppercase font-black tracking-wider block mb-1.5">Goles Local</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="99"
+                  placeholder="0"
+                  className="w-full bg-gray-950 border border-gray-800 focus:border-yellow-400/50 text-white px-4 py-3 rounded-xl text-center font-bold text-sm outline-none transition-colors"
+                  value={score.home}
+                  onChange={e => setScore({ ...score, home: e.target.value })}
+                />
               </div>
-            ))}
-          </div>
-        )}
+              <div>
+                <label className="text-[10px] text-gray-500 uppercase font-black tracking-wider block mb-1.5">Goles Visitante</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="99"
+                  placeholder="0"
+                  className="w-full bg-gray-950 border border-gray-800 focus:border-yellow-400/50 text-white px-4 py-3 rounded-xl text-center font-bold text-sm outline-none transition-colors"
+                  value={score.away}
+                  onChange={e => setScore({ ...score, away: e.target.value })}
+                />
+              </div>
+            </div>
+            
+            <button
+              type="submit"
+              disabled={loading || !selected || score.home === '' || score.away === ''}
+              className="bg-yellow-400 text-gray-950 font-bold py-3 rounded-xl hover:bg-yellow-300 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center font-sans mt-2"
+            >
+              {loading ? 'Guardando...' : 'Registrar Resultado Oficial ⚽'}
+            </button>
+          </form>
+        </div>
+
+        {/* Previous Results List */}
+        <div>
+          <h2 className="font-barlow font-black uppercase tracking-wider text-gray-400 mb-4 text-base">
+            Resultados Registrados ({played.length})
+          </h2>
+          
+          {played.length === 0 ? (
+            <p className="text-gray-500 text-center py-10 bg-gray-900/40 border border-gray-850 rounded-3xl">No hay resultados cargados todavía.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {played.map(m => (
+                <div key={m.id} className="bg-gray-900/40 border border-gray-850 rounded-2xl p-4 flex justify-between items-center backdrop-blur-sm">
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-white text-sm truncate uppercase font-barlow tracking-wider">
+                      {m.home_team} vs {m.away_team}
+                    </span>
+                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider mt-1">
+                      {new Date(m.match_date).toLocaleDateString('es')}
+                    </span>
+                  </div>
+                  
+                  <span className="bg-gray-950 border border-gray-800 px-3 py-1.5 rounded-xl font-bold text-yellow-400 font-sans text-xs">
+                    {m.home_score} - {m.away_score}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   )

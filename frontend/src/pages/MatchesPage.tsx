@@ -357,16 +357,16 @@ export default function MatchesPage() {
                       {!played && !started && (
                         <div className="flex gap-2 items-center justify-center">
                           <input type="number" min="0" max="20" placeholder="0"
-                            className="w-14 bg-gray-800 text-center rounded-lg px-2 py-1.5 text-sm font-bold border border-gray-700 focus:border-yellow-400 outline-none"
+                            className="w-11 h-11 bg-gray-950 text-center rounded-xl font-black border border-gray-850 focus:border-yellow-400/50 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             value={inputs[match.id]?.home || ''}
                             onChange={e => setInputs(prev => ({ ...prev, [match.id]: { ...prev[match.id], home: e.target.value } }))} />
-                          <span className="text-gray-500 font-bold">-</span>
+                          <span className="text-gray-650 font-bold select-none">-</span>
                           <input type="number" min="0" max="20" placeholder="0"
-                            className="w-14 bg-gray-800 text-center rounded-lg px-2 py-1.5 text-sm font-bold border border-gray-700 focus:border-yellow-400 outline-none"
+                            className="w-11 h-11 bg-gray-950 text-center rounded-xl font-black border border-gray-850 focus:border-yellow-400/50 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             value={inputs[match.id]?.away || ''}
                             onChange={e => setInputs(prev => ({ ...prev, [match.id]: { ...prev[match.id], away: e.target.value } }))} />
                           <button onClick={() => handlePredict(match.id)}
-                            className="bg-yellow-400 text-gray-950 font-bold px-4 py-1.5 rounded-lg hover:bg-yellow-300 text-sm transition">
+                            className="bg-yellow-400 text-gray-950 font-bold px-4 py-2.5 rounded-xl hover:bg-yellow-300 text-xs transition active:scale-95 cursor-pointer">
                             {pred ? 'Actualizar' : 'Predecir'}
                           </button>
                         </div>
