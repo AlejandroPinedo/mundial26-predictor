@@ -93,30 +93,33 @@ function Slot({
 }) {
   const h = size === 'lg' ? 'h-10' : 'h-8'
   const w = size === 'lg' ? 'w-36' : 'w-full'
+  
+  const cursorClass = onClick && team ? 'cursor-pointer active:scale-98' : 'cursor-default'
+  
   const cls = correct
-    ? 'bg-green-500/10 text-green-400 font-semibold'
+    ? 'bg-green-500/10 text-green-400 font-bold border border-green-500/25'
     : wrong
-    ? 'text-gray-500 line-through opacity-50'
+    ? 'bg-rose-500/5 text-gray-500 line-through border border-rose-500/15 opacity-60'
     : highlight
-    ? 'bg-yellow-400/15 text-yellow-400 font-bold'
+    ? 'bg-yellow-400/10 text-yellow-400 font-bold border border-yellow-450/30 shadow-md shadow-yellow-500/5'
     : team
-    ? 'text-white hover:bg-gray-800/80 cursor-pointer'
-    : 'text-gray-500 font-light'
+    ? 'bg-gray-900/50 hover:bg-gray-850/80 text-white font-medium border border-gray-800 hover:border-gray-700'
+    : 'bg-transparent border border-dashed border-gray-900/80 text-gray-600 font-bold'
 
   return (
     <button
       onClick={onClick}
-      disabled={!team}
-      className={`${w} ${h} flex items-center gap-1.5 px-2 rounded-lg text-xs transition-all duration-200 truncate ${cls}`}
+      disabled={!team || !onClick}
+      className={`${w} ${h} flex items-center gap-1.5 px-2.5 rounded-xl text-[11px] transition-all duration-200 truncate ${cursorClass} ${cls}`}
     >
       {team ? (
         <>
           <span className="text-base leading-none flex-shrink-0 no-invert">{getFlag(team)}</span>
-          <span className="truncate flex-1 text-left">{team}</span>
+          <span className="truncate flex-1 text-left uppercase font-sans tracking-wide">{team}</span>
           {highlight && <span className="text-[10px] text-yellow-400 ml-auto select-none">✓</span>}
         </>
       ) : (
-        <span className="text-gray-650 mx-auto text-[9px] uppercase font-bold tracking-wider">{placeholder}</span>
+        <span className="text-gray-650 mx-auto text-[8px] uppercase font-bold tracking-widest">{placeholder}</span>
       )}
     </button>
   )
@@ -146,18 +149,30 @@ function Match({
   else if (round === 'round16') ext = 91
   else if (round === 'quarter') ext = 182
 
+  const isAnyHighlighted = isTopHighlighted || isBottomHighlighted
+  const isAnyCorrect = isTopCorrect || isBottomCorrect
+  const isAnyWrong = isTopWrong || isBottomWrong
+
+  const lineColor = isAnyCorrect
+    ? 'border-green-500/40'
+    : isAnyHighlighted
+    ? 'border-yellow-450/40'
+    : isAnyWrong
+    ? 'border-gray-800/40'
+    : 'border-gray-900/60'
+
   const renderStub = (borderSide: 'left' | 'right') => {
     const borderClass = borderSide === 'left' ? 'left-0 border-l' : 'right-0 border-r'
     return (
       <div className="relative w-4 h-[75px] flex-shrink-0">
         {/* Center line */}
-        <div className="absolute top-[37.5px] left-0 w-full border-b border-gray-800" />
+        <div className={`absolute top-[37.5px] left-0 w-full border-b ${lineColor}`} />
         {/* Top slot line */}
-        <div className="absolute top-[19px] left-0 w-full border-b border-gray-800" />
+        <div className={`absolute top-[19px] left-0 w-full border-b ${lineColor}`} />
         {/* Bottom slot line */}
-        <div className="absolute bottom-[19px] left-0 w-full border-b border-gray-800" />
+        <div className={`absolute bottom-[19px] left-0 w-full border-b ${lineColor}`} />
         {/* Vertical connector */}
-        <div className={`absolute top-[19px] bottom-[19px] border-gray-800 ${borderClass}`} />
+        <div className={`absolute top-[19px] bottom-[19px] ${lineColor} ${borderClass}`} />
       </div>
     )
   }
@@ -167,7 +182,7 @@ function Match({
     if (linePos === 'center') {
       return (
         <div className="relative w-4 h-[75px] flex-shrink-0">
-          <div className="absolute top-[37.5px] left-0 w-full border-b border-gray-800" />
+          <div className={`absolute top-[37.5px] left-0 w-full border-b ${lineColor}`} />
         </div>
       )
     }
@@ -179,20 +194,28 @@ function Match({
     return (
       <div className="relative w-4 h-[75px] flex-shrink-0">
         {/* Horizontal line from card center */}
-        <div className="absolute top-[37.5px] left-0 w-full border-b border-gray-800" />
+        <div className={`absolute top-[37.5px] left-0 w-full border-b ${lineColor}`} />
         {/* Vertical step line */}
         <div
-          className={`absolute border-gray-800 ${borderClass}`}
+          className={`absolute ${lineColor} ${borderClass}`}
           style={{ top: `${topVal}px`, height: `${heightVal}px` }}
         />
         {/* Horizontal line to next round */}
         <div
-          className="absolute left-0 w-full border-b border-gray-800"
+          className={`absolute left-0 w-full border-b ${lineColor}`}
           style={{ top: `${isTop ? 37.5 - ext : 37.5 + ext}px` }}
         />
       </div>
     )
   }
+
+  const matchBoxBorder = isAnyCorrect
+    ? 'border-green-500/25 shadow-green-500/5'
+    : isAnyHighlighted
+    ? 'border-yellow-400/25 shadow-yellow-500/5'
+    : isAnyWrong
+    ? 'border-rose-500/10'
+    : 'border-gray-850/70'
 
   return (
     <div className="flex items-center">
@@ -200,13 +223,13 @@ function Match({
         <>
           {connectLeft && renderStub('left')}
           
-          <div className="relative w-36 bg-gray-900/40 backdrop-blur-sm border border-gray-850/80 rounded-xl p-1 shadow-lg hover:border-yellow-400/20 hover:bg-gray-900/60 transition-all duration-300 flex flex-col gap-0.5">
-            <div className="absolute -top-2.5 left-2 px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-[8px] text-gray-500 font-bold rounded uppercase tracking-wider leading-none select-none">
+          <div className={`relative w-36 bg-gray-900/40 backdrop-blur-sm border rounded-2xl p-1.5 shadow-lg hover:border-yellow-400/30 hover:bg-gray-900/60 transition-all duration-350 flex flex-col gap-1 ${matchBoxBorder}`}>
+            <div className="absolute -top-2.5 left-2.5 px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-[8px] text-gray-500 font-bold rounded uppercase tracking-wider leading-none select-none">
               {label}
             </div>
-            <div className="pt-1 flex flex-col gap-0.5">
+            <div className="pt-1.5 flex flex-col gap-1">
               <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
-              <div className="h-px bg-gray-800/40 mx-2" />
+              <div className="h-px bg-gray-850/50 mx-1.5" />
               <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
             </div>
           </div>
@@ -217,13 +240,13 @@ function Match({
         <>
           {connectLeft && renderStep('left')}
           
-          <div className="relative w-36 bg-gray-900/40 backdrop-blur-sm border border-gray-850/80 rounded-xl p-1 shadow-lg hover:border-yellow-400/20 hover:bg-gray-900/60 transition-all duration-300 flex flex-col gap-0.5">
-            <div className="absolute -top-2.5 left-2 px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-[8px] text-gray-500 font-bold rounded uppercase tracking-wider leading-none select-none">
+          <div className={`relative w-36 bg-gray-900/40 backdrop-blur-sm border rounded-2xl p-1.5 shadow-lg hover:border-yellow-400/30 hover:bg-gray-900/60 transition-all duration-350 flex flex-col gap-1 ${matchBoxBorder}`}>
+            <div className="absolute -top-2.5 left-2.5 px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-[8px] text-gray-500 font-bold rounded uppercase tracking-wider leading-none select-none">
               {label}
             </div>
-            <div className="pt-1 flex flex-col gap-0.5">
+            <div className="pt-1.5 flex flex-col gap-1">
               <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
-              <div className="h-px bg-gray-800/40 mx-2" />
+              <div className="h-px bg-gray-850/50 mx-1.5" />
               <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
             </div>
           </div>
@@ -243,13 +266,29 @@ function WinnerSlot({
   connectLeft?: boolean; connectRight?: boolean
   highlight?: boolean; correct?: boolean; wrong?: boolean
 }) {
+  const lineColor = correct
+    ? 'border-green-500/40'
+    : highlight
+    ? 'border-yellow-450/40'
+    : wrong
+    ? 'border-gray-800/40'
+    : 'border-gray-900/60'
+
+  const cardBorder = correct
+    ? 'border-green-500/25 shadow-green-500/5'
+    : highlight
+    ? 'border-yellow-400/25 shadow-yellow-500/5'
+    : wrong
+    ? 'border-rose-500/10'
+    : 'border-gray-850/80 hover:border-yellow-500/15'
+
   return (
     <div className="flex items-center">
-      {connectLeft && <div className="w-4 border-b border-gray-800" />}
-      <div className="w-32 bg-gray-900/40 backdrop-blur-sm border border-gray-850/80 rounded-xl p-1 shadow-lg hover:border-yellow-400/20 hover:bg-gray-900/60 transition-all duration-300">
+      {connectLeft && <div className={`w-4 border-b ${lineColor}`} />}
+      <div className={`w-32 bg-gray-900/40 backdrop-blur-sm border rounded-xl p-1 shadow-lg hover:bg-gray-900/65 transition-all duration-350 ${cardBorder}`}>
         <Slot team={team} placeholder={placeholder} onClick={onClick} highlight={highlight} correct={correct} wrong={wrong} />
       </div>
-      {connectRight && <div className="w-4 border-b border-gray-800" />}
+      {connectRight && <div className={`w-4 border-b ${lineColor}`} />}
     </div>
   )
 }
@@ -525,15 +564,15 @@ export default function BracketPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      <div className="max-w-7xl mx-auto p-4 md:p-6">
+      <div className="max-w-7xl mx-auto p-4 md:p-6 pb-20">
         
         {/* Header */}
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">
-              Bracket de Eliminación
+              Bracket de Eliminatorias 🏆
             </h1>
-            <p className="text-gray-400 text-sm mt-1">
+            <p className="text-gray-400 text-sm mt-1 font-sans">
               Completa las eliminatorias desde los Dieciseisavos (Round of 32) hasta coronar al Campeón del Mundo.
             </p>
           </div>
@@ -541,7 +580,7 @@ export default function BracketPage() {
             <button
               onClick={exportBracket}
               disabled={exporting || loading}
-              className="bg-gray-900 border border-gray-800 text-gray-300 hover:text-white font-bold px-4 py-2.5 rounded-xl hover:bg-gray-800 transition text-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="bg-gray-900 border border-gray-800 text-gray-300 hover:text-white font-bold px-4 py-2.5 rounded-xl hover:bg-gray-800 transition text-sm flex items-center gap-2 cursor-pointer disabled:opacity-50 font-sans"
               id="export-bracket-btn"
             >
               Descargar Bracket 📸
@@ -549,7 +588,7 @@ export default function BracketPage() {
             <button
               onClick={saveAll}
               disabled={saving}
-              className="bg-yellow-400 text-gray-950 font-bold px-6 py-2.5 rounded-xl hover:bg-yellow-300 active:scale-95 disabled:opacity-50 transition shadow-lg shadow-yellow-500/10 text-sm cursor-pointer"
+              className="bg-yellow-400 text-gray-950 font-bold px-6 py-2.5 rounded-xl hover:bg-yellow-300 active:scale-95 disabled:opacity-50 transition shadow-lg shadow-yellow-500/10 text-sm cursor-pointer font-sans"
             >
               {saving ? 'Guardando...' : 'Guardar todo'}
             </button>
@@ -557,17 +596,17 @@ export default function BracketPage() {
         </div>
 
         {/* Legend */}
-        <div className="bg-gray-900/40 border border-gray-800 rounded-2xl p-4 mb-6 text-xs text-gray-400 flex flex-wrap gap-4 justify-between items-center backdrop-blur-md">
-          <div className="flex flex-wrap gap-4">
-            <span>Puntos por acierto:</span>
-            <span><span className="text-blue-400 font-bold">1 pt</span> · Octavos</span>
-            <span><span className="text-purple-400 font-bold">2 pts</span> · Cuartos</span>
-            <span><span className="text-orange-400 font-bold">4 pts</span> · Semifinales</span>
-            <span><span className="text-yellow-400 font-bold">6 pts</span> · Finalista</span>
-            <span><span className="text-yellow-400 font-bold">10 pts</span> · Campeón</span>
+        <div className="bg-gray-900/45 border border-gray-850 rounded-3xl p-5 mb-8 text-xs text-gray-400 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center backdrop-blur-md font-sans">
+          <div className="flex flex-wrap gap-2.5 items-center">
+            <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Puntos por acierto:</span>
+            <span className="bg-gray-950 border border-gray-800 px-2 py-1 rounded-lg"><span className="text-blue-400 font-black">1 pt</span> · Octavos</span>
+            <span className="bg-gray-950 border border-gray-800 px-2 py-1 rounded-lg"><span className="text-purple-400 font-black">2 pts</span> · Cuartos</span>
+            <span className="bg-gray-950 border border-gray-800 px-2 py-1 rounded-lg"><span className="text-orange-400 font-black">4 pts</span> · Semis</span>
+            <span className="bg-gray-950 border border-gray-800 px-2 py-1 rounded-lg"><span className="text-yellow-450 font-black">6 pts</span> · Finalista</span>
+            <span className="bg-gray-950 border border-gray-800 px-2 py-1 rounded-lg"><span className="text-yellow-400 font-black">10 pts</span> · Campeón</span>
           </div>
-          <div className="text-yellow-400/80 font-medium">
-            * Haz click en un equipo para avanzarlo a la siguiente ronda
+          <div className="text-yellow-400/80 font-bold text-[10px] uppercase tracking-wider">
+            ⚡ Haz click en un equipo para avanzarlo de ronda
           </div>
         </div>
 
@@ -576,22 +615,22 @@ export default function BracketPage() {
             <Spinner />
           </div>
         ) : (
-          <div className="overflow-x-auto pb-6 border border-gray-900 rounded-2xl bg-gray-950/50 backdrop-blur-sm shadow-inner scrollbar-thin scrollbar-thumb-gray-800">
-            <div id="bracket-grid" className="inline-flex flex-col py-6 min-w-max px-6 bg-gray-950">
+          <div className="overflow-x-auto pb-6 border border-gray-900/60 rounded-3xl bg-gray-950/40 backdrop-blur-sm shadow-2xl scrollbar-thin scrollbar-thumb-gray-800">
+            <div id="bracket-grid" className="inline-flex flex-col py-8 min-w-max px-6 bg-gray-950">
               
               {/* Column Headers Row */}
-              <div className="flex items-center gap-0 border-b border-gray-950/40 pb-4 mb-6 text-center select-none font-bold">
-                <div className="w-[160px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Dieciseisavos (L)</p></div>
-                <div className="w-[176px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Octavos (L)</p></div>
-                <div className="w-[176px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Cuartos (L)</p></div>
-                <div className="w-[176px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Semifinal (L)</p></div>
-                <div className="w-[160px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Finalista (L)</p></div>
-                <div className="w-[192px]"><p className="text-yellow-400 text-[10.5px] uppercase tracking-wider">Campeón</p></div>
-                <div className="w-[160px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Finalista (R)</p></div>
-                <div className="w-[176px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Semifinal (R)</p></div>
-                <div className="w-[176px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Cuartos (R)</p></div>
-                <div className="w-[176px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Octavos (R)</p></div>
-                <div className="w-[160px]"><p className="text-gray-400 text-[10px] uppercase tracking-wider">Dieciseisavos (R)</p></div>
+              <div className="flex items-center gap-0 border-b border-gray-900/40 pb-4 mb-8 text-center select-none font-barlow font-black text-xs uppercase tracking-widest text-gray-500">
+                <div className="w-[160px]"><p>Dieciseisavos (L)</p></div>
+                <div className="w-[176px]"><p>Octavos (L)</p></div>
+                <div className="w-[176px]"><p>Cuartos (L)</p></div>
+                <div className="w-[176px]"><p>Semifinal (L)</p></div>
+                <div className="w-[160px]"><p>Finalista (L)</p></div>
+                <div className="w-[192px]"><p className="text-yellow-400">Campeón</p></div>
+                <div className="w-[160px]"><p>Finalista (R)</p></div>
+                <div className="w-[176px]"><p>Semifinal (R)</p></div>
+                <div className="w-[176px]"><p>Cuartos (R)</p></div>
+                <div className="w-[176px]"><p>Octavos (R)</p></div>
+                <div className="w-[160px]"><p>Dieciseisavos (R)</p></div>
               </div>
 
               {/* Bracket Grid */}
@@ -726,21 +765,23 @@ export default function BracketPage() {
 
                 {/* 6. CHAMPION CENTER */}
                 <div className="flex flex-col items-center justify-center px-6 py-[271px] w-[192px] flex-shrink-0">
-                  <div className="flex flex-col items-center p-6 bg-gray-900/30 border border-gray-800/80 rounded-3xl backdrop-blur-md shadow-2xl">
-                    <p className="text-yellow-400 text-[10px] font-bold uppercase tracking-wider mb-3">Campeón del Mundo</p>
+                  <div className="flex flex-col items-center p-6 bg-gradient-to-b from-yellow-500/5 to-transparent border border-yellow-500/20 rounded-3xl backdrop-blur-md shadow-2xl relative overflow-hidden group hover:border-yellow-400/40 transition-all duration-300">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-450/5 rounded-full blur-xl" />
+                    
+                    <p className="text-yellow-400 text-[9px] font-black uppercase tracking-widest mb-3.5 select-none font-sans">Campeón del Mundo</p>
                     <Slot
                       team={champion}
-                      placeholder="CAMPEÓN"
+                      placeholder="CAMPEÓN 🏆"
                       size="lg"
                       correct={isCorrect('champion', 0, champion)}
                       wrong={isWrong('champion', 0, champion)}
                     />
                     {champion ? (
-                      <div className="flex flex-col items-center mt-4 animate-bounce">
-                        <p className="text-4xl no-invert">🏆</p>
+                      <div className="flex flex-col items-center mt-4 animate-bounce duration-1000">
+                        <p className="text-4xl no-invert filter drop-shadow-md">🏆</p>
                       </div>
                     ) : (
-                      <div className="h-10 w-10 flex items-center justify-center mt-4 text-gray-700 no-invert">
+                      <div className="h-10 w-10 flex items-center justify-center mt-4 text-gray-800 no-invert select-none opacity-40">
                         🏆
                       </div>
                     )}
@@ -865,7 +906,7 @@ export default function BracketPage() {
                         onTopClick={() => advanceTeam('round32', idx, match.home)}
                         onBottomClick={() => advanceTeam('round32', idx, match.away)}
                         linePos={index % 2 === 0 ? 'bottom' : 'top'}
-                        connectLeft={true} connectRight={false}
+                        connectRight={false} connectLeft={true}
                         round="round32"
                         label={match.label || `M${73 + idx}`}
                         side="right"
@@ -875,9 +916,11 @@ export default function BracketPage() {
                 </div>
 
               </div>
+
             </div>
           </div>
         )}
+
       </div>
     </div>
   )
