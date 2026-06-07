@@ -16,6 +16,7 @@ type Prediction = {
   home_score: number | null
   away_score: number | null
   points: number | null
+  stadium_name?: string
 }
 
 export default function MyPredictionsPage() {
@@ -99,6 +100,11 @@ export default function MyPredictionsPage() {
                           weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
                         })}
                       </p>
+                      {p.stadium_name && (
+                        <p className="text-gray-500 text-[10px] text-center mt-1 flex items-center justify-center gap-1 font-medium">
+                          <span>🏟️</span> {p.stadium_name}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -130,6 +136,11 @@ export default function MyPredictionsPage() {
                           {p.points} pts — {getPointsBadge(p.points ?? 0)}
                         </span>
                       </div>
+                      {p.stadium_name && (
+                        <p className="text-gray-500 text-[10px] text-center mt-2.5 flex items-center justify-center gap-1 font-medium">
+                          <span>🏟️</span> {p.stadium_name}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>

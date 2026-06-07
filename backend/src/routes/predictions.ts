@@ -47,7 +47,7 @@ predictionsRouter.get('/my', authMiddleware, async (c) => {
 
   const result = await db.query(
     `SELECT p.*, m.home_team, m.away_team, m.match_date, m.stage,
-            m.home_score, m.away_score
+            m.home_score, m.away_score, m.stadium_name
      FROM predictions p
      JOIN matches m ON p.match_id = m.id
      WHERE p.user_id = $1
@@ -193,7 +193,7 @@ predictionsRouter.get('/user/:username', authMiddleware, async (c) => {
 
   const result = await db.query(
     `SELECT p.*, m.home_team, m.away_team, m.match_date, m.stage,
-            m.home_score, m.away_score
+            m.home_score, m.away_score, m.stadium_name
      FROM predictions p
      JOIN matches m ON p.match_id = m.id
      WHERE p.user_id = $1

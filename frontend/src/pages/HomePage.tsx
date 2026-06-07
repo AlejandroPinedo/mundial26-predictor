@@ -103,7 +103,7 @@ export default function HomePage() {
             { icon: '🌍', value: '48', label: 'Equipos', to: '/teams' },
             { icon: '🔠', value: '12', label: 'Grupos', to: '/matches' },
             { icon: '⚽', value: '104', label: 'Partidos', to: '/matches' },
-            { icon: '🏟️', value: '16', label: 'Sedes', to: '/rules' },
+            { icon: '🏟️', value: '16', label: 'Sedes', to: '/stadiums' },
           ].map(stat => (
             <Link key={stat.label} to={stat.to}
               className="bg-gray-900 border border-gray-800 rounded-2xl p-4 hover:border-gray-700 transition">

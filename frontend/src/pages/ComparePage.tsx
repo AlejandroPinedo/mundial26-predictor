@@ -18,6 +18,7 @@ type Prediction = {
   home_score: number | null
   away_score: number | null
   points: number | null
+  stadium_name?: string
 }
 
 type ComparedMatch = {
@@ -28,6 +29,7 @@ type ComparedMatch = {
   stage: string
   homeScore: number | null
   awayScore: number | null
+  stadiumName?: string
   myPred: { home: number; away: number; points: number | null } | null
   otherPred: { home: number; away: number; points: number | null } | null
 }
@@ -74,6 +76,7 @@ export default function ComparePage() {
             stage: m.stage,
             homeScore: m.home_score,
             awayScore: m.away_score,
+            stadiumName: m.stadium_name,
             myPred: my ? { home: my.predicted_home, away: my.predicted_away, points: my.points } : null,
             otherPred: other ? { home: other.predicted_home, away: other.predicted_away, points: other.points } : null,
           }
@@ -243,8 +246,15 @@ export default function ComparePage() {
                       }`}
                     >
                       {/* Top metadata */}
-                      <div className="flex justify-between items-center text-[10px] text-gray-500 font-bold uppercase tracking-wider">
-                        <span>{m.stage}</span>
+                      <div className="flex justify-between items-start text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                        <div className="flex flex-col gap-0.5">
+                          <span>{m.stage}</span>
+                          {m.stadiumName && (
+                            <span className="text-gray-600 flex items-center gap-1 font-medium select-none normal-case">
+                              🏟️ {m.stadiumName}
+                            </span>
+                          )}
+                        </div>
                         <span>
                           {new Date(m.matchDate).toLocaleDateString('es', {
                             day: 'numeric',

@@ -14,6 +14,7 @@ type Match = {
   group_name: string
   home_score: number | null
   away_score: number | null
+  stadium_name?: string
 }
 
 type Prediction = {
@@ -322,14 +323,21 @@ export default function MatchesPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-center gap-2 mb-3">
-                        <p className="text-gray-600 text-xs font-medium">
-                          {new Date(match.match_date).toLocaleDateString('es', {
-                            weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                          })}
-                        </p>
-                        {deadline && !played && !started && (
-                          <span className={`text-xs font-bold ${deadline.color}`}><span className="no-invert">⏰</span> {deadline.label}</span>
+                      <div className="flex flex-col items-center justify-center gap-1 mb-3">
+                        <div className="flex items-center justify-center gap-2">
+                          <p className="text-gray-600 text-xs font-medium">
+                            {new Date(match.match_date).toLocaleDateString('es', {
+                              weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                            })}
+                          </p>
+                          {deadline && !played && !started && (
+                            <span className={`text-xs font-bold ${deadline.color}`}><span className="no-invert">⏰</span> {deadline.label}</span>
+                          )}
+                        </div>
+                        {match.stadium_name && (
+                          <p className="text-[10px] text-gray-500 font-medium flex items-center gap-1">
+                            <span>🏟️</span> {match.stadium_name}
+                          </p>
                         )}
                       </div>
 
