@@ -20,6 +20,7 @@ export default function Sidebar({ unpredicted = 0 }: Props) {
     { to: '/my', icon: '🎯', label: 'Mis predicciones' },
     { to: '/groups', icon: '👥', label: 'Grupos privados' },
     { to: '/teams', icon: '🌍', label: 'Equipos' },
+    { to: '/stadiums', icon: '🏟️', label: 'Estadios' },
     { to: '/rules', icon: '📋', label: 'Reglas' },
   ]
 
