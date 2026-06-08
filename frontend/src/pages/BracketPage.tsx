@@ -145,9 +145,9 @@ function Match({
   side?: 'left' | 'right'
 }) {
   let ext = 0
-  if (round === 'round32') ext = 45.5
-  else if (round === 'round16') ext = 91
-  else if (round === 'quarter') ext = 182
+  if (round === 'round32') ext = 32.5
+  else if (round === 'round16') ext = 85.5
+  else if (round === 'quarter') ext = 191.5
 
   const isAnyHighlighted = isTopHighlighted || isBottomHighlighted
   const isAnyCorrect = isTopCorrect || isBottomCorrect
@@ -164,15 +164,15 @@ function Match({
   const renderStub = (borderSide: 'left' | 'right') => {
     const borderClass = borderSide === 'left' ? 'left-0 border-l' : 'right-0 border-r'
     return (
-      <div className="relative w-4 h-[75px] flex-shrink-0">
+      <div className="relative w-4 h-[90px] flex-shrink-0">
         {/* Center line */}
-        <div className={`absolute top-[37.5px] left-0 w-full border-b ${lineColor}`} />
+        <div className={`absolute top-[45px] left-0 w-full border-b ${lineColor}`} />
         {/* Top slot line */}
-        <div className={`absolute top-[19px] left-0 w-full border-b ${lineColor}`} />
+        <div className={`absolute top-[24.5px] left-0 w-full border-b ${lineColor}`} />
         {/* Bottom slot line */}
-        <div className={`absolute bottom-[19px] left-0 w-full border-b ${lineColor}`} />
+        <div className={`absolute bottom-[24.5px] left-0 w-full border-b ${lineColor}`} />
         {/* Vertical connector */}
-        <div className={`absolute top-[19px] bottom-[19px] ${lineColor} ${borderClass}`} />
+        <div className={`absolute top-[24.5px] bottom-[24.5px] ${lineColor} ${borderClass}`} />
       </div>
     )
   }
@@ -181,29 +181,24 @@ function Match({
     const borderClass = borderSide === 'left' ? 'left-0 border-l' : 'right-0 border-r'
     if (linePos === 'center') {
       return (
-        <div className="relative w-4 h-[75px] flex-shrink-0">
-          <div className={`absolute top-[37.5px] left-0 w-full border-b ${lineColor}`} />
+        <div className="relative w-4 h-[90px] flex-shrink-0">
+          <div className={`absolute top-[45px] left-0 w-full border-b ${lineColor}`} />
         </div>
       )
     }
 
     const isTop = linePos === 'top'
-    const topVal = isTop ? 37.5 - ext : 37.5
+    const topVal = isTop ? 45 - ext : 45
     const heightVal = ext
 
     return (
-      <div className="relative w-4 h-[75px] flex-shrink-0">
+      <div className="relative w-4 h-[90px] flex-shrink-0">
         {/* Horizontal line from card center */}
-        <div className={`absolute top-[37.5px] left-0 w-full border-b ${lineColor}`} />
+        <div className={`absolute top-[45px] left-0 w-full border-b ${lineColor}`} />
         {/* Vertical step line */}
         <div
           className={`absolute ${lineColor} ${borderClass}`}
           style={{ top: `${topVal}px`, height: `${heightVal}px` }}
-        />
-        {/* Horizontal line to next round */}
-        <div
-          className={`absolute left-0 w-full border-b ${lineColor}`}
-          style={{ top: `${isTop ? 37.5 - ext : 37.5 + ext}px` }}
         />
       </div>
     )
@@ -223,15 +218,13 @@ function Match({
         <>
           {connectLeft && renderStub('left')}
           
-          <div className={`relative w-36 bg-gray-900/40 backdrop-blur-sm border rounded-2xl p-1.5 shadow-lg hover:border-yellow-400/30 hover:bg-gray-900/60 transition-all duration-350 flex flex-col gap-1 ${matchBoxBorder}`}>
+          <div className={`relative w-36 h-[90px] bg-gray-900/40 backdrop-blur-sm border rounded-2xl p-1 shadow-lg hover:border-yellow-400/30 hover:bg-gray-900/60 transition-all duration-350 flex flex-col justify-center gap-1 ${matchBoxBorder}`}>
             <div className="absolute -top-2.5 left-2.5 px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-[8px] text-gray-500 font-bold rounded uppercase tracking-wider leading-none select-none">
               {label}
             </div>
-            <div className="pt-1.5 flex flex-col gap-1">
-              <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
-              <div className="h-px bg-gray-850/50 mx-1.5" />
-              <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
-            </div>
+            <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
+            <div className="h-px bg-gray-850/50 mx-1.5" />
+            <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
           </div>
           
           {connectRight && renderStep('right')}
@@ -240,15 +233,13 @@ function Match({
         <>
           {connectLeft && renderStep('left')}
           
-          <div className={`relative w-36 bg-gray-900/40 backdrop-blur-sm border rounded-2xl p-1.5 shadow-lg hover:border-yellow-400/30 hover:bg-gray-900/60 transition-all duration-350 flex flex-col gap-1 ${matchBoxBorder}`}>
+          <div className={`relative w-36 h-[90px] bg-gray-900/40 backdrop-blur-sm border rounded-2xl p-1 shadow-lg hover:border-yellow-400/30 hover:bg-gray-900/60 transition-all duration-350 flex flex-col justify-center gap-1 ${matchBoxBorder}`}>
             <div className="absolute -top-2.5 left-2.5 px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-[8px] text-gray-500 font-bold rounded uppercase tracking-wider leading-none select-none">
               {label}
             </div>
-            <div className="pt-1.5 flex flex-col gap-1">
-              <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
-              <div className="h-px bg-gray-850/50 mx-1.5" />
-              <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
-            </div>
+            <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
+            <div className="h-px bg-gray-850/50 mx-1.5" />
+            <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
           </div>
           
           {connectRight && renderStub('right')}
@@ -625,7 +616,7 @@ export default function BracketPage() {
                 <div className="w-[176px]"><p>Cuartos (L)</p></div>
                 <div className="w-[176px]"><p>Semifinal (L)</p></div>
                 <div className="w-[160px]"><p>Finalista (L)</p></div>
-                <div className="w-[192px]"><p className="text-yellow-400">Campeón</p></div>
+                <div className="w-[176px]"><p className="text-yellow-400">Campeón</p></div>
                 <div className="w-[160px]"><p>Finalista (R)</p></div>
                 <div className="w-[176px]"><p>Semifinal (R)</p></div>
                 <div className="w-[176px]"><p>Cuartos (R)</p></div>
@@ -662,7 +653,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 2. R16 LEFT */}
-                <div className="flex flex-col gap-[107px] py-[45.5px] w-[176px] items-start">
+                <div className="flex flex-col gap-[122px] py-[53px] w-[176px] items-start">
                   {r16L_Indices.map((idx, index) => {
                     const top = predictions.round16[2 * idx]
                     const bottom = predictions.round16[2 * idx + 1]
@@ -695,7 +686,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 3. QF LEFT */}
-                <div className="flex flex-col gap-[289px] py-[136.5px] w-[176px] items-start">
+                <div className="flex flex-col gap-[334px] py-[159px] w-[176px] items-start">
                   {qfL_Indices.map((idx, index) => {
                     const top = predictions.quarter[2 * idx]
                     const bottom = predictions.quarter[2 * idx + 1]
@@ -728,7 +719,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 4. SEMIFINAL LEFT */}
-                <div className="flex flex-col py-[318.5px] w-[176px] items-start">
+                <div className="flex flex-col py-[371px] w-[176px] items-start">
                   <Match
                     top={sfL_top}
                     bottom={sfL_bottom}
@@ -751,7 +742,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 5. FINALIST LEFT */}
-                <div className="flex flex-col py-[340px] w-[160px]">
+                <div className="flex flex-col py-[396px] w-[160px]">
                   <WinnerSlot
                     team={finalistL}
                     placeholder={getPlaceholder('finalist', 0)}
@@ -764,32 +755,41 @@ export default function BracketPage() {
                 </div>
 
                 {/* 6. CHAMPION CENTER */}
-                <div className="flex flex-col items-center justify-center px-6 py-[271px] w-[192px] flex-shrink-0">
-                  <div className="flex flex-col items-center p-6 bg-gradient-to-b from-yellow-500/5 to-transparent border border-yellow-500/20 rounded-3xl backdrop-blur-md shadow-2xl relative overflow-hidden group hover:border-yellow-400/40 transition-all duration-300">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-450/5 rounded-full blur-xl" />
+                <div className="flex flex-col items-center justify-center w-[176px] h-[832px] flex-shrink-0">
+                  <div className="flex items-center w-full">
+                    {/* Left connector */}
+                    <div className={`w-4 border-b ${predictions.champion[0] ? 'border-yellow-400/40' : 'border-gray-900/60'}`} />
                     
-                    <p className="text-yellow-400 text-[9px] font-black uppercase tracking-widest mb-3.5 select-none font-sans">Campeón del Mundo</p>
-                    <Slot
-                      team={champion}
-                      placeholder="CAMPEÓN 🏆"
-                      size="lg"
-                      correct={isCorrect('champion', 0, champion)}
-                      wrong={isWrong('champion', 0, champion)}
-                    />
-                    {champion ? (
-                      <div className="flex flex-col items-center mt-4 animate-bounce duration-1000">
-                        <p className="text-4xl no-invert filter drop-shadow-md">🏆</p>
-                      </div>
-                    ) : (
-                      <div className="h-10 w-10 flex items-center justify-center mt-4 text-gray-800 no-invert select-none opacity-40">
-                        🏆
-                      </div>
-                    )}
+                    {/* Champion Card */}
+                    <div className="flex-1 flex flex-col items-center p-4 bg-gradient-to-b from-yellow-500/5 to-transparent border border-yellow-500/20 rounded-3xl backdrop-blur-md shadow-2xl relative overflow-hidden group hover:border-yellow-400/40 transition-all duration-300">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-450/5 rounded-full blur-xl" />
+                      
+                      <p className="text-yellow-400 text-[9px] font-black uppercase tracking-widest mb-3.5 select-none font-sans">Campeón del Mundo</p>
+                      <Slot
+                        team={champion}
+                        placeholder="CAMPEÓN 🏆"
+                        size="lg"
+                        correct={isCorrect('champion', 0, champion)}
+                        wrong={isWrong('champion', 0, champion)}
+                      />
+                      {champion ? (
+                        <div className="flex flex-col items-center mt-4 animate-bounce duration-1000">
+                          <p className="text-4xl no-invert filter drop-shadow-md">🏆</p>
+                        </div>
+                      ) : (
+                        <div className="h-10 w-10 flex items-center justify-center mt-4 text-gray-800 no-invert select-none opacity-40">
+                          🏆
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Right connector */}
+                    <div className={`w-4 border-b ${predictions.champion[0] ? 'border-yellow-400/40' : 'border-gray-900/60'}`} />
                   </div>
                 </div>
 
                 {/* 7. FINALIST RIGHT */}
-                <div className="flex flex-col py-[340px] w-[160px] items-end">
+                <div className="flex flex-col py-[396px] w-[160px] items-end">
                   <WinnerSlot
                     team={finalistR}
                     placeholder={getPlaceholder('finalist', 1)}
@@ -802,7 +802,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 8. SEMIFINAL RIGHT */}
-                <div className="flex flex-col py-[318.5px] w-[176px] items-end">
+                <div className="flex flex-col py-[371px] w-[176px] items-end">
                   <Match
                     top={sfR_top}
                     bottom={sfR_bottom}
@@ -825,7 +825,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 9. QF RIGHT */}
-                <div className="flex flex-col gap-[289px] py-[136.5px] w-[176px] items-end">
+                <div className="flex flex-col gap-[334px] py-[159px] w-[176px] items-end">
                   {qfR_Indices.map((idx, index) => {
                     const top = predictions.quarter[2 * idx]
                     const bottom = predictions.quarter[2 * idx + 1]
@@ -858,7 +858,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 10. R16 RIGHT */}
-                <div className="flex flex-col gap-[107px] py-[45.5px] w-[176px] items-end">
+                <div className="flex flex-col gap-[122px] py-[53px] w-[176px] items-end">
                   {r16R_Indices.map((idx, index) => {
                     const top = predictions.round16[2 * idx]
                     const bottom = predictions.round16[2 * idx + 1]
