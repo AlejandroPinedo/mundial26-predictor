@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
+import PredictionProgress from '../components/PredictionProgress'
 import { getFlag } from '../utils/flags'
 import { useRealtimeMatches } from '../hooks/useRealtimeMatches'
 import { calculateGroupStandings, getBestThirdPlacedTeams, type TeamStats, type ThirdPlaceStats } from '../utils/standings'
@@ -185,6 +186,8 @@ export default function MatchesPage() {
 
   const now = new Date()
   const groups = [...new Set(matches.map(m => m.group_name))].sort()
+  const totalPending = matches.filter(m => m.home_score === null && now < new Date(m.match_date)).length
+  const predicted = matches.filter(m => m.home_score === null && now < new Date(m.match_date) && predictions[m.id]).length
   const groupMatches = matches
     .filter(m => m.group_name === activeGroup)
     .sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime())
@@ -219,6 +222,8 @@ export default function MatchesPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
+
+        <PredictionProgress predicted={predicted} total={totalPending} />
 
         {nextMatch && (
           <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400/20 to-yellow-600/10 border border-yellow-400/30 rounded-2xl p-5 mb-6">
@@ -379,7 +384,10 @@ export default function MatchesPage() {
                         </div>
                       )}
                       {started && !played && (
-                        <p className="text-orange-400/70 text-xs text-center mt-1 font-medium">En curso</p>
+                        <div className="flex items-center justify-center gap-1.5 mt-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                          <p className="text-green-400 text-xs font-bold">En vivo</p>
+                        </div>
                       )}
                     </div>
                   )

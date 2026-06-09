@@ -138,8 +138,8 @@ export default function AdminPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {played.map(m => (
-                <div key={m.id} className="bg-gray-900/40 border border-gray-850 rounded-2xl p-4 flex justify-between items-center backdrop-blur-sm">
-                  <div className="flex flex-col min-w-0">
+                <div key={m.id} className="bg-gray-900/40 border border-gray-800 rounded-2xl p-4 flex justify-between items-center">
+                  <div className="flex flex-col min-w-0 flex-1">
                     <span className="font-bold text-white text-sm truncate uppercase font-barlow tracking-wider">
                       {m.home_team} vs {m.away_team}
                     </span>
@@ -147,10 +147,20 @@ export default function AdminPage() {
                       {new Date(m.match_date).toLocaleDateString('es')}
                     </span>
                   </div>
-                  
-                  <span className="bg-gray-950 border border-gray-800 px-3 py-1.5 rounded-xl font-bold text-yellow-400 font-sans text-xs">
-                    {m.home_score} - {m.away_score}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-gray-950 border border-gray-800 px-3 py-1.5 rounded-xl font-bold text-yellow-400 text-xs">
+                      {m.home_score} - {m.away_score}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setSelected(m.id)
+                        setScore({ home: String(m.home_score), away: String(m.away_score) })
+                        window.scrollTo({ top: 0, behavior: 'smooth' })
+                      }}
+                      className="text-gray-500 hover:text-yellow-400 text-xs font-bold transition px-2 py-1 rounded-lg hover:bg-gray-800">
+                      Editar
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -14,6 +14,7 @@ export default function LeaderboardPage() {
   const { user } = useAuth()
   const [leaderboard, setLeaderboard] = useState<Entry[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     const load = () => apiFetch('/predictions/leaderboard').then(d => setLeaderboard(d.leaderboard))
@@ -23,6 +24,9 @@ export default function LeaderboardPage() {
   }, [])
 
   const myRank = leaderboard.findIndex(e => e.username === user?.username) + 1
+  const filtered = search
+    ? leaderboard.filter(e => e.username.toLowerCase().includes(search.toLowerCase()))
+    : leaderboard
   const myEntry = leaderboard.find(e => e.username === user?.username)
 
   const topThree = leaderboard.slice(0, 3)
@@ -39,7 +43,7 @@ export default function LeaderboardPage() {
       <div className="max-w-5xl mx-auto p-4 md:p-8">
         
         {/* Header */}
-        <div className="flex justify-between items-center mb-8 gap-4 flex-wrap">
+        <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
           <div>
             <h1 className="text-4xl font-barlow font-black uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">
               Ranking Global 📊
@@ -139,6 +143,16 @@ export default function LeaderboardPage() {
               </div>
             )}
 
+            {/* Search */}
+            <div className="mb-4">
+              <input
+                placeholder="🔍 Buscar jugador..."
+                className="w-full bg-gray-900 border border-gray-800 text-white px-4 py-2.5 rounded-2xl text-sm outline-none focus:border-yellow-400/50 transition"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+
             {/* Leaderboard Table / List */}
             <div className="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-2xl font-sans">
               <div className="px-6 py-4 border-b border-gray-800/80 bg-gray-900/40 flex justify-between items-center text-[10px] text-gray-500 font-black uppercase tracking-wider">
@@ -153,7 +167,7 @@ export default function LeaderboardPage() {
               </div>
 
               <div className="flex flex-col">
-                {leaderboard.map((entry, idx) => {
+                {filtered.map((entry, idx) => {
                   const isMe = entry.username === user?.username
                   const isTop3 = idx < 3
                   
