@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
+import PageHeader from '../components/PageHeader'
 
 type Match = {
   id: string
@@ -53,23 +54,15 @@ export default function AdminPage() {
   const played = matches.filter(m => m.home_score !== null)
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#020817] text-white">
       <div className="max-w-4xl mx-auto p-4 md:p-8 font-sans">
         
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-barlow font-black uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-yellow-550">
-            Panel de Administración 🔧
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Herramientas oficiales para registrar resultados y actualizar las clasificaciones en tiempo real.
-          </p>
-        </div>
+        <PageHeader title="PANEL ADMIN" subtitle="Registrar resultados oficiales" icon="🔧" badge="Admin Only" />
 
         {/* Load Results Form Card */}
         <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 mb-8 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 left-0 w-2.5 h-full bg-yellow-400" />
-          <h2 className="font-barlow font-black uppercase tracking-wider text-yellow-400 text-lg mb-4">
+          <h2 className="font-displayr text-yellow-400 text-lg mb-4">
             Cargar Resultado Oficial
           </h2>
           
@@ -129,7 +122,7 @@ export default function AdminPage() {
 
         {/* Previous Results List */}
         <div>
-          <h2 className="font-barlow font-black uppercase tracking-wider text-gray-400 mb-4 text-base">
+          <h2 className="font-displayr text-gray-400 mb-4 text-base">
             Resultados Registrados ({played.length})
           </h2>
           

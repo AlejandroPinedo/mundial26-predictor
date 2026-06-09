@@ -32,68 +32,83 @@ export default function Sidebar({ unpredicted = 0 }: Props) {
   ]
 
   return (
-    <aside className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-56 bg-gray-950/75 backdrop-blur-md border-r border-gray-900 z-50 font-sans">
-      
-      {/* Brand logo */}
-      <div className="p-5 border-b border-gray-900 select-none">
+    <aside className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-56 z-50 font-sans"
+      style={{ background: 'linear-gradient(180deg, #07090f 0%, #030712 100%)', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+
+      {/* Brand */}
+      <div className="p-5 pb-4">
         <div className="flex items-center gap-2.5">
-          <span className="text-2xl no-invert leading-none">⚽</span>
+          <div className="w-8 h-8 rounded-lg bg-yellow-400/10 border border-yellow-400/20 flex items-center justify-center">
+            <span className="text-base no-invert">⚽</span>
+          </div>
           <div>
-            <p className="font-barlow font-black text-white text-base uppercase tracking-wider leading-none">Mundial26</p>
-            <p className="text-yellow-400 text-[10px] font-bold uppercase tracking-widest mt-0.5">Predictor</p>
+            <p className="font-display text-base text-white tracking-widest leading-none">MUNDIAL26</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 live-dot" />
+              <p className="text-green-400 text-[9px] font-bold uppercase tracking-widest">En curso</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Navigation links */}
-      <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto scrollbar-thin">
+      {/* Pitch divider */}
+      <div className="pitch-divider mx-5 mb-3" />
+
+      {/* Navigation */}
+      <nav className="flex-1 px-3 flex flex-col gap-0.5 overflow-y-auto">
         {main.map(item => (
           <NavLink key={item.to} to={item.to}
             className={({ isActive }) =>
-              `flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-bold transition-all duration-150 ${
+              `flex items-center gap-3 py-2 px-3 rounded-xl text-sm transition-all duration-150 group ${
                 isActive
-                  ? 'bg-yellow-400/5 text-yellow-400 border-l-2 border-l-yellow-400 rounded-l-none'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-900/50'
+                  ? 'bg-yellow-400/10 text-yellow-400'
+                  : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'
               }`
             }>
-            <span className="text-base w-5 text-center relative no-invert flex items-center justify-center">
-              {item.icon}
-              {item.badge && item.badge > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center bg-red-500 text-white font-black rounded-full"
-                  style={{ fontSize: 8, minWidth: 14, height: 14, padding: '0 2px' }}>
-                  {item.badge > 9 ? '9+' : item.badge}
+            {({ isActive }) => (
+              <>
+                <span className={`text-base w-5 text-center relative no-invert flex items-center justify-center transition-transform ${isActive ? '' : 'group-hover:scale-110'}`}>
+                  {item.icon}
+                  {item.badge && item.badge > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center bg-red-500 text-white font-black rounded-full"
+                      style={{ fontSize: 8, minWidth: 14, height: 14, padding: '0 2px' }}>
+                      {item.badge > 9 ? '9+' : item.badge}
+                    </span>
+                  )}
                 </span>
-              )}
-            </span>
-            <span>{item.label}</span>
+                <span className="font-medium text-[13px]">{item.label}</span>
+                {isActive && <div className="ml-auto w-1 h-4 rounded-full bg-yellow-400 opacity-60" />}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      {/* Bottom links */}
-      <div className="p-3 border-t border-gray-900 flex flex-col gap-1">
+      {/* Pitch divider */}
+      <div className="pitch-divider mx-5 mt-2 mb-3" />
+
+      {/* Bottom */}
+      <div className="px-3 pb-4 flex flex-col gap-0.5">
         <button onClick={toggle}
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-400 hover:text-white hover:bg-gray-900/50 transition font-bold w-full cursor-pointer">
-          <span className="w-5 text-center no-invert flex items-center justify-center">{theme === 'dark' ? '☀️' : '🌙'}</span>
-          <span>{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>
+          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-500 hover:text-gray-200 hover:bg-white/[0.04] transition-all w-full cursor-pointer">
+          <span className="w-5 text-center no-invert text-base">{theme === 'dark' ? '☀️' : '🌙'}</span>
+          <span className="font-medium text-[13px]">{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>
         </button>
         {bottom.map(item => (
           <NavLink key={item.to} to={item.to}
             className={({ isActive }) =>
-              `flex items-center gap-3 py-2 px-3 rounded-xl text-sm font-bold transition-all duration-150 ${
-                isActive 
-                  ? 'bg-yellow-400/5 text-yellow-400 border-l-2 border-l-yellow-400 rounded-l-none' 
-                  : 'text-gray-400 hover:text-white hover:bg-gray-900/50'
+              `flex items-center gap-3 py-2 px-3 rounded-xl text-sm transition-all ${
+                isActive ? 'bg-yellow-400/10 text-yellow-400' : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'
               }`
             }>
-            <span className="text-base w-5 text-center no-invert flex items-center justify-center">{item.icon}</span>
-            <span className="truncate">{item.label}</span>
+            <span className="text-base w-5 text-center no-invert">{item.icon}</span>
+            <span className="font-medium text-[13px] truncate">{item.label}</span>
           </NavLink>
         ))}
         <button onClick={() => { logout(); navigate('/') }}
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/5 transition w-full cursor-pointer">
-          <span className="w-5 text-center no-invert flex items-center justify-center">🚪</span>
-          <span>Salir</span>
+          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-red-500/70 hover:text-red-400 hover:bg-red-500/5 transition-all w-full cursor-pointer">
+          <span className="w-5 text-center no-invert text-base">🚪</span>
+          <span className="text-[13px]">Salir</span>
         </button>
       </div>
     </aside>

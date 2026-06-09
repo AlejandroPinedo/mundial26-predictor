@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
+import PageHeader from '../components/PageHeader'
 
 type Group = {
   id: string
@@ -69,25 +70,17 @@ export default function GroupsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#020817] text-white">
       <div className="max-w-5xl mx-auto p-4 md:p-8 font-sans">
         
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-barlow font-black uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">
-            Mis Grupos Privados 👥
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Crea mini-ligas privadas y compite de forma directa con tus amigos.
-          </p>
-        </div>
+        <PageHeader title="MIS GRUPOS" subtitle="Ligas privadas · Compite con tus amigos" icon="👥" />
 
         {/* Create/Join Bento Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           
           {/* Create Group Card */}
-          <form onSubmit={handleCreate} className="bg-gray-900/50 border border-gray-800 rounded-3xl p-6 backdrop-blur-md relative overflow-hidden group premium-glow">
-            <h2 className="font-barlow font-black uppercase tracking-wider text-lg text-yellow-400 mb-1">
+          <form onSubmit={handleCreate} className="ticket-card rounded-3xl p-6 backdrop-blur-md relative overflow-hidden group premium-glow">
+            <h2 className="font-display text-2xl text-yellow-400 uppercase tracking-wide mb-1">
               Crear Nuevo Grupo
             </h2>
             <p className="text-xs text-gray-500 mb-4">Serás el administrador y podrás invitar a otros.</p>
@@ -109,8 +102,8 @@ export default function GroupsPage() {
           </form>
 
           {/* Join Group Card */}
-          <form onSubmit={handleJoin} className="bg-gray-900/50 border border-gray-800 rounded-3xl p-6 backdrop-blur-md relative overflow-hidden group premium-glow">
-            <h2 className="font-barlow font-black uppercase tracking-wider text-lg text-yellow-400 mb-1">
+          <form onSubmit={handleJoin} className="ticket-card rounded-3xl p-6 backdrop-blur-md relative overflow-hidden group premium-glow">
+            <h2 className="font-display text-2xl text-yellow-400 uppercase tracking-wide mb-1">
               Unirse a un Grupo
             </h2>
             <p className="text-xs text-gray-500 mb-4">Introduce el código de 6 letras que te compartieron.</p>
@@ -136,7 +129,7 @@ export default function GroupsPage() {
 
         {/* Groups List Section */}
         <div>
-          <h2 className="font-barlow font-black uppercase tracking-wider text-lg text-gray-400 mb-4">
+          <h2 className="font-displayr text-lg text-gray-400 mb-4">
             Mis Grupos Activos
           </h2>
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
+import PageHeader from '../components/PageHeader'
 
 type Match = {
   home_team: string
@@ -50,27 +51,22 @@ export default function TeamsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#020817] text-white flex items-center justify-center">
         <Spinner />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#020817] text-white">
       <div className="max-w-7xl mx-auto p-4 md:p-8 font-sans">
         
+        <PageHeader title="EQUIPOS" subtitle="48 selecciones · Copa Mundial FIFA 2026" icon="🌍" />
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-barlow font-black uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">
-              Equipos 🌍
-            </h1>
-            <p className="text-gray-400 text-sm mt-1">
-              Las {allTeams.length} selecciones clasificadas para la Copa Mundial de la FIFA 2026.
-            </p>
-          </div>
-          
+          <div />
+
           {/* View Switcher Tabs */}
           <div className="flex bg-gray-900 border border-gray-800 p-1 rounded-2xl self-start sm:self-auto select-none">
             <button
@@ -142,9 +138,9 @@ export default function TeamsPage() {
 
 function TeamCard({ team }: { team: string }) {
   return (
-    <div className="bg-gray-900/40 border border-gray-850 hover:border-yellow-400/30 rounded-3xl p-5 flex flex-col items-center gap-3 hover:-translate-y-1 transition-all duration-300 shadow-lg relative group overflow-hidden">
+    <div className="ticket-card rounded-2xl p-5 flex flex-col items-center gap-3 hover:-translate-y-1 transition-all duration-300 shadow-lg relative group overflow-hidden">
       <span className="text-5xl leading-none no-invert select-none group-hover:scale-105 transition-transform duration-300">{getFlag(team)}</span>
-      <span className="text-xs font-black text-center text-gray-200 uppercase tracking-wider font-barlow truncate w-full">{team}</span>
+      <span className="font-display text-sm text-center text-white uppercase tracking-wider truncate w-full">{team}</span>
     </div>
   )
 }

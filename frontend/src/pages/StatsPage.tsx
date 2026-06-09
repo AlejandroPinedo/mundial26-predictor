@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
+import PageHeader from '../components/PageHeader'
 
 type ChampCount = {
   team: string
@@ -48,18 +49,10 @@ export default function StatsPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#020817] text-white">
       <div className="max-w-7xl mx-auto p-4 md:p-8 font-sans">
         
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-barlow font-black uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">
-            Estadísticas Globales 📊
-          </h1>
-          <p className="text-gray-400 text-sm mt-1">
-            Análisis de tendencias y marcadores predichos por toda la comunidad del Mundial 2026.
-          </p>
-        </div>
+        <PageHeader title="ESTADÍSTICAS" subtitle="Insights de la comunidad Mundial26" icon="📈" live badge="Live" />
 
         {loading ? (
           <div className="flex justify-center py-20">
@@ -117,7 +110,7 @@ export default function StatsPage() {
                 {/* 1. Champion Candidates */}
                 <div className="bg-gray-900/40 border border-gray-850 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
                   <div>
-                    <h2 className="text-xl font-barlow font-black uppercase tracking-wider text-yellow-400 mb-6 flex items-center gap-2">
+                    <h2 className="text-xl font-displayr text-yellow-400 mb-6 flex items-center gap-2">
                       🏆 Favoritos al Título
                     </h2>
                     
@@ -162,7 +155,7 @@ export default function StatsPage() {
                 {/* 2. Most popular scores */}
                 <div className="bg-gray-900/40 border border-gray-855 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
                   <div>
-                    <h2 className="text-xl font-barlow font-black uppercase tracking-wider text-yellow-400 mb-6 flex items-center gap-2">
+                    <h2 className="text-xl font-displayr text-yellow-400 mb-6 flex items-center gap-2">
                       ⚽ Marcadores Más Predichos
                     </h2>
 
@@ -203,7 +196,7 @@ export default function StatsPage() {
 
               {/* 3. Hot Matches */}
               <div className="bg-gray-900/40 border border-gray-800 rounded-3xl p-6 shadow-xl">
-                <h2 className="text-xl font-barlow font-black uppercase tracking-wider text-yellow-400 mb-6 flex items-center gap-2">
+                <h2 className="text-xl font-displayr text-yellow-400 mb-6 flex items-center gap-2">
                   🔥 Partidos con Más Predicciones
                 </h2>
 
@@ -222,7 +215,7 @@ export default function StatsPage() {
                           {match.stage}
                         </div>
 
-                        <div className="flex flex-col gap-1.5 my-3 font-barlow font-black text-sm uppercase tracking-wide">
+                        <div className="flex flex-col gap-1.5 my-3 font-display text-base uppercase tracking-wide">
                           <div className="flex items-center gap-1.5">
                             <span className="text-lg no-invert leading-none">{getFlag(match.home_team)}</span>
                             <span className="truncate">{match.home_team}</span>

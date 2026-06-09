@@ -96,7 +96,7 @@ export default function GroupLeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#020817] text-white">
       <div className="max-w-7xl mx-auto p-4 md:p-8 font-sans">
         
         {/* Back navigation */}
@@ -120,8 +120,8 @@ export default function GroupLeaderboardPage() {
                 <div className="absolute top-0 left-0 w-2.5 h-full bg-yellow-400" />
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-white">
-                      {group.name} 🏆
+                    <h1 className="font-display text-5xl text-white uppercase leading-none">
+                      {group.name}
                     </h1>
                     <div className="flex flex-wrap items-center gap-4 mt-2 text-xs text-gray-400">
                       <div className="flex items-center gap-1.5">
@@ -154,7 +154,7 @@ export default function GroupLeaderboardPage() {
                 
                 {/* Leaderboard Column */}
                 <div className="lg:col-span-2 flex flex-col">
-                  <h2 className="text-xl font-barlow font-black uppercase tracking-wider text-yellow-400 mb-4 flex items-center gap-2">
+                  <h2 className="text-xl font-displayr text-yellow-400 mb-4 flex items-center gap-2">
                     🏆 Tabla de Clasificación
                   </h2>
                   
@@ -244,7 +244,7 @@ export default function GroupLeaderboardPage() {
 
                 {/* Private Chat Wall Column */}
                 <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 flex flex-col h-[550px] shadow-2xl relative">
-                  <h2 className="text-xl font-barlow font-black uppercase tracking-wider text-yellow-400 mb-4 flex items-center gap-2">
+                  <h2 className="text-xl font-displayr text-yellow-400 mb-4 flex items-center gap-2">
                     💬 Chat del Grupo
                   </h2>
 
