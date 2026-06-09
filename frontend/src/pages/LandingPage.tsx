@@ -24,7 +24,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col relative overflow-hidden font-sans">
-      
+
       {/* Dynamic Glowing Blur Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[50%] -translate-x-1/2 w-[500px] h-[500px] bg-yellow-400/5 rounded-full blur-[120px]" />
@@ -34,7 +34,7 @@ export default function LandingPage() {
 
       {/* Main Container */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center py-16 max-w-4xl mx-auto">
-        
+
         {/* Flag Host Header */}
         <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 rounded-full px-4 py-1.5 text-yellow-400 text-xs font-black mb-6 uppercase tracking-wider select-none font-sans shadow-inner">
           <span className="no-invert">🏆</span> USA · CANADA · MÉXICO 2026
@@ -82,18 +82,12 @@ export default function LandingPage() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6 w-full sm:w-auto">
-          <Link
-            to="/register"
-            className="bg-yellow-400 text-gray-950 font-black px-10 py-3.5 rounded-2xl text-base hover:bg-yellow-300 transition-all shadow-lg hover:shadow-yellow-400/20 active:scale-98 text-center uppercase tracking-wider font-barlow cursor-pointer"
-            id="landing-register-btn"
-          >
+          <Link to="/register"
+            className="bg-yellow-400 text-gray-950 font-black px-10 py-3.5 rounded-2xl text-base hover:bg-yellow-300 transition-all shadow-lg hover:shadow-yellow-400/20 text-center uppercase tracking-wider font-barlow cursor-pointer">
             Jugar gratis →
           </Link>
-          <Link
-            to="/login"
-            className="border border-gray-800 text-gray-300 font-bold px-10 py-3.5 rounded-2xl text-base hover:border-gray-600 hover:text-white transition-all bg-gray-900/40 backdrop-blur-md active:scale-98 text-center cursor-pointer"
-            id="landing-login-btn"
-          >
+          <Link to="/login"
+            className="border border-gray-800 text-gray-300 font-bold px-10 py-3.5 rounded-2xl text-base hover:border-gray-600 hover:text-white transition-all bg-gray-900/40 backdrop-blur-md text-center cursor-pointer">
             Iniciar sesión
           </Link>
         </div>
@@ -110,12 +104,10 @@ export default function LandingPage() {
           { icon: '🏅', label: 'Suma Puntos', desc: 'Gana 3 puntos por marcador exacto y 1 punto por acertar ganador/empate.' },
           { icon: '👥', label: 'Grupos Privados', desc: 'Crea tu propia liga y chatea en tiempo real con tus amigos.' },
         ].map((item, i) => (
-          <div
-            key={item.label}
+          <div key={item.label}
             className={`px-6 py-8 text-center flex flex-col items-center gap-2 ${
-              i < 2 ? 'border-b md:border-b-0 md:border-r border-gray-900/60' : 'border-b md:border-b-0 border-gray-900/60'
-            }`}
-          >
+              i < 2 ? 'border-b md:border-b-0 md:border-r border-gray-900/60' : ''
+            }`}>
             <div className="text-3xl mb-1 no-invert">{item.icon}</div>
             <h3 className="font-barlow font-black text-white text-base uppercase tracking-wider">{item.label}</h3>
             <p className="text-gray-500 text-xs leading-relaxed max-w-xs">{item.desc}</p>

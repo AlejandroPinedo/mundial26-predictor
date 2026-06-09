@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
+import { useRealtimeMatches } from '../hooks/useRealtimeMatches'
 import { calculateGroupStandings, getBestThirdPlacedTeams, type TeamStats, type ThirdPlaceStats } from '../utils/standings'
 
 type Match = {
@@ -136,6 +137,12 @@ export default function MatchesPage() {
       setInputs(initInputs)
     }).finally(() => setLoading(false))
   }, [])
+
+  const handleRealtimeUpdate = useCallback((updatedMatches: Match[]) => {
+    setMatches(updatedMatches)
+  }, [])
+
+  useRealtimeMatches(handleRealtimeUpdate)
 
   async function handlePredict(matchId: string) {
     const input = inputs[matchId]

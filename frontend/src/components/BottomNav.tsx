@@ -17,6 +17,7 @@ const moreItems = [
   { to: '/stadiums', icon: '🏟️', label: 'Estadios' },
   { to: '/groups', icon: '👥', label: 'Grupos' },
   { to: '/my', icon: '🎯', label: 'Mis predicciones' },
+  { to: '/standings', icon: '🏅', label: 'Clasificaciones' },
   { to: '/stats', icon: '📈', label: 'Estadísticas' },
   { to: '/profile', icon: '👤', label: 'Perfil' },
   { to: '/rules', icon: '📖', label: 'Guía' },

@@ -22,6 +22,8 @@ import CalendarPage from './pages/CalendarPage'
 import StadiumsPage from './pages/StadiumsPage'
 import ComparePage from './pages/ComparePage'
 import StatsPage from './pages/StatsPage'
+import StandingsPage from './pages/StandingsPage'
+import OAuthCallbackPage from './pages/OAuthCallbackPage'
 
 function Protected({ children }: { children: React.ReactNode }) {
   return (
@@ -48,6 +50,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/rules" element={<RulesPage />} />
+            <Route path="/auth/callback" element={<OAuthCallbackPage />} />
             <Route path="/home" element={<Protected><HomePage /></Protected>} />
             <Route path="/matches" element={<Protected><MatchesPage /></Protected>} />
             <Route path="/my" element={<Protected><MyPredictionsPage /></Protected>} />
@@ -62,6 +65,7 @@ export default function App() {
             <Route path="/stadiums" element={<Protected><StadiumsPage /></Protected>} />
             <Route path="/compare/:username" element={<Protected><ComparePage /></Protected>} />
             <Route path="/stats" element={<Protected><StatsPage /></Protected>} />
+            <Route path="/standings" element={<Protected><StandingsPage /></Protected>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </BrowserRouter>
