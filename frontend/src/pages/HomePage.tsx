@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
-import Spinner from '../components/Spinner'
+import Skeleton from '../components/Skeleton'
 import { useAuth } from '../context/AuthContext'
 import { getFlag } from '../utils/flags'
 
@@ -33,9 +34,10 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<Entry[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [lastResultCount, setLastResultCount] = useState<number | null>(null)
 
   useEffect(() => {
-    Promise.all([
+    const load = (silent = false) => Promise.all([
       apiFetch('/predictions/matches'),
       apiFetch('/predictions/leaderboard'),
       apiFetch('/predictions/stats'),
@@ -44,13 +46,23 @@ export default function HomePage() {
       const upcoming = m.matches
         .filter((x: Match) => x.home_score === null && now < new Date(x.match_date))
         .slice(0, 3)
+      const playedCount = m.matches.filter((x: Match) => x.home_score !== null).length
+      if (silent && lastResultCount !== null && playedCount > lastResultCount) {
+        toast('⚽ Nuevo resultado cargado — ¡revisa tus puntos!', { icon: '🎯' })
+      }
+      setLastResultCount(playedCount)
       setNextMatches(upcoming)
       setLeaderboard(l.leaderboard.slice(0, 5))
       setStats(s.stats)
     }).finally(() => setLoading(false))
+
+    load()
+    const interval = setInterval(() => load(true), 30_000)
+    return () => clearInterval(interval)
   }, [])
 
   const myRank = leaderboard.findIndex(e => e.username === user?.username) + 1
+  // Remove unused Spinner import - using Skeleton instead
 
   return (
     <div className="min-h-screen bg-gray-950 text-white font-sans">
@@ -100,6 +112,14 @@ export default function HomePage() {
               <Link to="/bracket" className="border border-gray-800 text-gray-300 font-bold px-6 py-3 rounded-2xl hover:border-gray-650 hover:text-white transition-all bg-gray-900/30 backdrop-blur text-sm cursor-pointer">
                 Mi bracket
               </Link>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText('https://mundial26-predictor.vercel.app')
+                  toast.success('Link copiado — ¡compártelo!')
+                }}
+                className="border border-gray-800 text-gray-400 font-bold px-6 py-3 rounded-2xl hover:border-yellow-400/30 hover:text-yellow-400 transition-all bg-gray-900/30 text-sm cursor-pointer flex items-center gap-2">
+                🔗 Invitar amigos
+              </button>
             </div>
           </div>
         </div>
@@ -156,7 +176,7 @@ export default function HomePage() {
                 <Link to="/leaderboard" className="text-yellow-400 text-xs font-bold hover:underline">Ver todo →</Link>
               </div>
               {loading ? (
-                <div className="flex justify-center py-6"><Spinner /></div>
+                <div className="py-2"><Skeleton rows={5} /></div>
               ) : (
                 <div className="flex flex-col gap-2">
                   {leaderboard.map((e, i) => (

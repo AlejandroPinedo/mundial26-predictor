@@ -7,10 +7,45 @@ import { calculatePoints } from '../utils/scoring.js'
 export const predictionsRouter = new Hono<{ Variables: AppVariables }>()
 
 predictionsRouter.get('/matches', async (c) => {
-  const result = await db.query(
-    'SELECT * FROM matches ORDER BY match_date ASC'
-  )
+  const result = await db.query('SELECT * FROM matches ORDER BY match_date ASC')
   return c.json({ matches: result.rows })
+})
+
+
+predictionsRouter.get('/standings/:group', async (c) => {
+  const group = c.req.param('group').toUpperCase()
+
+  const result = await db.query(
+    `SELECT
+      team,
+      COUNT(*) as played,
+      SUM(CASE WHEN (home_team = team AND home_score > away_score)
+                 OR (away_team = team AND away_score > home_score) THEN 1 ELSE 0 END) as wins,
+      SUM(CASE WHEN home_score = away_score THEN 1 ELSE 0 END) as draws,
+      SUM(CASE WHEN (home_team = team AND home_score < away_score)
+                 OR (away_team = team AND away_score < home_score) THEN 1 ELSE 0 END) as losses,
+      SUM(CASE WHEN home_team = team THEN home_score ELSE away_score END) as gf,
+      SUM(CASE WHEN home_team = team THEN away_score ELSE home_score END) as ga,
+      SUM(CASE WHEN home_team = team THEN home_score - away_score
+               ELSE away_score - home_score END) as gd,
+      SUM(CASE
+        WHEN (home_team = team AND home_score > away_score)
+          OR (away_team = team AND away_score > home_score) THEN 3
+        WHEN home_score = away_score THEN 1
+        ELSE 0 END) as points
+     FROM (
+       SELECT home_team as team, away_team, home_score, away_score, group_name FROM matches
+       WHERE home_score IS NOT NULL AND group_name = $1
+       UNION ALL
+       SELECT away_team as team, home_team, home_score, away_score, group_name FROM matches
+       WHERE home_score IS NOT NULL AND group_name = $1
+     ) t
+     GROUP BY team
+     ORDER BY points DESC, gd DESC, gf DESC`,
+    [group]
+  )
+
+  return c.json({ standings: result.rows, group })
 })
 
 predictionsRouter.post('/', authMiddleware, async (c) => {
