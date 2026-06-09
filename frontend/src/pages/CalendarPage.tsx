@@ -13,6 +13,7 @@ type Match = {
   group_name: string
   home_score: number | null
   away_score: number | null
+  stadium_name?: string
 }
 
 type Prediction = {
@@ -355,13 +356,20 @@ export default function CalendarPage() {
                           className="bg-gray-900/40 border border-gray-800/80 rounded-2xl p-4 shadow-lg hover:border-gray-700/60 transition-all duration-300 flex flex-col justify-between backdrop-blur-sm relative"
                         >
                           {/* Card Top Information */}
-                          <div className="flex justify-between items-center mb-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider select-none">
-                            <span>
-                              Partido #{m.id.split('-')[1] || m.id} · {m.group_name ? `Grupo ${m.group_name}` : m.stage}
-                            </span>
-                            <span className="text-yellow-400 font-semibold bg-yellow-400/5 px-2 py-0.5 rounded border border-yellow-400/10">
-                              {formatTimeLabel(m.match_date)}
-                            </span>
+                          <div className="flex flex-col gap-1 mb-3 select-none">
+                            <div className="flex justify-between items-center text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                              <span>
+                                Partido #{m.id.split('-')[1] || m.id} · {m.group_name ? `Grupo ${m.group_name}` : m.stage}
+                              </span>
+                              <span className="text-yellow-400 font-semibold bg-yellow-400/5 px-2 py-0.5 rounded border border-yellow-400/10">
+                                {formatTimeLabel(m.match_date)}
+                              </span>
+                            </div>
+                            {m.stadium_name && (
+                              <span className="text-[9px] text-gray-655 font-bold uppercase tracking-wider flex items-center gap-1">
+                                🏟️ {m.stadium_name}
+                              </span>
+                            )}
                           </div>
 
                           {/* Teams Score / Prediction Row */}
