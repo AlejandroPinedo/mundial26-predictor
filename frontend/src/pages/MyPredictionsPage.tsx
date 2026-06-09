@@ -21,14 +21,29 @@ type Prediction = {
   group_name?: string
 }
 
+type BracketPredictions = { round16: string[]; quarter: string[]; semi: string[]; finalist: string[]; champion: string[] }
+
+const ROUND_LABELS: Record<string, { label: string; pts: number; icon: string }> = {
+  round16: { label: 'Ronda de 32', pts: 1, icon: '⚽' },
+  quarter: { label: 'Cuartos de Final', pts: 2, icon: '🔥' },
+  semi: { label: 'Semifinal', pts: 4, icon: '⭐' },
+  finalist: { label: 'Finalistas', pts: 6, icon: '🥈' },
+  champion: { label: 'Campeón', pts: 10, icon: '🏆' },
+}
+
 export default function MyPredictionsPage() {
   const [predictions, setPredictions] = useState<Prediction[]>([])
+  const [bracket, setBracket] = useState<BracketPredictions | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    apiFetch('/predictions/my')
-      .then(d => setPredictions(d.predictions))
-      .finally(() => setLoading(false))
+    Promise.all([
+      apiFetch('/predictions/my'),
+      apiFetch('/bracket/my'),
+    ]).then(([d, b]) => {
+      setPredictions(d.predictions)
+      setBracket(b.predictions)
+    }).finally(() => setLoading(false))
   }, [])
 
   const played = predictions.filter(p => p.home_score !== null)
@@ -233,6 +248,39 @@ export default function MyPredictionsPage() {
 
           </div>
         )}
+
+        {/* Bracket predictions */}
+        {bracket && Object.values(bracket).some(arr => arr.length > 0) && (
+          <div className="mt-6">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
+              Bracket de Playoffs
+            </h2>
+            <div className="flex flex-col gap-3">
+              {Object.entries(ROUND_LABELS).map(([round, meta]) => {
+                const teams = bracket[round as keyof BracketPredictions] || []
+                if (teams.length === 0) return null
+                return (
+                  <div key={round} className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span>{meta.icon}</span>
+                      <span className="font-bold text-sm">{meta.label}</span>
+                      <span className="text-gray-600 text-xs ml-auto">{meta.pts} pts c/u</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {teams.map(team => (
+                        <span key={team} className="flex items-center gap-1.5 bg-gray-800 border border-gray-700 rounded-xl px-3 py-1 text-xs font-medium">
+                          <span>{getFlag(team)}</span>
+                          <span>{team}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )

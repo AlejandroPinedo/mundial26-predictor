@@ -494,12 +494,7 @@ export default function BracketPage() {
       const rounds = ['round16', 'quarter', 'semi', 'finalist', 'champion'] as const
       await Promise.all(
         rounds.map(round => {
-          const listToSave: string[] = []
-          predictions[round].forEach((team, idx) => {
-            if (team) {
-              listToSave.push(`${idx}:${team}`)
-            }
-          })
+          const listToSave = predictions[round].filter((team): team is string => !!team)
           return apiFetch('/bracket/predict', {
             method: 'POST',
             body: JSON.stringify({ round, teams: listToSave }),
