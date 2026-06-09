@@ -1,13 +1,19 @@
-  /// <reference types="vitest" />
-  import { defineConfig } from 'vitest/config'
-  import react from '@vitejs/plugin-react'
-  import tailwindcss from '@tailwindcss/vite'
+/// <reference types="vitest" />
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
-  export default defineConfig({
-    plugins: [react(), tailwindcss()],
-    test: {
-      environment: 'jsdom',
-      setupFiles: ['./src/test/setup.ts'],
-      globals: true,
-    },
-  })
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  optimizeDeps: {
+    include: ['tslib', '@supabase/supabase-js'],
+  },
+  build: {
+    chunkSizeWarningLimit: 700,
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    globals: true,
+  },
+})
