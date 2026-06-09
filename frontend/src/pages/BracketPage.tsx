@@ -7,6 +7,8 @@ import { calculateRoundOf32 } from '../utils/standings'
 import { toPng } from 'html-to-image'
 import { useAuth } from '../context/AuthContext'
 import PageHeader from '../components/PageHeader'
+import type { BracketScores, MatchScore } from '../types/bracket'
+import MatchScoreInput from '../components/MatchScoreInput'
 
 type Predictions = {
   round16: (string | null)[]
@@ -306,6 +308,19 @@ export default function BracketPage() {
   const [r32Matchups, setR32Matchups] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [scores, setScores] = useState<BracketScores>({})
+
+  function getScore(round: string, matchIndex: number): MatchScore {
+    return scores[`${round}_${matchIndex}`] ?? { home: null, away: null, homePen: null, awayPen: null }
+  }
+
+  function setScore(round: string, matchIndex: number, update: Partial<MatchScore>) {
+    const key = `${round}_${matchIndex}`
+    setScores(prev => ({
+      ...prev,
+      [key]: { ...(prev[key] ?? { home: null, away: null, homePen: null, awayPen: null }), ...update },
+    }))
+  }
 
   const exportBracket = async () => {
     const el = document.getElementById('bracket-grid')
@@ -411,6 +426,8 @@ export default function BracketPage() {
         }
         setResults(parsedResults)
 
+        if (m.scores) setScores(m.scores as BracketScores)
+
         // Compute R32 Matchups dynamically
         if (matchesData?.matches && groupPredsData?.predictions) {
           const groupStagePredsMap: Record<string, any> = {}
@@ -492,13 +509,41 @@ export default function BracketPage() {
   async function saveAll() {
     setSaving(true)
     try {
+      // Validate penalties
+      for (const [, s] of Object.entries(scores)) {
+        if (s.home !== null && s.away !== null && s.home === s.away) {
+          if (s.homePen !== null && s.awayPen !== null && s.homePen === s.awayPen) {
+            toast.error('Los penales no pueden ser iguales en un empate')
+            setSaving(false)
+            return
+          }
+        }
+      }
+
       const rounds = ['round16', 'quarter', 'semi', 'finalist', 'champion'] as const
       await Promise.all(
         rounds.map(round => {
-          const listToSave = predictions[round].filter((team): team is string => !!team)
+          const teams = predictions[round as keyof typeof predictions].filter((team): team is string => !!team)
+
+          // Build scores payload
+          const matchCount = Math.ceil(teams.length / 2)
+          const scorePayload = []
+          for (let i = 0; i < matchCount; i++) {
+            const s = scores[`${round}_${i}`]
+            if (s && s.home !== null && s.away !== null) {
+              scorePayload.push({
+                matchIndex: i,
+                home: s.home,
+                away: s.away,
+                homePen: s.home === s.away ? (s.homePen ?? null) : null,
+                awayPen: s.home === s.away ? (s.awayPen ?? null) : null,
+              })
+            }
+          }
+
           return apiFetch('/bracket/predict', {
             method: 'POST',
-            body: JSON.stringify({ round, teams: listToSave }),
+            body: JSON.stringify({ round, teams, scores: scorePayload }),
           })
         })
       )
@@ -681,64 +726,87 @@ export default function BracketPage() {
                     const isTopSelected = !!top && predictions.semi[targetSlot] === top
                     const isBottomSelected = !!bottom && predictions.semi[targetSlot] === bottom
                     return (
-                      <Match
-                        key={`qfl-${idx}`}
-                        top={top}
-                        bottom={bottom}
-                        topPlaceholder={getPlaceholder('quarter', 2 * idx)}
-                        bottomPlaceholder={getPlaceholder('quarter', 2 * idx + 1)}
-                        isTopHighlighted={isTopSelected}
-                        isBottomHighlighted={isBottomSelected}
-                        isTopCorrect={isCorrect('quarter', 2 * idx, top)}
-                        isBottomCorrect={isCorrect('quarter', 2 * idx + 1, bottom)}
-                        isTopWrong={isWrong('quarter', 2 * idx, top)}
-                        isBottomWrong={isWrong('quarter', 2 * idx + 1, bottom)}
-                        onTopClick={() => advanceTeam('quarter', 2 * idx, top)}
-                        onBottomClick={() => advanceTeam('quarter', 2 * idx + 1, bottom)}
-                        linePos={index % 2 === 0 ? 'bottom' : 'top'}
-                        connectLeft={true} connectRight={true}
-                        round="quarter"
-                        label={`M${97 + idx}`}
-                        side="left"
-                      />
+                      <div key={`qfl-${idx}`} className="flex flex-col">
+                        <Match
+                          top={top}
+                          bottom={bottom}
+                          topPlaceholder={getPlaceholder('quarter', 2 * idx)}
+                          bottomPlaceholder={getPlaceholder('quarter', 2 * idx + 1)}
+                          isTopHighlighted={isTopSelected}
+                          isBottomHighlighted={isBottomSelected}
+                          isTopCorrect={isCorrect('quarter', 2 * idx, top)}
+                          isBottomCorrect={isCorrect('quarter', 2 * idx + 1, bottom)}
+                          isTopWrong={isWrong('quarter', 2 * idx, top)}
+                          isBottomWrong={isWrong('quarter', 2 * idx + 1, bottom)}
+                          onTopClick={() => advanceTeam('quarter', 2 * idx, top)}
+                          onBottomClick={() => advanceTeam('quarter', 2 * idx + 1, bottom)}
+                          linePos={index % 2 === 0 ? 'bottom' : 'top'}
+                          connectLeft={true} connectRight={true}
+                          round="quarter"
+                          label={`M${97 + idx}`}
+                          side="left"
+                        />
+                        <MatchScoreInput
+                          score={getScore('quarter', idx)}
+                          homeTeam={top}
+                          awayTeam={bottom}
+                          onChange={update => setScore('quarter', idx, update)}
+                        />
+                      </div>
                     )
                   })}
                 </div>
 
                 {/* 4. SEMIFINAL LEFT */}
                 <div className="flex flex-col py-[371px] w-[176px] items-start">
-                  <Match
-                    top={sfL_top}
-                    bottom={sfL_bottom}
-                    topPlaceholder={getPlaceholder('semi', 0)}
-                    bottomPlaceholder={getPlaceholder('semi', 1)}
-                    isTopHighlighted={isSfL_topSelected}
-                    isBottomHighlighted={isSfL_bottomSelected}
-                    isTopCorrect={isCorrect('semi', 0, sfL_top)}
-                    isBottomCorrect={isCorrect('semi', 1, sfL_bottom)}
-                    isTopWrong={isWrong('semi', 0, sfL_top)}
-                    isBottomWrong={isWrong('semi', 1, sfL_bottom)}
-                    onTopClick={() => advanceTeam('semi', 0, sfL_top)}
-                    onBottomClick={() => advanceTeam('semi', 1, sfL_bottom)}
-                    linePos="center"
-                    connectLeft={true} connectRight={true}
-                    round="semi"
-                    label="M101"
-                    side="left"
-                  />
+                  <div className="flex flex-col">
+                    <Match
+                      top={sfL_top}
+                      bottom={sfL_bottom}
+                      topPlaceholder={getPlaceholder('semi', 0)}
+                      bottomPlaceholder={getPlaceholder('semi', 1)}
+                      isTopHighlighted={isSfL_topSelected}
+                      isBottomHighlighted={isSfL_bottomSelected}
+                      isTopCorrect={isCorrect('semi', 0, sfL_top)}
+                      isBottomCorrect={isCorrect('semi', 1, sfL_bottom)}
+                      isTopWrong={isWrong('semi', 0, sfL_top)}
+                      isBottomWrong={isWrong('semi', 1, sfL_bottom)}
+                      onTopClick={() => advanceTeam('semi', 0, sfL_top)}
+                      onBottomClick={() => advanceTeam('semi', 1, sfL_bottom)}
+                      linePos="center"
+                      connectLeft={true} connectRight={true}
+                      round="semi"
+                      label="M101"
+                      side="left"
+                    />
+                    <MatchScoreInput
+                      score={getScore('semi', 0)}
+                      homeTeam={sfL_top}
+                      awayTeam={sfL_bottom}
+                      onChange={update => setScore('semi', 0, update)}
+                    />
+                  </div>
                 </div>
 
                 {/* 5. FINALIST LEFT */}
                 <div className="flex flex-col py-[396px] w-[160px]">
-                  <WinnerSlot
-                    team={finalistL}
-                    placeholder={getPlaceholder('finalist', 0)}
-                    highlight={isFinalistLSelected}
-                    correct={isCorrect('finalist', 0, finalistL)}
-                    wrong={isWrong('finalist', 0, finalistL)}
-                    connectLeft={true} connectRight={true}
-                    onClick={() => advanceTeam('finalist', 0, finalistL)}
-                  />
+                  <div className="flex flex-col">
+                    <WinnerSlot
+                      team={finalistL}
+                      placeholder={getPlaceholder('finalist', 0)}
+                      highlight={isFinalistLSelected}
+                      correct={isCorrect('finalist', 0, finalistL)}
+                      wrong={isWrong('finalist', 0, finalistL)}
+                      connectLeft={true} connectRight={true}
+                      onClick={() => advanceTeam('finalist', 0, finalistL)}
+                    />
+                    <MatchScoreInput
+                      score={getScore('finalist', 0)}
+                      homeTeam={finalistL}
+                      awayTeam={finalistR}
+                      onChange={update => setScore('finalist', 0, update)}
+                    />
+                  </div>
                 </div>
 
                 {/* 6. CHAMPION CENTER */}
@@ -790,25 +858,33 @@ export default function BracketPage() {
 
                 {/* 8. SEMIFINAL RIGHT */}
                 <div className="flex flex-col py-[371px] w-[176px] items-end">
-                  <Match
-                    top={sfR_top}
-                    bottom={sfR_bottom}
-                    topPlaceholder={getPlaceholder('semi', 2)}
-                    bottomPlaceholder={getPlaceholder('semi', 3)}
-                    isTopHighlighted={isSfR_topSelected}
-                    isBottomHighlighted={isSfR_bottomSelected}
-                    isTopCorrect={isCorrect('semi', 2, sfR_top)}
-                    isBottomCorrect={isCorrect('semi', 3, sfR_bottom)}
-                    isTopWrong={isWrong('semi', 2, sfR_top)}
-                    isBottomWrong={isWrong('semi', 3, sfR_bottom)}
-                    onTopClick={() => advanceTeam('semi', 2, sfR_top)}
-                    onBottomClick={() => advanceTeam('semi', 3, sfR_bottom)}
-                    linePos="center"
-                    connectLeft={true} connectRight={true}
-                    round="semi"
-                    label="M102"
-                    side="right"
-                  />
+                  <div className="flex flex-col">
+                    <Match
+                      top={sfR_top}
+                      bottom={sfR_bottom}
+                      topPlaceholder={getPlaceholder('semi', 2)}
+                      bottomPlaceholder={getPlaceholder('semi', 3)}
+                      isTopHighlighted={isSfR_topSelected}
+                      isBottomHighlighted={isSfR_bottomSelected}
+                      isTopCorrect={isCorrect('semi', 2, sfR_top)}
+                      isBottomCorrect={isCorrect('semi', 3, sfR_bottom)}
+                      isTopWrong={isWrong('semi', 2, sfR_top)}
+                      isBottomWrong={isWrong('semi', 3, sfR_bottom)}
+                      onTopClick={() => advanceTeam('semi', 2, sfR_top)}
+                      onBottomClick={() => advanceTeam('semi', 3, sfR_bottom)}
+                      linePos="center"
+                      connectLeft={true} connectRight={true}
+                      round="semi"
+                      label="M102"
+                      side="right"
+                    />
+                    <MatchScoreInput
+                      score={getScore('semi', 1)}
+                      homeTeam={sfR_top}
+                      awayTeam={sfR_bottom}
+                      onChange={update => setScore('semi', 1, update)}
+                    />
+                  </div>
                 </div>
 
                 {/* 9. QF RIGHT */}
@@ -819,27 +895,35 @@ export default function BracketPage() {
                     const targetSlot = idx
                     const isTopSelected = !!top && predictions.semi[targetSlot] === top
                     const isBottomSelected = !!bottom && predictions.semi[targetSlot] === bottom
+                    const matchIndex = idx - 2
                     return (
-                      <Match
-                        key={`qfr-${idx}`}
-                        top={top}
-                        bottom={bottom}
-                        topPlaceholder={getPlaceholder('quarter', 2 * idx)}
-                        bottomPlaceholder={getPlaceholder('quarter', 2 * idx + 1)}
-                        isTopHighlighted={isTopSelected}
-                        isBottomHighlighted={isBottomSelected}
-                        isTopCorrect={isCorrect('quarter', 2 * idx, top)}
-                        isBottomCorrect={isCorrect('quarter', 2 * idx + 1, bottom)}
-                        isTopWrong={isWrong('quarter', 2 * idx, top)}
-                        isBottomWrong={isWrong('quarter', 2 * idx + 1, bottom)}
-                        onTopClick={() => advanceTeam('quarter', 2 * idx, top)}
-                        onBottomClick={() => advanceTeam('quarter', 2 * idx + 1, bottom)}
-                        linePos={index % 2 === 0 ? 'bottom' : 'top'}
-                        connectLeft={true} connectRight={true}
-                        round="quarter"
-                        label={`M${97 + idx}`}
-                        side="right"
-                      />
+                      <div key={`qfr-${idx}`} className="flex flex-col">
+                        <Match
+                          top={top}
+                          bottom={bottom}
+                          topPlaceholder={getPlaceholder('quarter', 2 * idx)}
+                          bottomPlaceholder={getPlaceholder('quarter', 2 * idx + 1)}
+                          isTopHighlighted={isTopSelected}
+                          isBottomHighlighted={isBottomSelected}
+                          isTopCorrect={isCorrect('quarter', 2 * idx, top)}
+                          isBottomCorrect={isCorrect('quarter', 2 * idx + 1, bottom)}
+                          isTopWrong={isWrong('quarter', 2 * idx, top)}
+                          isBottomWrong={isWrong('quarter', 2 * idx + 1, bottom)}
+                          onTopClick={() => advanceTeam('quarter', 2 * idx, top)}
+                          onBottomClick={() => advanceTeam('quarter', 2 * idx + 1, bottom)}
+                          linePos={index % 2 === 0 ? 'bottom' : 'top'}
+                          connectLeft={true} connectRight={true}
+                          round="quarter"
+                          label={`M${97 + idx}`}
+                          side="right"
+                        />
+                        <MatchScoreInput
+                          score={getScore('quarter', matchIndex)}
+                          homeTeam={top}
+                          awayTeam={bottom}
+                          onChange={update => setScore('quarter', matchIndex, update)}
+                        />
+                      </div>
                     )
                   })}
                 </div>
