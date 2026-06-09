@@ -156,3 +156,9 @@ vite.config.ts.timestamp-*
 .idea/
 
 dist/
+
+# Screenshots
+*.png
+*.jpg
+*.jpeg
+!frontend/public/**

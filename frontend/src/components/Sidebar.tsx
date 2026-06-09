@@ -22,7 +22,7 @@ export default function Sidebar({ unpredicted = 0 }: Props) {
     { to: '/groups', icon: '👥', label: 'Grupos privados' },
     { to: '/teams', icon: '🌍', label: 'Equipos' },
     { to: '/stadiums', icon: '🏟️', label: 'Estadios' },
-    { to: '/rules', icon: '📋', label: 'Reglas' },
+    { to: '/rules', icon: '📖', label: 'Guía' },
   ]
 
   const bottom = [
