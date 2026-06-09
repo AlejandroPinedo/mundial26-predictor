@@ -82,7 +82,7 @@ export default function BottomNav({ unpredicted = 0 }: Props) {
             className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-1 transition-all duration-150 ${
               showMore ? 'text-yellow-400' : 'text-gray-500 hover:text-gray-300'
             }`}>
-            <span className="text-lg leading-none">⊕</span>
+            <span className="text-base leading-none font-black">···</span>
             <span className="text-[9px] uppercase tracking-wider font-black">Más</span>
           </button>
         </div>
