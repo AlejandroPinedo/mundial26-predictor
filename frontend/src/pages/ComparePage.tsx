@@ -4,7 +4,6 @@ import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
 import { getPointsBadge } from '../utils/points'
-import { useAuth } from '../context/AuthContext'
 
 type Prediction = {
   id: string
@@ -36,7 +35,6 @@ type ComparedMatch = {
 
 export default function ComparePage() {
   const { username } = useParams<{ username: string }>()
-  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [comparedMatches, setComparedMatches] = useState<ComparedMatch[]>([])
   const [filter, setFilter] = useState<'all' | 'played' | 'pending'>('all')
