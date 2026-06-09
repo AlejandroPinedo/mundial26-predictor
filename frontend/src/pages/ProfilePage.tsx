@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
-
 import Spinner from '../components/Spinner'
 import { useAuth } from '../context/AuthContext'
 
@@ -65,7 +65,7 @@ export default function ProfilePage() {
           <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center text-gray-950 text-3xl font-barlow font-black">
             {user?.username[0].toUpperCase()}
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-yellow-400">{user?.username}</h1>
             <p className="text-gray-400">{user?.email}</p>
             {rank && totalPlayers && (
@@ -74,6 +74,10 @@ export default function ProfilePage() {
               </p>
             )}
           </div>
+          <Link to={`/compare/${user?.username}`}
+            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 px-4 py-2 rounded-xl text-sm font-bold transition">
+            ⚔️ Comparar
+          </Link>
         </div>
 
         {loading ? <Spinner /> : stats && (
