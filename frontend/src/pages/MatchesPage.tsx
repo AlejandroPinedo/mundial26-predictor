@@ -14,6 +14,7 @@ type Match = {
   group_name: string
   home_score: number | null
   away_score: number | null
+  stadium_name?: string
 }
 
 type Prediction = {
@@ -322,14 +323,21 @@ export default function MatchesPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-center gap-2 mb-3">
-                        <p className="text-gray-600 text-xs font-medium">
-                          {new Date(match.match_date).toLocaleDateString('es', {
-                            weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                          })}
-                        </p>
-                        {deadline && !played && !started && (
-                          <span className={`text-xs font-bold ${deadline.color}`}><span className="no-invert">⏰</span> {deadline.label}</span>
+                      <div className="flex flex-col items-center justify-center gap-1 mb-3">
+                        <div className="flex items-center justify-center gap-2">
+                          <p className="text-gray-600 text-xs font-medium">
+                            {new Date(match.match_date).toLocaleDateString('es', {
+                              weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                            })}
+                          </p>
+                          {deadline && !played && !started && (
+                            <span className={`text-xs font-bold ${deadline.color}`}><span className="no-invert">⏰</span> {deadline.label}</span>
+                          )}
+                        </div>
+                        {match.stadium_name && (
+                          <p className="text-[10px] text-gray-500 font-medium flex items-center gap-1">
+                            <span>🏟️</span> {match.stadium_name}
+                          </p>
                         )}
                       </div>
 
@@ -349,16 +357,16 @@ export default function MatchesPage() {
                       {!played && !started && (
                         <div className="flex gap-2 items-center justify-center">
                           <input type="number" min="0" max="20" placeholder="0"
-                            className="w-14 bg-gray-800 text-center rounded-lg px-2 py-1.5 text-sm font-bold border border-gray-700 focus:border-yellow-400 outline-none"
+                            className="w-11 h-11 bg-gray-950 text-center rounded-xl font-black border border-gray-850 focus:border-yellow-400/50 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             value={inputs[match.id]?.home || ''}
                             onChange={e => setInputs(prev => ({ ...prev, [match.id]: { ...prev[match.id], home: e.target.value } }))} />
-                          <span className="text-gray-500 font-bold">-</span>
+                          <span className="text-gray-650 font-bold select-none">-</span>
                           <input type="number" min="0" max="20" placeholder="0"
-                            className="w-14 bg-gray-800 text-center rounded-lg px-2 py-1.5 text-sm font-bold border border-gray-700 focus:border-yellow-400 outline-none"
+                            className="w-11 h-11 bg-gray-950 text-center rounded-xl font-black border border-gray-850 focus:border-yellow-400/50 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             value={inputs[match.id]?.away || ''}
                             onChange={e => setInputs(prev => ({ ...prev, [match.id]: { ...prev[match.id], away: e.target.value } }))} />
                           <button onClick={() => handlePredict(match.id)}
-                            className="bg-yellow-400 text-gray-950 font-bold px-4 py-1.5 rounded-lg hover:bg-yellow-300 text-sm transition">
+                            className="bg-yellow-400 text-gray-950 font-bold px-4 py-2.5 rounded-xl hover:bg-yellow-300 text-xs transition active:scale-95 cursor-pointer">
                             {pred ? 'Actualizar' : 'Predecir'}
                           </button>
                         </div>

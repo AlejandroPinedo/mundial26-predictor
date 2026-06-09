@@ -19,6 +19,9 @@ import AdminPage from './pages/AdminPage'
 import BracketPage from './pages/BracketPage'
 import TeamsPage from './pages/TeamsPage'
 import CalendarPage from './pages/CalendarPage'
+import StadiumsPage from './pages/StadiumsPage'
+import ComparePage from './pages/ComparePage'
+import StatsPage from './pages/StatsPage'
 
 function Protected({ children }: { children: React.ReactNode }) {
   return (
@@ -56,6 +59,9 @@ export default function App() {
             <Route path="/bracket" element={<Protected><BracketPage /></Protected>} />
             <Route path="/teams" element={<Protected><TeamsPage /></Protected>} />
             <Route path="/calendar" element={<Protected><CalendarPage /></Protected>} />
+            <Route path="/stadiums" element={<Protected><StadiumsPage /></Protected>} />
+            <Route path="/compare/:username" element={<Protected><ComparePage /></Protected>} />
+            <Route path="/stats" element={<Protected><StatsPage /></Protected>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </BrowserRouter>

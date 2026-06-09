@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 
-
 type Group = {
   id: string
   name: string
@@ -63,66 +62,134 @@ export default function GroupsPage() {
     }
   }
 
+  const copyCode = (code: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigator.clipboard.writeText(code)
+    toast.success(`Código ${code} copiado`)
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      
-      <div className="max-w-5xl mx-auto p-6">
-        <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-yellow-400 mb-6">Mis Grupos</h1>
+      <div className="max-w-5xl mx-auto p-4 md:p-8 font-sans">
+        
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-barlow font-black uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">
+            Mis Grupos Privados 👥
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">
+            Crea mini-ligas privadas y compite de forma directa con tus amigos.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <form onSubmit={handleCreate} className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-            <h2 className="font-barlow font-bold uppercase tracking-wider text-lg text-yellow-400/90 mb-3">Crear grupo</h2>
+        {/* Create/Join Bento Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+          
+          {/* Create Group Card */}
+          <form onSubmit={handleCreate} className="bg-gray-900/50 border border-gray-800 rounded-3xl p-6 backdrop-blur-md relative overflow-hidden group premium-glow">
+            <h2 className="font-barlow font-black uppercase tracking-wider text-lg text-yellow-400 mb-1">
+              Crear Nuevo Grupo
+            </h2>
+            <p className="text-xs text-gray-500 mb-4">Serás el administrador y podrás invitar a otros.</p>
+            
             <input
-              className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg mb-3 text-sm"
-              placeholder="Nombre del grupo"
+              className="w-full bg-gray-950 border border-gray-800 focus:border-yellow-400/55 text-white px-4 py-3 rounded-xl mb-4 text-sm outline-none transition-all placeholder-gray-600"
+              placeholder="Nombre de tu grupo (ej: Oficina, Amigos, Familia)"
               value={newName}
               onChange={e => setNewName(e.target.value)}
             />
-            <button type="submit" disabled={loading}
-              className="w-full bg-yellow-400 text-gray-950 font-bold py-2 rounded-lg hover:bg-yellow-300 text-sm disabled:opacity-50">
-              Crear
+            
+            <button
+              type="submit"
+              disabled={loading || !newName.trim()}
+              className="w-full bg-yellow-400 text-gray-950 font-bold py-2.5 rounded-xl hover:bg-yellow-300 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1"
+            >
+              {loading ? 'Procesando...' : 'Crear Grupo 🏆'}
             </button>
           </form>
 
-          <form onSubmit={handleJoin} className="bg-gray-900 rounded-xl p-5 border border-gray-800">
-            <h2 className="font-barlow font-bold uppercase tracking-wider text-lg text-yellow-400/90 mb-3">Unirse con código</h2>
+          {/* Join Group Card */}
+          <form onSubmit={handleJoin} className="bg-gray-900/50 border border-gray-800 rounded-3xl p-6 backdrop-blur-md relative overflow-hidden group premium-glow">
+            <h2 className="font-barlow font-black uppercase tracking-wider text-lg text-yellow-400 mb-1">
+              Unirse a un Grupo
+            </h2>
+            <p className="text-xs text-gray-500 mb-4">Introduce el código de 6 letras que te compartieron.</p>
+            
             <input
-              className="w-full bg-gray-800 text-white px-3 py-2 rounded-lg mb-3 text-sm uppercase tracking-widest"
-              placeholder="Ej: ABC123"
+              className="w-full bg-gray-950 border border-gray-800 focus:border-yellow-400/55 text-white px-4 py-3 rounded-xl mb-4 text-sm font-bold uppercase tracking-widest text-center outline-none transition-all placeholder-gray-600"
+              placeholder="CÓDIGO DE 6 LETRAS"
               value={joinCode}
               onChange={e => setJoinCode(e.target.value.toUpperCase())}
               maxLength={6}
             />
-            <button type="submit" disabled={loading}
-              className="w-full bg-gray-700 text-white font-bold py-2 rounded-lg hover:bg-gray-600 text-sm disabled:opacity-50">
-              Unirse
+            
+            <button
+              type="submit"
+              disabled={loading || joinCode.length < 6}
+              className="w-full bg-gray-800 text-white font-bold py-2.5 rounded-xl hover:bg-gray-700 hover:border-gray-650 transition-all text-sm border border-gray-750 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1"
+            >
+              {loading ? 'Procesando...' : 'Unirse al Grupo 🤜🤛'}
             </button>
           </form>
+
         </div>
 
-        <div className="flex flex-col gap-3">
-          {groups.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-4xl mb-3">👥</p>
-              <p className="text-gray-400 font-bold mb-1">Sin grupos todavía</p>
-              <p className="text-gray-600 text-sm">Crea uno o únete con un código de invitación</p>
-            </div>
-          ) : groups.map(group => (
-            <button key={group.id}
-              onClick={() => navigate(`/groups/${group.id}`)}
-              className="bg-gray-900 rounded-xl p-4 text-left hover:bg-gray-800 transition">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="font-bold">{group.name}</p>
-                  <p className="text-gray-500 text-xs mt-1">
-                    {group.member_count} miembro{Number(group.member_count) !== 1 ? 's' : ''} · Código: <span className="text-yellow-400 font-mono">{group.invite_code}</span>
-                  </p>
-                </div>
-                <span className="text-gray-600">→</span>
+        {/* Groups List Section */}
+        <div>
+          <h2 className="font-barlow font-black uppercase tracking-wider text-lg text-gray-400 mb-4">
+            Mis Grupos Activos
+          </h2>
+
+          <div className="flex flex-col gap-3">
+            {groups.length === 0 ? (
+              <div className="text-center py-16 bg-gray-900/30 border border-gray-800 rounded-3xl">
+                <p className="text-5xl mb-4 no-invert">👥</p>
+                <p className="text-white font-bold text-lg">Aún no estás en ningún grupo</p>
+                <p className="text-gray-500 text-sm mt-1 max-w-sm mx-auto">
+                  Crea tu propia liga o únete a una existente con el código de invitación para competir.
+                </p>
               </div>
-            </button>
-          ))}
+            ) : (
+              groups.map(group => (
+                <button
+                  key={group.id}
+                  onClick={() => navigate(`/groups/${group.id}`)}
+                  className="bg-gray-900/40 hover:bg-gray-900/80 border border-gray-850 hover:border-gray-700 rounded-2xl p-5 text-left transition-all duration-200 shadow-lg flex justify-between items-center group premium-glow cursor-pointer"
+                >
+                  <div className="flex flex-col gap-1 min-w-0 flex-1">
+                    <p className="font-bold text-white text-lg group-hover:text-yellow-400 transition-colors duration-150 truncate">
+                      {group.name}
+                    </p>
+                    <div className="flex items-center gap-4 flex-wrap text-xs text-gray-400 mt-1">
+                      <span className="flex items-center gap-1">
+                        👥 {group.member_count} miembro{Number(group.member_count) !== 1 ? 's' : ''}
+                      </span>
+                      <span className="w-px h-3 bg-gray-800" />
+                      <div className="flex items-center gap-1.5">
+                        <span>Código:</span>
+                        <span className="font-mono font-bold text-yellow-400 bg-yellow-400/5 border border-yellow-400/10 px-2 py-0.5 rounded">
+                          {group.invite_code}
+                        </span>
+                        <span
+                          onClick={(e) => copyCode(group.invite_code, e)}
+                          className="hover:text-white text-[10px] underline ml-1 cursor-pointer font-bold"
+                          title="Copiar código"
+                        >
+                          Copiar 📋
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <span className="text-gray-650 group-hover:text-yellow-400 group-hover:translate-x-1.5 transition-all text-xl font-bold pl-4">
+                    →
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
         </div>
+
       </div>
     </div>
   )
