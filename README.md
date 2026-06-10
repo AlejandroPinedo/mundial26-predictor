@@ -1,145 +1,165 @@
 # ⚽ Mundial26 Predictor
 
-> Predice los marcadores del Mundial 2026, compite con tus amigos y demuestra que la tienes clara.
+> Predict the scores of the 2026 World Cup, compete with your friends, and prove you saw it coming.
 
-**🔗 Live:** [mundial26-predictor.vercel.app](https://mundial26-predictor.vercel.app)
-
----
-
-## ¿Qué es esto?
-
-Una aplicación web fullstack para pronosticar los partidos del **FIFA World Cup 2026** (USA · Canadá · México). Los usuarios predicen marcadores, compiten en un leaderboard global y en grupos privados, y llenan su bracket de playoffs.
-
-Construida como proyecto de aprendizaje con arquitectura y ciclo de vida profesional: CI/CD, múltiples entornos, releases semánticos y tests unitarios.
+**🔗 Live demo:** [mundial26-predictor.vercel.app](https://mundial26-predictor.vercel.app)
 
 ---
 
-## Funcionalidades
+## About this project
 
-| Categoría | Feature |
+**Mundial26 Predictor is a personal, self-taught learning project — built for education, not profit.**
+
+It exists to practice the full lifecycle of a real-world web application from scratch: CI/CD pipelines, multi-environment deployments, Git branching workflows, semantic releases, unit testing, monitoring, and AI-assisted frontend development. The football prediction game is the excuse; the engineering process is the goal.
+
+It is a fullstack web app for forecasting the matches of the 2026 FIFA World Cup (United States · Canada · Mexico). Users predict match scores, compete on a global leaderboard and in private groups, and fill out their playoff bracket.
+
+> **Disclaimer:** This is an unofficial, non-commercial fan project created for learning purposes only. It is not affiliated with, endorsed by, or connected to FIFA or any of its partners. No revenue is generated, no fees are charged, and no official trademarks or assets are used. "FIFA World Cup" is a trademark of FIFA.
+
+---
+
+## ✨ v2.0 — "WE ARE 26" redesign
+
+Version 2.0 ships a complete visual redesign inspired by the tri-nation identity of the 2026 tournament — built end-to-end with AI-assisted development as a vibecoding experiment:
+
+- **Tri-nation design system**: stadium-ink dark backgrounds with a four-color signature — Canada red `#FF3B5C` · trophy gold `#FFC300` · Mexico green `#00E08F` · USA blue `#3D7BFF` — implemented as Tailwind CSS v4 design tokens.
+- **Sports-poster typography**: Archivo Black for headlines and scoreboards, Archivo condensed for labels, Outfit for body text.
+- **Signature components**: match-ticket cards, glass panels, giant "26" watermarks, glowing scoreboard digits, and a professional SVG stroke-icon set replacing emoji navigation.
+- All 21 pages were redesigned while preserving 100% of the existing functionality.
+
+The full design brief that guided the redesign lives in [`docs/REDESIGN_PROMPT.md`](docs/REDESIGN_PROMPT.md).
+
+---
+
+## Features
+
+| Category | Feature |
 |---|---|
-| **Auth** | Registro, login con JWT, cambio de contraseña |
-| **Fase de grupos** | Predicción de marcadores para 72 partidos organizados por grupos A–L |
-| **Clasificaciones** | Tabla de posiciones dinámica por grupo con PJ, G, E, P, GF, GC, DG, Pts |
-| **Bracket playoffs** | Predicción interactiva desde Ronda de 32 hasta Campeón |
-| **Puntuación** | Automática: 3 pts marcador exacto, 1 pt resultado correcto |
-| **Leaderboard** | Ranking global con auto-refresh cada 30s y medallas top 3 |
-| **Grupos privados** | Ligas con código de invitación, leaderboard propio y chat de grupo |
-| **Comparador** | Comparación cara a cara de predicciones entre dos usuarios |
-| **Estadísticas** | Dashboard de insights de la comunidad |
-| **Calendario** | Vista de partidos por fecha con predicción integrada |
-| **Equipos** | Galería de las 48 selecciones con banderas por grupo |
-| **Estadios** | Los 16 recintos del torneo con ciudad y capacidad |
-| **Admin** | Panel para registrar resultados y calcular puntos automáticamente |
-| **Notificaciones** | Toast en tiempo real cuando se carga un nuevo resultado (polling 30s) |
-| **PWA** | Instalable en móvil como app nativa |
-| **Dark/Light mode** | Toggle de tema desde el sidebar |
-| **Exportar bracket** | Descarga el bracket como imagen para compartir |
+| **Auth** | Sign up, JWT login, Google/GitHub OAuth, password change |
+| **Group stage** | Score predictions for 72 matches across groups A–L |
+| **Standings** | Dynamic group tables with P, W, D, L, GF, GA, GD, Pts |
+| **Playoff bracket** | Interactive predictions from the Round of 32 to the Champion |
+| **Scoring** | Automatic: 3 pts exact score, 1 pt correct outcome |
+| **Leaderboard** | Global ranking with 30s auto-refresh and top-3 podium |
+| **Private groups** | Invite-code leagues with their own leaderboard and group chat |
+| **Head-to-head** | Side-by-side prediction comparison between two players |
+| **Stats** | Community insights dashboard (popular picks, hot matches) |
+| **Calendar** | Matches by date with inline prediction |
+| **Teams** | Gallery of all 48 national teams by group |
+| **Stadiums** | The 16 tournament venues with city and capacity |
+| **Admin** | Panel to load official results and recalculate points |
+| **Notifications** | Real-time toasts when new results land (30s polling) |
+| **PWA** | Installable on mobile as a native-like app |
+| **Dark/Light mode** | Theme toggle with persistence |
+| **Bracket export** | Download your bracket as a shareable PNG |
 
 ---
 
-## Stack técnico
+## Tech stack
 
 ```
 Frontend:   React 19 + Vite 8 + TypeScript + Tailwind CSS v4
 Backend:    Node.js + Hono + TypeScript
-Base datos: PostgreSQL (Supabase)
-Auth:       JWT manual (bcryptjs + jsonwebtoken)
-Testing:    Vitest (8 tests unitarios)
+Database:   PostgreSQL (Supabase)
+Auth:       JWT (bcryptjs + jsonwebtoken) + OAuth
+Testing:    Vitest (unit tests, run on every PR)
 CI/CD:      GitHub Actions + Vercel + Render
 Monitoring: Sentry (frontend + backend)
 ```
 
 ---
 
-## Arquitectura
+## Architecture
 
 ```
 mundial26-predictor/          ← monorepo
 ├── frontend/                 ← React + Vite
 │   ├── src/
-│   │   ├── components/       ← AppShell, Sidebar, BottomNav, Skeleton...
+│   │   ├── components/       ← AppShell, Sidebar, BottomNav, Icon, Skeleton...
 │   │   ├── hooks/            ← useRealtimeMatches (polling)
-│   │   ├── pages/            ← 20 páginas
+│   │   ├── pages/            ← 21 pages
 │   │   ├── context/          ← AuthContext, ThemeContext
 │   │   ├── api/              ← apiFetch client
 │   │   └── utils/            ← flags, points, scoring, simulate
-│   └── public/               ← favicon, manifest PWA
+│   └── public/               ← favicon, PWA manifest
 ├── backend/
 │   ├── src/
 │   │   ├── routes/           ← auth, predictions, groups, bracket
-│   │   ├── middleware/        ← authMiddleware, rateLimit
+│   │   ├── middleware/       ← authMiddleware, rateLimit
 │   │   └── utils/            ← scoring (calculatePoints)
-│   └── dist/                 ← build de producción
-└── .github/workflows/        ← CI pipeline (tests en cada PR)
+│   └── dist/                 ← production build
+├── docs/                     ← design brief and plans
+└── .github/workflows/        ← CI pipeline (tests on every PR)
 ```
 
 ---
 
-## Navegación
+## Navigation
 
-**Desktop (Sidebar):** Inicio · Calendario · Partidos · Bracket · Ranking · Clasificaciones · Estadísticas · Mis predicciones · Grupos · Equipos · Estadios · Guía
+**Desktop (sidebar):** Home · Calendar · Matches · Bracket · Ranking · Standings · Stats · My predictions · Private groups · Teams · Stadiums · Guide
 
-**Móvil (Bottom Nav):** Inicio · Partidos · Bracket · Ranking · ⊕ Más (drawer con todas las secciones)
+**Mobile (bottom nav):** Home · Matches · Bracket · Ranking · ⊕ More (drawer with every section)
+
+The app UI is in Spanish — it was built for a Spanish-speaking friend group.
 
 ---
 
-## Entornos
+## Environments
 
-| Entorno | Frontend | Backend |
+| Environment | Frontend | Backend |
 |---|---|---|
 | **Production** | [mundial26-predictor.vercel.app](https://mundial26-predictor.vercel.app) | [mundial26-api-staging.onrender.com](https://mundial26-api-staging.onrender.com) |
-| **Staging** | Preview URL por PR (Vercel) | — |
+| **Staging** | Per-PR preview URL (Vercel) | — |
 
 ---
 
-## Setup local
+## Local setup
 
 ```bash
-# Clonar
+# Clone
 git clone https://github.com/AlejandroPinedo/mundial26-predictor.git
 cd mundial26-predictor
 
 # Backend
 cd backend
-cp .env.example .env   # completar con tus credenciales
+cp .env.example .env   # fill in your credentials
 npm install
 npm run dev            # http://localhost:3000
 
-# Frontend (nueva terminal)
+# Frontend (new terminal)
 cd frontend
 cp .env.example .env
 npm install
 npm run dev            # http://localhost:5173
 ```
 
-### Variables de entorno requeridas
+### Required environment variables
 
 **Backend `.env`:**
 ```
-DATABASE_URL=         # Supabase Transaction Pooler URL (puerto 6543)
-JWT_SECRET=           # String aleatorio seguro
-CORS_ORIGIN=          # http://localhost:5173 en local
-SENTRY_DSN=           # Opcional
+DATABASE_URL=         # Supabase Transaction Pooler URL (port 6543)
+JWT_SECRET=           # Secure random string
+CORS_ORIGIN=          # http://localhost:5173 for local dev
+SENTRY_DSN=           # Optional
 ```
 
 **Frontend `.env`:**
 ```
-VITE_API_URL=         # http://localhost:3000 en local
-VITE_SENTRY_DSN=      # Opcional
+VITE_API_URL=         # http://localhost:3000 for local dev
+VITE_SENTRY_DSN=      # Optional
 ```
 
 ---
 
-## Flujo de trabajo Git
+## Git workflow
 
 ```
-feat/* → PR → CI (tests) → develop → PR → main → deploy automático
+feat/* → PR → CI (tests) → develop → PR → main → auto-deploy
 ```
 
-- **`main`** → producción (Vercel + Render auto-deploy)
-- **`develop`** → integración (staging preview en Vercel)
-- **feature branches** → trabajo diario con PRs
+- **`main`** → production (Vercel + Render auto-deploy)
+- **`develop`** → integration (staging preview on Vercel)
+- **feature branches** → day-to-day work via PRs
 
 Conventional Commits: `feat:`, `fix:`, `ci:`, `chore:`, `docs:`
 
@@ -147,38 +167,45 @@ Conventional Commits: `feat:`, `fix:`, `ci:`, `chore:`, `docs:`
 
 ## Releases
 
-| Versión | Highlights |
+| Version | Highlights |
 |---|---|
-| v1.6.x | Guía completa, drawer "Más" en móvil, botón Comparar desde perfil |
-| v1.5.x | Chat de grupo, comparador, sedes, standings, bracket R32, insights comunidad |
-| v1.3.0 | Rediseño completo: sidebar, bottom nav, home dashboard, galería equipos |
-| v1.2.0 | Banderas, alertas deadline, PWA, UI revamp |
-| v1.0.0 | MVP completo: auth, predicciones, leaderboard, grupos privados, admin panel |
+| **v2.0.0** | "WE ARE 26" complete frontend redesign: tri-nation design system, SVG icon set, sports-poster typography, web-font loading fix |
+| v1.6.x | Full guide, mobile "More" drawer, Compare button from profile |
+| v1.5.x | Group chat, head-to-head compare, venues, standings, R32 bracket, community insights |
+| v1.3.0 | Full redesign: sidebar, bottom nav, home dashboard, teams gallery |
+| v1.2.0 | Flags, deadline alerts, PWA, UI revamp |
+| v1.0.0 | Complete MVP: auth, predictions, leaderboard, private groups, admin panel |
 | v0.1.0 | Initial deployment |
 
 ---
 
-## Sistema de puntos
+## Scoring system
 
-**Fase de grupos:**
-- 🟢 **3 pts** — Marcador exacto
-- 🔵 **1 pt** — Resultado correcto (ganador/empate acertado)
-- ⚫ **0 pts** — Resultado incorrecto
+**Group stage:**
+- 🟢 **3 pts** — Exact score
+- 🔵 **1 pt** — Correct outcome (winner/draw)
+- ⚫ **0 pts** — Wrong outcome
 
 **Playoffs:**
-- Ronda de 32: 1 pt · Cuartos: 2 pts · Semifinal: 4 pts · Finalista: 6 pts · Campeón: 10 pts
+- Round of 32: 1 pt · Quarter-finals: 2 pts · Semi-finals: 4 pts · Finalist: 6 pts · Champion: 10 pts
 
 ---
 
 ## Tests
 
 ```bash
-cd backend && npm test    # 5 tests (calculatePoints)
-cd frontend && npm test   # 3 tests (getPointsBadge)
+cd backend && npm test    # calculatePoints unit tests
+cd frontend && npm test   # getPointsBadge unit tests
 ```
 
-El CI en GitHub Actions corre los tests automáticamente en cada PR.
+GitHub Actions runs both suites automatically on every PR targeting `develop` or `main`.
 
 ---
 
-*Proyecto de aprendizaje — DevOps + Web Development desde cero.*
+## License
+
+[MIT](LICENSE) — free to learn from, fork, and experiment with.
+
+---
+
+*A self-taught journey: DevOps + web development from zero, one PR at a time.*
