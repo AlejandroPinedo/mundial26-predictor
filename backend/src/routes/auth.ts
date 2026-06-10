@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import { db } from '../db.js'
 import { rateLimit } from '../middleware/rateLimit.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { validateUsername } from '../utils/validation.js'
 import type { AppVariables } from '../types.js'
 
 export const authRouter = new Hono<{ Variables: AppVariables }>()
@@ -61,11 +62,13 @@ authRouter.post('/register', rateLimit(5, 60_000), async (c) => {
     const { email, username, password } = await c.req.json()
     if (!email || !username || !password) return c.json({ error: 'Todos los campos son requeridos' }, 400)
     if (password.length < 6) return c.json({ error: 'La contraseña debe tener al menos 6 caracteres' }, 400)
+    const usernameError = validateUsername(username)
+    if (usernameError) return c.json({ error: usernameError }, 400)
 
     const passwordHash = await bcrypt.hash(password, 10)
     const result = await db.query(
       'INSERT INTO users (email, username, password_hash) VALUES ($1, $2, $3) RETURNING id, email, username',
-      [email, username, passwordHash]
+      [email, username.trim(), passwordHash]
     )
     return c.json({ user: result.rows[0] }, 201)
   } catch (error: unknown) {
@@ -109,6 +112,38 @@ authRouter.post('/change-password', authMiddleware, rateLimit(5, 60_000), async 
     return c.json({ message: 'Contraseña actualizada' })
   } catch {
     return c.json({ error: 'Error al cambiar contraseña' }, 500)
+  }
+})
+
+authRouter.post('/change-username', authMiddleware, rateLimit(5, 60_000), async (c) => {
+  try {
+    const userId = c.get('userId')
+    const { newUsername } = await c.req.json()
+
+    const validationError = validateUsername(newUsername)
+    if (validationError) return c.json({ error: validationError }, 400)
+
+    const username = (newUsername as string).trim()
+    const current = await db.query('SELECT username FROM users WHERE id = $1', [userId])
+    if (current.rows[0]?.username === username) {
+      return c.json({ error: 'Ese ya es tu nombre de usuario' }, 400)
+    }
+
+    const result = await db.query(
+      'UPDATE users SET username = $1 WHERE id = $2 RETURNING *',
+      [username, userId]
+    )
+    const user = result.rows[0]
+    // El JWT incluye el username como claim — se reemite para que no quede obsoleto
+    return c.json({
+      token: signToken(user),
+      user: userPayload(user),
+      message: 'Nombre de usuario actualizado',
+    })
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : ''
+    const duplicate = msg.includes('duplicate') || msg.includes('unique')
+    return c.json({ error: duplicate ? 'Ese nombre de usuario ya está en uso' : 'Error al cambiar el nombre de usuario' }, duplicate ? 400 : 500)
   }
 })
 
