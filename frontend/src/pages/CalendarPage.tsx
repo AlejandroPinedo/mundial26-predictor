@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
 import PageHeader from '../components/PageHeader'
+import Icon from '../components/Icon'
 
 type Match = {
   id: string
@@ -127,7 +128,7 @@ export default function CalendarPage() {
   // Filter logic
   const filteredMatches = matches.filter((m) => {
     const mDate = m.match_date.split('T')[0]
-    
+
     // Search filter
     const matchesSearch =
       m.home_team.toLowerCase().includes(search.toLowerCase()) ||
@@ -181,311 +182,312 @@ export default function CalendarPage() {
   const completionPercent = totalMatchesCount > 0 ? Math.round((predictedCount / totalMatchesCount) * 100) : 0
 
   return (
-    <div className="min-h-screen bg-[#020817] text-white">
-      <div className="max-w-7xl mx-auto p-4 md:p-6 pb-24">
-        
-        <PageHeader title="CALENDARIO" subtitle="Fixture completo · Copa Mundial FIFA 2026" icon="📅" />
+    <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 pb-24 font-sans">
 
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-          <div />
+      <PageHeader title="CALENDARIO" subtitle="Fixture completo · Copa Mundial FIFA 2026" icon="📅" />
 
-          {/* Progress Tracker Card */}
-          <div className="bg-gray-900/40 border border-gray-800 rounded-2xl p-4 flex items-center gap-4 backdrop-blur-md self-start md:self-auto min-w-[240px]">
-            <div className="relative h-12 w-12 flex-shrink-0 flex items-center justify-center">
-              <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                <path
-                  className="text-gray-800"
-                  strokeWidth="3"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-                <path
-                  className="text-yellow-400 transition-all duration-500"
-                  strokeWidth="3"
-                  strokeDasharray={`${completionPercent}, 100`}
-                  strokeLinecap="round"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-              </svg>
-              <span className="text-xs font-black text-yellow-400">{completionPercent}%</span>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider leading-none">Tu Progreso</p>
-              <p className="text-lg font-black text-white leading-none mt-1">
-                {predictedCount} <span className="text-xs text-gray-500 font-normal">/ {totalMatchesCount} predecidos</span>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters Panel */}
-        <div className="bg-gray-900/30 border border-gray-800/80 rounded-2xl p-4 mb-6 backdrop-blur-md flex flex-col gap-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            
-            {/* Search Input */}
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 text-sm">🔍</span>
-              <input
-                type="text"
-                placeholder="Buscar equipo, sede o fase..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-gray-950 border border-gray-800 rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-yellow-400/50 transition text-white placeholder-gray-600"
+      {/* Progress Tracker Card */}
+      <div className="flex md:justify-end mb-6 fade-up-1">
+        <div className="glass rounded-2xl p-4 flex items-center gap-4 min-w-[240px]">
+          <div className="relative h-12 w-12 flex-shrink-0 flex items-center justify-center">
+            <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <path
+                className="text-white/10"
+                strokeWidth="3"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
-            </div>
-
-            {/* Stage Selector */}
-            <div>
-              <select
-                value={selectedStage}
-                onChange={(e) => setSelectedStage(e.target.value)}
-                className="w-full bg-gray-950 border border-gray-800 rounded-xl py-2 px-3 text-sm focus:outline-none focus:border-yellow-400/50 transition text-white"
-              >
-                <option value="all">Fase: Todas</option>
-                <option value="group">Fase de Grupos</option>
-                <option value="round of 32">Dieciseisavos (R32)</option>
-                <option value="round of 16">Octavos (R16)</option>
-                <option value="quarterfinals">Cuartos de Final</option>
-                <option value="semifinals">Semifinales</option>
-                <option value="final">Final</option>
-              </select>
-            </div>
-
-            {/* Status Selector */}
-            <div>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full bg-gray-950 border border-gray-800 rounded-xl py-2 px-3 text-sm focus:outline-none focus:border-yellow-400/50 transition text-white"
-              >
-                <option value="all">Estado: Todos</option>
-                <option value="predicted">Predecidos por mí</option>
-                <option value="unpredicted">Pendientes por predecir</option>
-                <option value="played">Finalizados</option>
-              </select>
-            </div>
-
+              <path
+                className="text-gold transition-all duration-500"
+                strokeWidth="3"
+                strokeDasharray={`${completionPercent}, 100`}
+                strokeLinecap="round"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+            <span className="text-[11px] font-display text-gold">{completionPercent}%</span>
           </div>
-
-          {/* Quick Date Selector Slider */}
-          <div className="border-t border-gray-800/60 pt-3">
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Filtrar por fecha</p>
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-800">
-              <button
-                onClick={() => setSelectedDate('all')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                  selectedDate === 'all'
-                    ? 'bg-yellow-400 text-gray-950 shadow-md shadow-yellow-500/10'
-                    : 'bg-gray-950 border border-gray-800 text-gray-400 hover:text-white'
-                }`}
-              >
-                Todos los días
-              </button>
-              {distinctDates.map((dateStr) => {
-                const isActive = selectedDate === dateStr
-                return (
-                  <button
-                    key={dateStr}
-                    onClick={() => setSelectedDate(dateStr)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                      isActive
-                        ? 'bg-yellow-400 text-gray-950 shadow-md shadow-yellow-500/10'
-                        : 'bg-gray-950 border border-gray-800 text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    {formatDateLabel(dateStr)}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Matches Feed */}
-        {loading ? (
-          <div className="h-96 flex items-center justify-center">
-            <Spinner />
-          </div>
-        ) : sortedFilteredDates.length === 0 ? (
-          <div className="bg-gray-900/20 border border-gray-850 rounded-3xl p-12 text-center max-w-md mx-auto mt-8">
-            <p className="text-4xl mb-4 no-invert">🔍</p>
-            <h3 className="text-white font-bold text-lg mb-1">No se encontraron partidos</h3>
-            <p className="text-gray-500 text-sm">
-              Intenta cambiar los filtros de búsqueda, fase o fecha para encontrar lo que buscas.
+          <div>
+            <p className="text-[10px] text-gray-500 font-condensed font-extrabold uppercase tracking-[0.18em] leading-none">Tu Progreso</p>
+            <p className="text-lg font-display text-white leading-none mt-1.5">
+              {predictedCount} <span className="text-xs text-gray-500 font-sans font-normal">/ {totalMatchesCount} predecidos</span>
             </p>
           </div>
-        ) : (
-          <div className="flex flex-col gap-8">
-            {sortedFilteredDates.map((dateStr) => {
-              const dateMatches = matchesByDate[dateStr]
+        </div>
+      </div>
+
+      {/* Filters Panel */}
+      <div className="glass rounded-2xl p-4 mb-6 flex flex-col gap-4 fade-up-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+
+          {/* Search Input */}
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+              <Icon name="search" size={15} />
+            </span>
+            <input
+              type="text"
+              placeholder="Buscar equipo, sede o fase..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-ink-950 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-gold/50 transition text-white placeholder-gray-600"
+            />
+          </div>
+
+          {/* Stage Selector */}
+          <div>
+            <select
+              value={selectedStage}
+              onChange={(e) => setSelectedStage(e.target.value)}
+              className="w-full bg-ink-950 border border-white/10 rounded-xl py-2 px-3 text-sm focus:outline-none focus:border-gold/50 transition text-white cursor-pointer"
+            >
+              <option value="all">Fase: Todas</option>
+              <option value="group">Fase de Grupos</option>
+              <option value="round of 32">Dieciseisavos (R32)</option>
+              <option value="round of 16">Octavos (R16)</option>
+              <option value="quarterfinals">Cuartos de Final</option>
+              <option value="semifinals">Semifinales</option>
+              <option value="final">Final</option>
+            </select>
+          </div>
+
+          {/* Status Selector */}
+          <div>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="w-full bg-ink-950 border border-white/10 rounded-xl py-2 px-3 text-sm focus:outline-none focus:border-gold/50 transition text-white cursor-pointer"
+            >
+              <option value="all">Estado: Todos</option>
+              <option value="predicted">Predecidos por mí</option>
+              <option value="unpredicted">Pendientes por predecir</option>
+              <option value="played">Finalizados</option>
+            </select>
+          </div>
+
+        </div>
+
+        {/* Quick Date Selector Slider */}
+        <div className="border-t border-white/8 pt-3">
+          <p className="text-[10px] text-gray-500 font-condensed font-extrabold uppercase tracking-[0.18em] mb-2">Filtrar por fecha</p>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            <button
+              onClick={() => setSelectedDate('all')}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-condensed font-extrabold uppercase tracking-wide whitespace-nowrap transition cursor-pointer ${
+                selectedDate === 'all'
+                  ? 'bg-gold text-ink-950 shadow-md shadow-gold/20'
+                  : 'bg-ink-950 border border-white/10 text-gray-400 hover:text-white'
+              }`}
+            >
+              Todos los días
+            </button>
+            {distinctDates.map((dateStr) => {
+              const isActive = selectedDate === dateStr
               return (
-                <div key={dateStr} className="flex flex-col gap-3">
-                  {/* Sticky Date Title */}
-                  <div className="sticky top-0 z-10 py-2 bg-gray-950/80 backdrop-blur-md border-b border-gray-900/60 flex items-center justify-between">
-                    <h2 className="text-sm font-bold text-gray-300 uppercase tracking-wider">
-                      {getFullDateLabel(dateStr)}
-                    </h2>
-                    <span className="text-xs text-gray-500 font-bold">
-                      {dateMatches.length} {dateMatches.length === 1 ? 'partido' : 'partidos'}
-                    </span>
-                  </div>
-
-                  {/* Grid of Match Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {dateMatches.map((m) => {
-                      const pred = predictions[m.id]
-                      const input = inputs[m.id] || { home: '', away: '' }
-                      const kickoff = new Date(m.match_date)
-                      const isLocked = now > kickoff || m.home_score !== null
-                      const isSaved = pred !== undefined && String(pred.predicted_home) === input.home && String(pred.predicted_away) === input.away
-
-                      // Points display
-                      const pts = pred?.points ?? 0
-
-                      return (
-                        <div
-                          key={m.id}
-                          className="bg-gray-900/40 border border-gray-800/80 rounded-2xl p-4 shadow-lg hover:border-gray-700/60 transition-all duration-300 flex flex-col justify-between backdrop-blur-sm relative"
-                        >
-                          {/* Card Top Information */}
-                          <div className="flex flex-col gap-1 mb-3 select-none">
-                            <div className="flex justify-between items-center text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                              <span>
-                                Partido #{m.id.split('-')[1] || m.id} · {m.group_name ? `Grupo ${m.group_name}` : m.stage}
-                              </span>
-                              <span className="text-yellow-400 font-semibold bg-yellow-400/5 px-2 py-0.5 rounded border border-yellow-400/10">
-                                {formatTimeLabel(m.match_date)}
-                              </span>
-                            </div>
-                            {m.stadium_name && (
-                              <span className="text-[9px] text-gray-655 font-bold uppercase tracking-wider flex items-center gap-1">
-                                🏟️ {m.stadium_name}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Teams Score / Prediction Row */}
-                          <div className="flex items-center justify-between gap-4 py-2">
-                            {/* Home Team */}
-                            <div className="flex-1 flex flex-col items-center gap-1 text-center min-w-0">
-                              <span className="text-3xl no-invert leading-none mb-1">{getFlag(m.home_team)}</span>
-                              <span className="text-xs font-semibold text-white truncate w-full">{m.home_team}</span>
-                            </div>
-
-                            {/* Center Score / Inputs */}
-                            <div className="flex items-center gap-2">
-                              {isLocked ? (
-                                /* Locked view (official result & predicted score side by side) */
-                                <div className="flex flex-col items-center gap-1 select-none">
-                                  {m.home_score !== null ? (
-                                    /* Actual Match Result */
-                                    <div className="flex items-center gap-1.5 text-base font-black text-white">
-                                      <span>{m.home_score}</span>
-                                      <span className="text-gray-600 text-xs font-normal">-</span>
-                                      <span>{m.away_score}</span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 font-bold uppercase tracking-wider">
-                                      Jugando
-                                    </span>
-                                  )}
-                                  {pred ? (
-                                    /* Prediction result */
-                                    <div className="text-[10px] text-gray-500 flex items-center gap-1 bg-gray-950 border border-gray-850 px-2 py-0.5 rounded-full mt-1">
-                                      <span>Pred:</span>
-                                      <span className="font-bold text-gray-400">
-                                        {pred.predicted_home} - {pred.predicted_away}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-[9px] text-gray-600 italic mt-1">Sin pred.</span>
-                                  )}
-                                </div>
-                              ) : (
-                                /* Future match / Editable fields */
-                                <div className="flex items-center gap-1">
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    max="99"
-                                    value={input.home}
-                                    placeholder="-"
-                                    onChange={(e) => handleInputChange(m.id, 'home', e.target.value)}
-                                    className="w-10 h-10 bg-gray-950 border border-gray-850 focus:border-yellow-400/50 rounded-xl text-center font-black text-sm focus:outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                  />
-                                  <span className="text-gray-600 font-bold select-none">-</span>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    max="99"
-                                    value={input.away}
-                                    placeholder="-"
-                                    onChange={(e) => handleInputChange(m.id, 'away', e.target.value)}
-                                    className="w-10 h-10 bg-gray-950 border border-gray-850 focus:border-yellow-400/50 rounded-xl text-center font-black text-sm focus:outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                  />
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Away Team */}
-                            <div className="flex-1 flex flex-col items-center gap-1 text-center min-w-0">
-                              <span className="text-3xl no-invert leading-none mb-1">{getFlag(m.away_team)}</span>
-                              <span className="text-xs font-semibold text-white truncate w-full">{m.away_team}</span>
-                            </div>
-                          </div>
-
-                          {/* Footer action bar */}
-                          <div className="border-t border-gray-800/40 mt-3 pt-3 flex justify-between items-center h-8">
-                            {/* Left area: Points earned or locking warning */}
-                            <div>
-                              {m.home_score !== null && pred ? (
-                                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${
-                                  pts > 0 ? 'bg-green-500/15 text-green-400' : 'bg-gray-800 text-gray-500'
-                                }`}>
-                                  {pts > 0 ? `+${pts} PTS` : '0 PTS'}
-                                </span>
-                              ) : !isLocked ? (
-                                /* Deadline warning if under 24 hours */
-                                (() => {
-                                  const warn = (kickoff.getTime() - now.getTime()) / (1000 * 60 * 60) < 24
-                                  return warn ? (
-                                    <span className="text-[9px] text-orange-400 bg-orange-400/5 border border-orange-400/10 px-2 py-0.5 rounded font-bold uppercase tracking-wider animate-pulse">
-                                      Cierra pronto
-                                    </span>
-                                  ) : null
-                                })()
-                              ) : null}
-                            </div>
-
-                            {/* Right area: Save button */}
-                            {!isLocked && (
-                              <button
-                                onClick={() => handlePredict(m.id)}
-                                disabled={savingId === m.id || isSaved}
-                                className={`text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95 disabled:active:scale-100 ${
-                                  isSaved
-                                    ? 'bg-green-500/10 text-green-400 border border-green-500/25 cursor-default'
-                                    : 'bg-yellow-400 text-gray-950 hover:bg-yellow-300 disabled:opacity-50'
-                                }`}
-                              >
-                                {savingId === m.id ? '...' : isSaved ? 'Guardado ✓' : 'Guardar'}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
+                <button
+                  key={dateStr}
+                  onClick={() => setSelectedDate(dateStr)}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-condensed font-extrabold uppercase tracking-wide whitespace-nowrap transition cursor-pointer ${
+                    isActive
+                      ? 'bg-gold text-ink-950 shadow-md shadow-gold/20'
+                      : 'bg-ink-950 border border-white/10 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {formatDateLabel(dateStr)}
+                </button>
               )
             })}
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Matches Feed */}
+      {loading ? (
+        <div className="h-96 flex items-center justify-center">
+          <Spinner />
+        </div>
+      ) : sortedFilteredDates.length === 0 ? (
+        <div className="bg-panel border border-white/8 rounded-2xl p-12 text-center max-w-md mx-auto mt-8">
+          <Icon name="search" size={40} className="mx-auto text-gray-600 mb-4" />
+          <h3 className="text-white font-condensed font-extrabold uppercase tracking-wide text-lg mb-1">No se encontraron partidos</h3>
+          <p className="text-gray-500 text-sm">
+            Intenta cambiar los filtros de búsqueda, fase o fecha para encontrar lo que buscas.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-8 fade-up-3">
+          {sortedFilteredDates.map((dateStr) => {
+            const dateMatches = matchesByDate[dateStr]
+            return (
+              <div key={dateStr} className="flex flex-col gap-3">
+                {/* Sticky Date Title */}
+                <div className="sticky top-0 z-10 py-2 bg-ink-950/85 backdrop-blur-md flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="font-condensed font-black text-sm text-white uppercase tracking-[0.16em] truncate">
+                      {getFullDateLabel(dateStr)}
+                    </h2>
+                    <div className="tri-stripe w-12 rounded-full mt-1.5" aria-hidden="true" />
+                  </div>
+                  <span className="chip text-gray-400 flex-shrink-0">
+                    {dateMatches.length} {dateMatches.length === 1 ? 'partido' : 'partidos'}
+                  </span>
+                </div>
+
+                {/* Grid of Match Tickets */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {dateMatches.map((m) => {
+                    const pred = predictions[m.id]
+                    const input = inputs[m.id] || { home: '', away: '' }
+                    const kickoff = new Date(m.match_date)
+                    const isLocked = now > kickoff || m.home_score !== null
+                    const isSaved = pred !== undefined && String(pred.predicted_home) === input.home && String(pred.predicted_away) === input.away
+
+                    // Points display
+                    const pts = pred?.points ?? 0
+
+                    return (
+                      <div
+                        key={m.id}
+                        className="ticket-card rounded-2xl p-4 flex flex-col justify-between hover-lift"
+                      >
+                        {/* Card Top Information */}
+                        <div className="flex flex-col gap-1 mb-3 select-none relative z-10">
+                          <div className="flex justify-between items-center gap-2 text-[10px] font-condensed font-extrabold text-gray-500 uppercase tracking-[0.12em]">
+                            <span className="truncate">
+                              Partido #{m.id.split('-')[1] || m.id} · {m.group_name ? `Grupo ${m.group_name}` : m.stage}
+                            </span>
+                            <span className="text-gold bg-gold/5 px-2 py-0.5 rounded border border-gold/15 flex-shrink-0">
+                              {formatTimeLabel(m.match_date)}
+                            </span>
+                          </div>
+                          {m.stadium_name && (
+                            <span className="text-[9px] text-gray-600 font-condensed font-bold uppercase tracking-wider flex items-center gap-1">
+                              <span className="no-invert">🏟️</span> {m.stadium_name}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Teams Score / Prediction Row */}
+                        <div className="flex items-center justify-between gap-3 py-2 relative z-10">
+                          {/* Home Team */}
+                          <div className="flex-1 flex flex-col items-center gap-1 text-center min-w-0">
+                            <span className="text-3xl no-invert leading-none mb-1">{getFlag(m.home_team)}</span>
+                            <span className="text-xs font-condensed font-bold text-white truncate w-full">{m.home_team}</span>
+                          </div>
+
+                          {/* Center Score / Inputs */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {isLocked ? (
+                              /* Locked view (official result & predicted score side by side) */
+                              <div className="flex flex-col items-center gap-1 select-none">
+                                {m.home_score !== null ? (
+                                  /* Actual Match Result */
+                                  <div className="scoreboard px-2.5 py-1 rounded-lg text-sm">
+                                    {m.home_score} - {m.away_score}
+                                  </div>
+                                ) : (
+                                  <span className="chip border-mx/30 bg-mx/10 text-mx">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-mx animate-pulse" />
+                                    Jugando
+                                  </span>
+                                )}
+                                {pred ? (
+                                  /* Prediction result */
+                                  <div className="text-[10px] text-gray-500 flex items-center gap-1 bg-ink-950 border border-white/8 px-2 py-0.5 rounded-full mt-1">
+                                    <span>Pred:</span>
+                                    <span className="font-bold text-gray-300">
+                                      {pred.predicted_home} - {pred.predicted_away}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-[9px] text-gray-600 italic mt-1">Sin pred.</span>
+                                )}
+                              </div>
+                            ) : (
+                              /* Future match / Editable fields */
+                              <div className="flex items-center gap-1.5">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="99"
+                                  value={input.home}
+                                  placeholder="-"
+                                  onChange={(e) => handleInputChange(m.id, 'home', e.target.value)}
+                                  className="w-10 h-10 bg-ink-950 border border-white/10 focus:border-gold/60 focus:shadow-[0_0_12px_-2px_rgba(255,195,0,0.4)] rounded-xl text-center font-display text-sm text-gold focus:outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <span className="text-gray-600 text-[10px] font-condensed font-extrabold select-none">VS</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="99"
+                                  value={input.away}
+                                  placeholder="-"
+                                  onChange={(e) => handleInputChange(m.id, 'away', e.target.value)}
+                                  className="w-10 h-10 bg-ink-950 border border-white/10 focus:border-gold/60 focus:shadow-[0_0_12px_-2px_rgba(255,195,0,0.4)] rounded-xl text-center font-display text-sm text-gold focus:outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Away Team */}
+                          <div className="flex-1 flex flex-col items-center gap-1 text-center min-w-0">
+                            <span className="text-3xl no-invert leading-none mb-1">{getFlag(m.away_team)}</span>
+                            <span className="text-xs font-condensed font-bold text-white truncate w-full">{m.away_team}</span>
+                          </div>
+                        </div>
+
+                        {/* Footer action bar */}
+                        <div className="border-t border-white/8 mt-3 pt-3 flex justify-between items-center h-8 relative z-10">
+                          {/* Left area: Points earned or locking warning */}
+                          <div>
+                            {m.home_score !== null && pred ? (
+                              <span className={`chip ${
+                                pts === 3 ? 'border-gold/30 bg-gold/10 text-gold' :
+                                pts > 0 ? 'border-mx/30 bg-mx/10 text-mx' :
+                                'border-ca/25 bg-ca/10 text-ca'
+                              }`}>
+                                {pts > 0 ? `+${pts} PTS` : '0 PTS'}
+                              </span>
+                            ) : !isLocked ? (
+                              /* Deadline warning if under 24 hours */
+                              (() => {
+                                const warn = (kickoff.getTime() - now.getTime()) / (1000 * 60 * 60) < 24
+                                return warn ? (
+                                  <span className="chip border-ca/30 bg-ca/10 text-ca animate-pulse">
+                                    Cierra pronto
+                                  </span>
+                                ) : null
+                              })()
+                            ) : null}
+                          </div>
+
+                          {/* Right area: Save button */}
+                          {!isLocked && (
+                            <button
+                              onClick={() => handlePredict(m.id)}
+                              disabled={savingId === m.id || isSaved}
+                              className={`text-[10px] font-condensed font-extrabold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all active:scale-95 disabled:active:scale-100 cursor-pointer ${
+                                isSaved
+                                  ? 'bg-mx/10 text-mx border border-mx/25 cursor-default'
+                                  : 'bg-gold text-ink-950 hover:brightness-110 shadow-md shadow-gold/20 disabled:opacity-50'
+                              }`}
+                            >
+                              {savingId === m.id ? '...' : isSaved ? 'Guardado ✓' : 'Guardar'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

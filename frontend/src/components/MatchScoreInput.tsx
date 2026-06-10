@@ -20,11 +20,11 @@ export default function MatchScoreInput({ score, homeTeam, awayTeam, onChange, d
     score.homePen !== null && score.awayPen !== null &&
     score.homePen === score.awayPen
 
-  const inputClass = "w-10 h-8 bg-black text-yellow-400 text-center rounded text-sm font-display outline-none border border-yellow-400/20 focus:border-yellow-400/60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:opacity-40 transition-colors"
+  const inputClass = "w-11 h-9 bg-ink-950 text-gold text-center rounded-lg text-base font-display outline-none border border-white/10 focus:border-gold/60 focus:shadow-[0_0_12px_-2px_rgba(255,195,0,0.4)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:opacity-40 transition-all"
 
   return (
     <div className="mt-2 space-y-1.5">
-      <div className="flex items-center gap-1.5 justify-center">
+      <div className="flex items-center gap-2 justify-center">
         <input
           type="number" min={0} max={20}
           value={score.home ?? 0}
@@ -32,7 +32,7 @@ export default function MatchScoreInput({ score, homeTeam, awayTeam, onChange, d
           disabled={disabled}
           className={inputClass}
         />
-        <span className="text-gray-600 text-[10px] font-bold select-none">—</span>
+        <span className="text-gray-600 text-[10px] font-condensed font-extrabold select-none">VS</span>
         <input
           type="number" min={0} max={20}
           value={score.away ?? 0}
@@ -44,30 +44,30 @@ export default function MatchScoreInput({ score, homeTeam, awayTeam, onChange, d
 
       {isDraw && (
         <div className="space-y-1">
-          <p className="text-orange-400 text-[9px] font-bold uppercase tracking-widest text-center flex items-center justify-center gap-1">
-            <span>🥅</span> Penales
+          <p className="text-ca text-[9px] font-condensed font-extrabold uppercase tracking-[0.18em] text-center flex items-center justify-center gap-1">
+            <span className="no-invert">🥅</span> Penales
           </p>
-          <div className="flex items-center gap-1.5 justify-center">
+          <div className="flex items-center gap-2 justify-center">
             <input
               type="number" min={0} max={30}
               value={score.homePen ?? ''}
               onChange={e => onChange({ homePen: e.target.value === '' ? null : Number(e.target.value) })}
               disabled={disabled}
               placeholder="0"
-              className="w-10 h-7 bg-orange-950/60 border border-orange-500/40 text-orange-400 text-center rounded text-xs outline-none focus:border-orange-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-11 h-8 bg-ca/10 border border-ca/40 text-ca text-center rounded-lg text-xs font-bold outline-none focus:border-ca [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <span className="text-orange-600 text-[10px] font-bold">—</span>
+            <span className="text-ca/60 text-[10px] font-bold">—</span>
             <input
               type="number" min={0} max={30}
               value={score.awayPen ?? ''}
               onChange={e => onChange({ awayPen: e.target.value === '' ? null : Number(e.target.value) })}
               disabled={disabled}
               placeholder="0"
-              className="w-10 h-7 bg-orange-950/60 border border-orange-500/40 text-orange-400 text-center rounded text-xs outline-none focus:border-orange-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-11 h-8 bg-ca/10 border border-ca/40 text-ca text-center rounded-lg text-xs font-bold outline-none focus:border-ca [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
           {penaltiesInvalid && (
-            <p className="text-red-400 text-[9px] text-center font-bold">Los penales no pueden ser iguales</p>
+            <p className="text-ca text-[9px] text-center font-bold">Los penales no pueden ser iguales</p>
           )}
         </div>
       )}

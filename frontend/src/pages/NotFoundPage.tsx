@@ -1,13 +1,25 @@
 export default function NotFoundPage() {
   return (
-    <div className="min-h-screen bg-[#020817] flex items-center justify-center font-sans">
-      <div className="text-center px-6">
-        <div className="font-display text-[180px] text-white/5 leading-none select-none">404</div>
-        <div className="font-display text-6xl text-yellow-400 -mt-12 relative z-10 uppercase">Fuera de Juego</div>
-        <p className="text-gray-500 mt-3 mb-8 text-sm">El árbitro ha pitado. Esta página no existe.</p>
-        <a href="/home" className="bg-yellow-400 text-gray-950 font-display text-xl px-8 py-3 rounded-xl hover:bg-yellow-300 transition tracking-widest inline-block uppercase">
-          Volver al Estadio
-        </a>
+    <div className="min-h-screen bg-ink-950 flex flex-col font-sans relative overflow-hidden">
+      <div className="tri-stripe" />
+      <span className="wm-26 -top-8 -left-12 hidden md:block" aria-hidden="true">26</span>
+      <span className="wm-26 -bottom-16 -right-10 hidden md:block" aria-hidden="true">26</span>
+      <div className="absolute top-[28%] left-1/2 -translate-x-1/2 w-[520px] h-[400px] bg-ca/5 rounded-full blur-[130px] pointer-events-none" aria-hidden="true" />
+
+      <div className="flex-1 flex items-center justify-center relative z-10">
+        <div className="text-center px-6 fade-up">
+          <p className="text-ca text-[11px] font-condensed font-extrabold uppercase tracking-[0.3em] mb-2 flex items-center justify-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-ca live-dot" />
+            Tarjeta roja
+          </p>
+          <div className="font-display text-[clamp(8rem,26vw,15rem)] leading-[0.85] text-white/5 select-none" aria-hidden="true">404</div>
+          <h1 className="font-display text-4xl md:text-6xl text-gold -mt-10 md:-mt-14 relative z-10 uppercase">Fuera de Juego</h1>
+          <div className="tri-stripe w-24 rounded-full mx-auto my-5" />
+          <p className="text-gray-500 mb-8 text-sm">El árbitro ha pitado. Esta página no existe.</p>
+          <a href="/home" className="btn-gold text-base min-w-[220px]">
+            Volver al Estadio
+          </a>
+        </div>
       </div>
     </div>
   )
