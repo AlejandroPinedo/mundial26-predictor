@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import PredictionProgress from '../components/PredictionProgress'
 import PageHeader from '../components/PageHeader'
+import Icon from '../components/Icon'
 import { getFlag } from '../utils/flags'
 import { useRealtimeMatches } from '../hooks/useRealtimeMatches'
 import { calculateGroupStandings, getBestThirdPlacedTeams, type TeamStats, type ThirdPlaceStats } from '../utils/standings'
@@ -29,40 +30,43 @@ type Prediction = {
 
 function StandingsTable({ teams }: { teams: TeamStats[] }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 overflow-hidden">
-      <h3 className="font-bold text-yellow-400 text-xs uppercase tracking-wider mb-3">Tabla del Grupo</h3>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="text-gray-500 border-b border-gray-800">
-              <th className="py-2 w-8">#</th>
-              <th className="py-2">Equipo</th>
-              <th className="py-2 text-center w-8">PJ</th>
-              <th className="py-2 text-center w-8">DG</th>
-              <th className="py-2 text-center w-10 font-bold">Pts</th>
-            </tr>
-          </thead>
-          <tbody>
-            {teams.map((t, idx) => (
-              <tr key={t.team} className="border-b border-gray-800/40 last:border-0 hover:bg-gray-800/20 transition">
-                <td className="py-2.5 font-bold text-gray-500">
-                  <span className={idx < 2 ? 'text-green-400' : idx === 2 ? 'text-blue-400' : ''}>{idx + 1}</span>
-                </td>
-                <td className="py-2.5 flex items-center gap-1.5 font-medium truncate">
-                  <span className="text-lg flex-shrink-0 no-invert">{getFlag(t.team)}</span>
-                  <span className="truncate max-w-[110px]">{t.team}</span>
-                </td>
-                <td className="py-2.5 text-center text-gray-400">{t.mp}</td>
-                <td className="py-2.5 text-center text-gray-400">{t.gd > 0 ? `+${t.gd}` : t.gd}</td>
-                <td className="py-2.5 text-center font-bold text-yellow-400">{t.pts}</td>
+    <div className="bg-panel border border-white/8 rounded-2xl overflow-hidden">
+      <div className="tri-stripe" aria-hidden="true" />
+      <div className="p-4">
+        <h3 className="font-condensed font-extrabold text-gold text-[11px] uppercase tracking-[0.18em] mb-3">Tabla del Grupo</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="text-gray-500 border-b border-white/8 font-condensed uppercase tracking-wider">
+                <th className="py-2 w-8 font-extrabold">#</th>
+                <th className="py-2 font-extrabold">Equipo</th>
+                <th className="py-2 text-center w-8 font-extrabold">PJ</th>
+                <th className="py-2 text-center w-8 font-extrabold">DG</th>
+                <th className="py-2 text-center w-10 font-extrabold">Pts</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="mt-3 text-[10px] text-gray-500 flex flex-col gap-1 border-t border-gray-800/60 pt-3">
-        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"/> Clasifica directo (1° y 2°)</span>
-        <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block"/> Posible clasificación (3°)</span>
+            </thead>
+            <tbody>
+              {teams.map((t, idx) => (
+                <tr key={t.team} className="border-b border-white/5 last:border-0 hover:bg-white/[0.03] transition">
+                  <td className="py-2.5 font-display text-sm">
+                    <span className={idx < 2 ? 'text-mx' : idx === 2 ? 'text-us' : 'text-gray-600'}>{idx + 1}</span>
+                  </td>
+                  <td className="py-2.5 flex items-center gap-1.5 font-medium truncate">
+                    <span className="text-lg flex-shrink-0 no-invert">{getFlag(t.team)}</span>
+                    <span className="truncate max-w-[110px] text-gray-200">{t.team}</span>
+                  </td>
+                  <td className="py-2.5 text-center text-gray-400">{t.mp}</td>
+                  <td className="py-2.5 text-center text-gray-400">{t.gd > 0 ? `+${t.gd}` : t.gd}</td>
+                  <td className="py-2.5 text-center font-display text-gold">{t.pts}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-3 text-[10px] text-gray-500 flex flex-col gap-1 border-t border-white/8 pt-3 font-condensed font-bold uppercase tracking-wider">
+          <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-mx inline-block"/> Clasifica directo (1° y 2°)</span>
+          <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-us inline-block"/> Posible clasificación (3°)</span>
+        </div>
       </div>
     </div>
   )
@@ -70,43 +74,48 @@ function StandingsTable({ teams }: { teams: TeamStats[] }) {
 
 function BestThirdsModal({ thirds, onClose }: { thirds: ThirdPlaceStats[]; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl p-5 w-full max-w-md" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-sm text-yellow-400 uppercase tracking-wider">Tabla de Mejores Terceros</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-white text-xl">✕</button>
-        </div>
-        <p className="text-xs text-gray-500 mb-3">Los 8 mejores terceros avanzan a la Ronda de 32 (Dieciseisavos de Final).</p>
-        <div className="overflow-x-auto max-h-96">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="text-gray-500 border-b border-gray-800">
-                <th className="py-2 w-8">#</th>
-                <th className="py-2 w-16 text-center">Grupo</th>
-                <th className="py-2">Equipo</th>
-                <th className="py-2 text-center w-8">PJ</th>
-                <th className="py-2 text-center w-8">DG</th>
-                <th className="py-2 text-center w-10 font-bold">Pts</th>
-              </tr>
-            </thead>
-            <tbody>
-              {thirds.map((t, idx) => (
-                <tr key={t.team} className={`border-b border-gray-800/40 last:border-0 ${idx < 8 ? 'bg-blue-500/5' : ''}`}>
-                  <td className="py-2.5 font-bold">
-                    <span className={idx < 8 ? 'text-blue-400 font-black' : 'text-gray-600'}>{idx + 1}</span>
-                  </td>
-                  <td className="py-2.5 text-gray-400 font-bold text-center">Grupo {t.group}</td>
-                  <td className="py-2.5 flex items-center gap-1.5 font-medium truncate">
-                    <span className="text-lg flex-shrink-0 no-invert">{getFlag(t.team)}</span>
-                    <span className="truncate max-w-[120px]">{t.team}</span>
-                  </td>
-                  <td className="py-2.5 text-center text-gray-400">{t.mp}</td>
-                  <td className="py-2.5 text-center text-gray-400">{t.gd > 0 ? `+${t.gd}` : t.gd}</td>
-                  <td className="py-2.5 text-center font-bold text-yellow-400">{t.pts}</td>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-panel border border-white/10 rounded-2xl w-full max-w-md overflow-hidden fade-up" onClick={e => e.stopPropagation()}>
+        <div className="tri-stripe" aria-hidden="true" />
+        <div className="p-5">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-condensed font-extrabold text-sm text-gold uppercase tracking-[0.16em]">Tabla de Mejores Terceros</h3>
+            <button onClick={onClose} aria-label="Cerrar" className="text-gray-500 hover:text-white transition cursor-pointer p-1">
+              <Icon name="x" size={18} />
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">Los 8 mejores terceros avanzan a la Ronda de 32 (Dieciseisavos de Final).</p>
+          <div className="overflow-x-auto max-h-96">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="text-gray-500 border-b border-white/8 font-condensed uppercase tracking-wider">
+                  <th className="py-2 w-8 font-extrabold">#</th>
+                  <th className="py-2 w-16 text-center font-extrabold">Grupo</th>
+                  <th className="py-2 font-extrabold">Equipo</th>
+                  <th className="py-2 text-center w-8 font-extrabold">PJ</th>
+                  <th className="py-2 text-center w-8 font-extrabold">DG</th>
+                  <th className="py-2 text-center w-10 font-extrabold">Pts</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {thirds.map((t, idx) => (
+                  <tr key={t.team} className={`border-b border-white/5 last:border-0 ${idx < 8 ? 'bg-us/5' : ''}`}>
+                    <td className="py-2.5">
+                      <span className={idx < 8 ? 'text-us font-display text-sm' : 'text-gray-600 font-bold'}>{idx + 1}</span>
+                    </td>
+                    <td className="py-2.5 text-gray-400 font-condensed font-bold text-center uppercase">Grupo {t.group}</td>
+                    <td className="py-2.5 flex items-center gap-1.5 font-medium truncate">
+                      <span className="text-lg flex-shrink-0 no-invert">{getFlag(t.team)}</span>
+                      <span className="truncate max-w-[120px] text-gray-200">{t.team}</span>
+                    </td>
+                    <td className="py-2.5 text-center text-gray-400">{t.mp}</td>
+                    <td className="py-2.5 text-center text-gray-400">{t.gd > 0 ? `+${t.gd}` : t.gd}</td>
+                    <td className="py-2.5 text-center font-display text-gold">{t.pts}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -130,7 +139,7 @@ export default function MatchesPage() {
       const map: Record<string, Prediction> = {}
       for (const p of predData.predictions) map[p.match_id] = p
       setPredictions(map)
-      
+
       // Seed inputs with saved predictions
       const initInputs: Record<string, { home: string; away: string }> = {}
       for (const p of predData.predictions) {
@@ -198,8 +207,8 @@ export default function MatchesPage() {
     const diff = new Date(match_date).getTime() - now.getTime()
     const hours = diff / (1000 * 60 * 60)
     if (hours < 0) return null
-    if (hours < 3) return { label: `${Math.floor(diff / 60000)} min`, color: 'text-red-400' }
-    if (hours < 24) return { label: `${Math.floor(hours)}h`, color: 'text-orange-400' }
+    if (hours < 3) return { label: `${Math.floor(diff / 60000)} min`, color: 'text-ca' }
+    if (hours < 24) return { label: `${Math.floor(hours)}h`, color: 'text-gold' }
     return null
   }
 
@@ -221,188 +230,213 @@ export default function MatchesPage() {
   const thirds = getBestThirdPlacedTeams(standings)
 
   return (
-    <div className="min-h-screen bg-[#020817] text-white font-sans">
-      <div className="max-w-7xl mx-auto p-4 md:p-8">
+    <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 font-sans">
 
-        <PageHeader title="PARTIDOS" subtitle="Fase de grupos · Copa Mundial FIFA 2026" live badge="FIFA WC26" icon="⚽" />
+      <PageHeader title="PARTIDOS" subtitle="Fase de grupos · Copa Mundial FIFA 2026" live badge="FIFA WC26" icon="⚽" />
+
+      <div className="mb-6 fade-up-1">
         <PredictionProgress predicted={predicted} total={totalPending} />
+      </div>
 
-        {nextMatch && (
-          <div className="ticket-card rounded-2xl p-5 mb-6 overflow-hidden">
+      {nextMatch && (
+        <div className="ticket-card rounded-2xl p-5 mb-6 fade-up-2">
+          <span className="wm-26 -right-2 -bottom-12" aria-hidden="true">26</span>
+          <div className="relative z-10">
             <div className="flex items-center gap-2 mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-400 live-dot" />
-              <span className="text-orange-400 text-[10px] font-bold uppercase tracking-[0.2em]">Próximo partido</span>
-              <span className="ml-auto text-gray-600 text-xs">Grupo {nextMatch.group_name}</span>
+              <span className="chip border-gold/30 bg-gold/10 text-gold">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold live-dot" />
+                Próximo partido
+              </span>
+              <span className="ml-auto chip text-gray-400">Grupo {nextMatch.group_name}</span>
             </div>
             <div className="flex justify-between items-center">
-              <div className="text-center flex-1">
-                <p className="text-3xl mb-1 no-invert">{getFlag(nextMatch.home_team)}</p>
-                <p className="font-display text-sm text-white uppercase tracking-wide">{nextMatch.home_team}</p>
+              <div className="text-center flex-1 min-w-0">
+                <p className="text-4xl mb-1.5 no-invert">{getFlag(nextMatch.home_team)}</p>
+                <p className="font-display text-sm md:text-base text-white uppercase tracking-wide truncate">{nextMatch.home_team}</p>
               </div>
-              <div className="text-center px-6">
-                <div className="scoreboard scanlines px-4 py-2 rounded-lg text-2xl relative">
-                  VS
-                </div>
-                <p className="text-gray-600 text-[10px] mt-2 uppercase tracking-wider">
+              <div className="text-center px-4 sm:px-6 flex-shrink-0">
+                <div className="scoreboard px-4 py-2 rounded-lg text-2xl">VS</div>
+                <p className="text-gray-500 text-[10px] mt-2 font-condensed font-extrabold uppercase tracking-[0.18em]">
                   {new Date(nextMatch.match_date).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
                 </p>
-                <p className="text-yellow-400 font-bold text-sm">
+                <p className="text-gold font-display text-base leading-tight">
                   {new Date(nextMatch.match_date).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
-              <div className="text-center flex-1">
-                <p className="text-3xl mb-1 no-invert">{getFlag(nextMatch.away_team)}</p>
-                <p className="font-display text-sm text-white uppercase tracking-wide">{nextMatch.away_team}</p>
+              <div className="text-center flex-1 min-w-0">
+                <p className="text-4xl mb-1.5 no-invert">{getFlag(nextMatch.away_team)}</p>
+                <p className="font-display text-sm md:text-base text-white uppercase tracking-wide truncate">{nextMatch.away_team}</p>
               </div>
             </div>
           </div>
-        )}
-
-        <div className="flex justify-between items-center mb-4 gap-2 flex-wrap">
-          <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-yellow-400">Partidos y Tablas <span className="no-invert">⚽</span></h1>
-          <button
-            onClick={() => setShowThirds(true)}
-            className="bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold px-4 py-1.5 rounded-xl hover:bg-blue-500/20 text-xs transition"
-          >
-            Ver Mejores Terceros
-          </button>
         </div>
+      )}
 
-        <div className="flex gap-2 overflow-x-auto py-2 mb-6 scrollbar-hide">
-          {groups.map(g => {
-            const groupUnpredicted = matches.filter(m =>
-              m.group_name === g && m.home_score === null &&
-              now < new Date(m.match_date) && !predictions[m.id]
-            ).length
-            return (
-              <button key={g} onClick={() => setActiveGroup(g)}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold transition flex-shrink-0 ${
-                  activeGroup === g ? 'bg-yellow-400 text-gray-950 shadow-lg shadow-yellow-400/20' : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'
-                }`}>
-                Grupo {g}
-                {groupUnpredicted > 0 && (
-                  <span className="inline-flex items-center justify-center bg-red-500 text-white font-black rounded-full flex-shrink-0"
-                    style={{ fontSize: 9, minWidth: 16, height: 16, padding: '0 3px' }}>
-                    {groupUnpredicted}
-                  </span>
-                )}
-              </button>
-            )
-          })}
+      <div className="flex justify-between items-end mb-4 gap-3 flex-wrap fade-up-3">
+        <div>
+          <h2 className="font-display text-2xl text-white uppercase tracking-tight">Partidos y Tablas</h2>
+          <div className="tri-stripe w-16 rounded-full mt-2" aria-hidden="true" />
         </div>
+        <button
+          onClick={() => setShowThirds(true)}
+          className="bg-us/10 border border-us/30 text-us font-condensed font-extrabold uppercase tracking-wider px-4 py-2 rounded-xl hover:bg-us/20 text-xs transition cursor-pointer inline-flex items-center gap-1.5"
+        >
+          <Icon name="trophy" size={13} />
+          Ver Mejores Terceros
+        </button>
+      </div>
 
-        {loading ? <Spinner /> : (
-          <div className="grid lg:grid-cols-3 gap-6">
-            
-            {/* Standings Column */}
-            <div className="lg:col-span-1 flex flex-col gap-4">
-              <StandingsTable teams={groupStandings} />
-            </div>
-
-            {/* Matches Column */}
-            <div className="lg:col-span-2">
-              {groupMatches.some(m => m.home_score === null && now < new Date(m.match_date) && inputs[m.id]?.home && inputs[m.id]?.away) && (
-                <button onClick={handlePredictAll}
-                  className="w-full bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 font-bold py-2 rounded-xl mb-4 hover:bg-yellow-400/20 transition text-sm">
-                  Guardar todas las predicciones del Grupo {activeGroup}
-                </button>
+      <div className="flex gap-2 overflow-x-auto py-2 mb-6">
+        {groups.map(g => {
+          const groupUnpredicted = matches.filter(m =>
+            m.group_name === g && m.home_score === null &&
+            now < new Date(m.match_date) && !predictions[m.id]
+          ).length
+          return (
+            <button key={g} onClick={() => setActiveGroup(g)}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-condensed font-extrabold uppercase tracking-wider transition flex-shrink-0 cursor-pointer ${
+                activeGroup === g ? 'bg-gold text-ink-950 shadow-lg shadow-gold/20' : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'
+              }`}>
+              Grupo {g}
+              {groupUnpredicted > 0 && (
+                <span className="inline-flex items-center justify-center bg-ca text-white font-black rounded-full flex-shrink-0"
+                  style={{ fontSize: 9, minWidth: 16, height: 16, padding: '0 3px' }}>
+                  {groupUnpredicted}
+                </span>
               )}
+            </button>
+          )
+        })}
+      </div>
 
-              <div className="flex flex-col gap-3">
-                {groupMatches.map(match => {
-                  const pred = predictions[match.id]
-                  const played = match.home_score !== null
-                  const started = now > new Date(match.match_date)
-                  const isNext = nextMatch?.id === match.id
-                  const deadline = getDeadlineWarning(match.match_date)
+      {loading ? <Spinner /> : (
+        <div className="grid lg:grid-cols-3 gap-6 fade-up-4">
 
-                  return (
-                    <div key={match.id}
-                      className={`ticket-card rounded-xl overflow-hidden transition-all hover:-translate-y-0.5 ${
-                        isNext ? 'border-yellow-400/25 shadow-lg shadow-yellow-400/5' :
-                        played ? 'opacity-80' : ''
-                      }`}>
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <span className="text-2xl no-invert flex-shrink-0">{getFlag(match.home_team)}</span>
-                            <span className="font-display text-sm text-white uppercase tracking-wide truncate">{match.home_team}</span>
-                          </div>
-                          <div className="text-center px-3 flex-shrink-0">
-                            {played ? (
-                              <div className="scoreboard scanlines px-3 py-1 rounded-lg text-sm relative">
-                                {match.home_score} - {match.away_score}
-                              </div>
-                            ) : (
-                              <span className="text-gray-600 text-xs font-bold uppercase tracking-widest">vs</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
-                            <span className="font-display text-sm text-white uppercase tracking-wide truncate text-right">{match.away_team}</span>
-                            <span className="text-2xl no-invert flex-shrink-0">{getFlag(match.away_team)}</span>
-                          </div>
-                        </div>
+          {/* Standings Column */}
+          <div className="lg:col-span-1 flex flex-col gap-4">
+            <StandingsTable teams={groupStandings} />
+          </div>
 
-                        <div className="flex items-center justify-center gap-3 mb-3">
-                          <p className="text-gray-600 text-[10px] uppercase tracking-wider">
+          {/* Matches Column */}
+          <div className="lg:col-span-2">
+            {groupMatches.some(m => m.home_score === null && now < new Date(m.match_date) && inputs[m.id]?.home && inputs[m.id]?.away) && (
+              <button onClick={handlePredictAll}
+                className="w-full bg-gold/10 border border-gold/30 text-gold font-condensed font-extrabold uppercase tracking-wider py-2.5 rounded-xl mb-4 hover:bg-gold/20 transition text-xs cursor-pointer">
+                Guardar todas las predicciones del Grupo {activeGroup}
+              </button>
+            )}
+
+            <div className="flex flex-col gap-3">
+              {groupMatches.map(match => {
+                const pred = predictions[match.id]
+                const played = match.home_score !== null
+                const started = now > new Date(match.match_date)
+                const isNext = nextMatch?.id === match.id
+                const deadline = getDeadlineWarning(match.match_date)
+
+                return (
+                  <div key={match.id}
+                    className={`ticket-card rounded-2xl transition-all hover:-translate-y-0.5 ${
+                      isNext ? 'ring-1 ring-gold/30 shadow-lg shadow-gold/5' :
+                      played ? 'opacity-75' : ''
+                    }`}>
+                    <div className="p-4 sm:p-5 relative z-10">
+                      <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                        {played ? (
+                          <span className="chip text-gray-400">
+                            <Icon name="check" size={10} />
+                            Finalizado
+                          </span>
+                        ) : started ? (
+                          <span className="chip border-mx/30 bg-mx/10 text-mx">
+                            <span className="w-1.5 h-1.5 rounded-full bg-mx animate-pulse" />
+                            En juego
+                          </span>
+                        ) : (
+                          <span className="chip border-us/25 bg-us/10 text-us">
+                            <Icon name="clock" size={10} />
+                            Pendiente
+                          </span>
+                        )}
+                        <div className="flex items-center gap-3">
+                          <p className="text-gray-500 text-[10px] font-condensed font-bold uppercase tracking-[0.14em]">
                             {new Date(match.match_date).toLocaleDateString('es', {
                               weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
                             })}
                           </p>
                           {deadline && !played && !started && (
-                            <span className={`text-[10px] font-bold ${deadline.color} flex items-center gap-1`}>
-                              <span className="no-invert">⏰</span>{deadline.label}
+                            <span className={`text-[10px] font-condensed font-extrabold ${deadline.color} flex items-center gap-1`}>
+                              <Icon name="clock" size={11} />{deadline.label}
                             </span>
                           )}
                         </div>
+                      </div>
 
-                        {pred && (
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            <span className="text-yellow-400/70 text-xs">Tu pred:</span>
-                            <span className="text-yellow-400 font-bold text-sm">{pred.predicted_home} — {pred.predicted_away}</span>
-                            {pred.points !== null && (
-                              <span className={`px-2 py-0.5 rounded-lg text-xs font-bold ${
-                                pred.points === 3 ? 'bg-green-500/20 text-green-400' :
-                                pred.points === 1 ? 'bg-blue-500/20 text-blue-400' :
-                                'bg-gray-700/50 text-gray-400'
-                              }`}>{pred.points}pts</span>
-                            )}
-                          </div>
-                        )}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="text-2xl no-invert flex-shrink-0">{getFlag(match.home_team)}</span>
+                          <span className="font-display text-sm text-white uppercase tracking-wide truncate">{match.home_team}</span>
+                        </div>
+                        <div className="text-center px-3 flex-shrink-0">
+                          {played ? (
+                            <div className="scoreboard px-3 py-1.5 rounded-lg text-base">
+                              {match.home_score} - {match.away_score}
+                            </div>
+                          ) : started ? (
+                            <span className="text-mx text-[10px] font-condensed font-extrabold uppercase tracking-[0.18em] flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-mx animate-pulse" />
+                              En vivo
+                            </span>
+                          ) : (
+                            <span className="text-gray-600 text-[10px] font-condensed font-extrabold uppercase tracking-[0.2em]">vs</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
+                          <span className="font-display text-sm text-white uppercase tracking-wide truncate text-right">{match.away_team}</span>
+                          <span className="text-2xl no-invert flex-shrink-0">{getFlag(match.away_team)}</span>
+                        </div>
+                      </div>
+
+                      {pred && (
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <span className="text-gray-500 text-[10px] font-condensed font-bold uppercase tracking-wider">Tu pred:</span>
+                          <span className="text-gold font-display text-sm">{pred.predicted_home} — {pred.predicted_away}</span>
+                          {pred.points !== null && (
+                            <span className={`chip ${
+                              pred.points === 3 ? 'border-gold/30 bg-gold/10 text-gold' :
+                              pred.points === 1 ? 'border-mx/30 bg-mx/10 text-mx' :
+                              'border-ca/25 bg-ca/10 text-ca'
+                            }`}>{pred.points}pts</span>
+                          )}
+                        </div>
+                      )}
 
                       {!played && !started && (
                         <div className="flex gap-2 items-center justify-center">
                           <input type="number" min="0" max="20" placeholder="0"
-                            className="w-11 h-11 bg-gray-950 text-center rounded-xl font-black border border-gray-850 focus:border-yellow-400/50 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-11 h-11 bg-ink-950 text-gold text-center rounded-xl font-display text-base border border-white/10 focus:border-gold/60 focus:shadow-[0_0_12px_-2px_rgba(255,195,0,0.4)] outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             value={inputs[match.id]?.home || ''}
                             onChange={e => setInputs(prev => ({ ...prev, [match.id]: { ...prev[match.id], home: e.target.value } }))} />
-                          <span className="text-gray-650 font-bold select-none">-</span>
+                          <span className="text-gray-600 text-[10px] font-condensed font-extrabold select-none">VS</span>
                           <input type="number" min="0" max="20" placeholder="0"
-                            className="w-11 h-11 bg-gray-950 text-center rounded-xl font-black border border-gray-850 focus:border-yellow-400/50 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-11 h-11 bg-ink-950 text-gold text-center rounded-xl font-display text-base border border-white/10 focus:border-gold/60 focus:shadow-[0_0_12px_-2px_rgba(255,195,0,0.4)] outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             value={inputs[match.id]?.away || ''}
                             onChange={e => setInputs(prev => ({ ...prev, [match.id]: { ...prev[match.id], away: e.target.value } }))} />
                           <button onClick={() => handlePredict(match.id)}
-                            className="bg-yellow-400 text-gray-950 font-bold px-4 py-2.5 rounded-xl hover:bg-yellow-300 text-xs transition active:scale-95 cursor-pointer">
+                            className="btn-gold text-xs active:scale-95 cursor-pointer">
                             {pred ? 'Actualizar' : 'Predecir'}
                           </button>
                         </div>
                       )}
-                      {started && !played && (
-                        <div className="flex items-center justify-center gap-1.5 mt-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                          <p className="text-green-400 text-xs font-bold">En vivo</p>
-                        </div>
-                      )}
-                      </div>
                     </div>
-                  )
-                })}
-              </div>
+                  </div>
+                )
+              })}
             </div>
-
           </div>
-        )}
-      </div>
+
+        </div>
+      )}
 
       {showThirds && (
         <BestThirdsModal thirds={thirds} onClose={() => setShowThirds(false)} />

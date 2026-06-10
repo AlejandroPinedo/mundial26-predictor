@@ -34,7 +34,7 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 function PageLoader() {
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+    <div className="min-h-screen bg-ink-950 flex items-center justify-center">
       <Spinner />
     </div>
   )
@@ -60,8 +60,15 @@ export default function App() {
           <Toaster
             position="top-right"
             toastOptions={{
-              style: { background: '#1f2937', color: '#fff', border: '1px solid #374151' },
-              success: { iconTheme: { primary: '#facc15', secondary: '#111827' } },
+              style: {
+                background: '#18142A',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                fontFamily: "'Outfit', sans-serif",
+              },
+              success: { iconTheme: { primary: '#FFC300', secondary: '#07060E' } },
+              error: { iconTheme: { primary: '#FF3B5C', secondary: '#07060E' } },
             }}
           />
           <Suspense fallback={<PageLoader />}>

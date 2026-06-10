@@ -7,6 +7,7 @@ import { calculateRoundOf32 } from '../utils/standings'
 import { toPng } from 'html-to-image'
 import { useAuth } from '../context/AuthContext'
 import PageHeader from '../components/PageHeader'
+import Icon from '../components/Icon'
 import type { BracketScores, MatchScore } from '../types/bracket'
 import MatchScoreInput from '../components/MatchScoreInput'
 
@@ -97,17 +98,17 @@ function Slot({
   const h = size === 'lg' ? 'h-10' : 'h-8'
   const w = size === 'lg' ? 'w-36' : 'w-full'
   
-  const cursorClass = onClick && team ? 'cursor-pointer active:scale-98' : 'cursor-default'
-  
+  const cursorClass = onClick && team ? 'cursor-pointer active:scale-[0.98]' : 'cursor-default'
+
   const cls = correct
-    ? 'bg-green-500/10 text-green-400 font-bold border border-green-500/25'
+    ? 'bg-mx/10 text-mx font-bold border border-mx/30'
     : wrong
-    ? 'bg-rose-500/5 text-gray-500 line-through border border-rose-500/15 opacity-60'
+    ? 'bg-ca/5 text-gray-500 line-through border border-ca/15 opacity-60'
     : highlight
-    ? 'bg-yellow-400/10 text-yellow-400 font-bold border border-yellow-450/30 shadow-md shadow-yellow-500/5'
+    ? 'bg-gold/10 text-gold font-bold border border-gold/40 border-l-2 border-l-gold shadow-[0_0_14px_-4px_rgba(255,195,0,0.35)]'
     : team
-    ? 'bg-gray-900/50 hover:bg-gray-850/80 text-white font-medium border border-gray-800 hover:border-gray-700'
-    : 'bg-transparent border border-dashed border-gray-900/80 text-gray-600 font-bold'
+    ? 'bg-white/4 hover:bg-white/8 text-gray-300 font-medium border border-white/5 hover:border-gold/25'
+    : 'bg-transparent border border-dashed border-white/10 text-gray-600 font-bold'
 
   return (
     <button
@@ -118,11 +119,11 @@ function Slot({
       {team ? (
         <>
           <span className="text-base leading-none flex-shrink-0 no-invert">{getFlag(team)}</span>
-          <span className="truncate flex-1 text-left uppercase font-sans tracking-wide">{team}</span>
-          {highlight && <span className="text-[10px] text-yellow-400 ml-auto select-none">✓</span>}
+          <span className="truncate flex-1 text-left uppercase font-condensed font-semibold tracking-wide">{team}</span>
+          {highlight && <span className="text-[10px] text-gold ml-auto select-none">✓</span>}
         </>
       ) : (
-        <span className="text-gray-650 mx-auto text-[8px] uppercase font-bold tracking-widest">{placeholder}</span>
+        <span className="text-gray-600 mx-auto text-[8px] uppercase font-condensed font-extrabold tracking-widest">{placeholder}</span>
       )}
     </button>
   )
@@ -157,12 +158,12 @@ function Match({
   const isAnyWrong = isTopWrong || isBottomWrong
 
   const lineColor = isAnyCorrect
-    ? 'border-green-500/40'
+    ? 'border-mx/40'
     : isAnyHighlighted
-    ? 'border-yellow-450/40'
+    ? 'border-gold/40'
     : isAnyWrong
-    ? 'border-gray-800/40'
-    : 'border-gray-900/60'
+    ? 'border-white/10'
+    : 'border-white/10'
 
   const renderStub = (borderSide: 'left' | 'right') => {
     const borderClass = borderSide === 'left' ? 'left-0 border-l' : 'right-0 border-r'
@@ -208,12 +209,12 @@ function Match({
   }
 
   const matchBoxBorder = isAnyCorrect
-    ? 'border-green-500/25 shadow-green-500/5'
+    ? 'border-mx/30 shadow-mx/5'
     : isAnyHighlighted
-    ? 'border-yellow-400/25 shadow-yellow-500/5'
+    ? 'border-gold/30 shadow-gold/10'
     : isAnyWrong
-    ? 'border-rose-500/10'
-    : 'border-gray-850/70'
+    ? 'border-ca/10'
+    : 'border-white/8'
 
   return (
     <div className="flex items-center">
@@ -221,12 +222,12 @@ function Match({
         <>
           {connectLeft && renderStub('left')}
           
-          <div className={`relative w-36 h-[90px] bg-gray-900/40 backdrop-blur-sm border rounded-2xl p-1 shadow-lg hover:border-yellow-400/30 hover:bg-gray-900/60 transition-all duration-350 flex flex-col justify-center gap-1 ${matchBoxBorder}`}>
-            <div className="absolute -top-2.5 left-2.5 px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-[8px] text-gray-500 font-bold rounded uppercase tracking-wider leading-none select-none">
+          <div className={`relative w-36 h-[90px] bg-panel border rounded-2xl p-1 shadow-lg hover:border-gold/30 hover:bg-panel-2 transition-all duration-200 flex flex-col justify-center gap-1 ${matchBoxBorder}`}>
+            <div className="absolute -top-2.5 left-2.5 px-1.5 py-0.5 bg-ink-950 border border-white/10 text-[8px] text-gray-500 font-condensed font-extrabold rounded uppercase tracking-wider leading-none select-none">
               {label}
             </div>
             <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
-            <div className="h-px bg-gray-850/50 mx-1.5" />
+            <div className="h-px bg-white/5 mx-1.5" />
             <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
           </div>
           
@@ -236,12 +237,12 @@ function Match({
         <>
           {connectLeft && renderStep('left')}
           
-          <div className={`relative w-36 h-[90px] bg-gray-900/40 backdrop-blur-sm border rounded-2xl p-1 shadow-lg hover:border-yellow-400/30 hover:bg-gray-900/60 transition-all duration-350 flex flex-col justify-center gap-1 ${matchBoxBorder}`}>
-            <div className="absolute -top-2.5 left-2.5 px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-[8px] text-gray-500 font-bold rounded uppercase tracking-wider leading-none select-none">
+          <div className={`relative w-36 h-[90px] bg-panel border rounded-2xl p-1 shadow-lg hover:border-gold/30 hover:bg-panel-2 transition-all duration-200 flex flex-col justify-center gap-1 ${matchBoxBorder}`}>
+            <div className="absolute -top-2.5 left-2.5 px-1.5 py-0.5 bg-ink-950 border border-white/10 text-[8px] text-gray-500 font-condensed font-extrabold rounded uppercase tracking-wider leading-none select-none">
               {label}
             </div>
             <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
-            <div className="h-px bg-gray-850/50 mx-1.5" />
+            <div className="h-px bg-white/5 mx-1.5" />
             <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
           </div>
           
@@ -261,25 +262,25 @@ function WinnerSlot({
   highlight?: boolean; correct?: boolean; wrong?: boolean
 }) {
   const lineColor = correct
-    ? 'border-green-500/40'
+    ? 'border-mx/40'
     : highlight
-    ? 'border-yellow-450/40'
+    ? 'border-gold/40'
     : wrong
-    ? 'border-gray-800/40'
-    : 'border-gray-900/60'
+    ? 'border-white/10'
+    : 'border-white/10'
 
   const cardBorder = correct
-    ? 'border-green-500/25 shadow-green-500/5'
+    ? 'border-mx/30 shadow-mx/5'
     : highlight
-    ? 'border-yellow-400/25 shadow-yellow-500/5'
+    ? 'border-gold/30 shadow-gold/10'
     : wrong
-    ? 'border-rose-500/10'
-    : 'border-gray-850/80 hover:border-yellow-500/15'
+    ? 'border-ca/10'
+    : 'border-white/8 hover:border-gold/25'
 
   return (
     <div className="flex items-center">
       {connectLeft && <div className={`w-4 border-b ${lineColor}`} />}
-      <div className={`w-32 bg-gray-900/40 backdrop-blur-sm border rounded-xl p-1 shadow-lg hover:bg-gray-900/65 transition-all duration-350 ${cardBorder}`}>
+      <div className={`w-32 bg-panel border rounded-xl p-1 shadow-lg hover:bg-panel-2 transition-all duration-200 ${cardBorder}`}>
         <Slot team={team} placeholder={placeholder} onClick={onClick} highlight={highlight} correct={correct} wrong={wrong} />
       </div>
       {connectRight && <div className={`w-4 border-b ${lineColor}`} />}
@@ -305,6 +306,7 @@ export default function BracketPage() {
     finalist: Array(2).fill(null),
     champion: Array(1).fill(null),
   })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape proviene de calculateRoundOf32 (pre-existente)
   const [r32Matchups, setR32Matchups] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -357,7 +359,7 @@ export default function BracketPage() {
     try {
       const dataUrl = await toPng(el, {
         cacheBust: true,
-        backgroundColor: '#030712', // bg-gray-950
+        backgroundColor: '#07060E', // bg-ink-950
         style: {
           transform: 'scale(1)',
           borderRadius: '0px',
@@ -454,6 +456,7 @@ export default function BracketPage() {
 
         // Compute R32 Matchups dynamically
         if (matchesData?.matches && groupPredsData?.predictions) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape de predicción pre-existente
           const groupStagePredsMap: Record<string, any> = {}
           for (const p of groupPredsData.predictions) {
             groupStagePredsMap[p.match_id] = p
@@ -619,23 +622,24 @@ export default function BracketPage() {
   const isSfR_bottomSelected = !!sfR_bottom && predictions.finalist[1] === sfR_bottom
 
   return (
-    <div className="min-h-screen bg-[#020817] text-white">
-      <div className="max-w-7xl mx-auto p-4 md:p-6 pb-20">
-        
+    <div className="min-h-screen text-white">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 pb-20">
+
         <PageHeader title="BRACKET PLAYOFFS" subtitle="Ronda de 32 → Campeón · Copa Mundial 2026" icon="🏆" badge="FIFA WC26" action={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <button
               onClick={exportBracket}
               disabled={exporting || loading}
-              className="bg-gray-900 border border-gray-800 text-gray-300 hover:text-white font-bold px-4 py-2.5 rounded-xl hover:bg-gray-800 transition text-sm flex items-center gap-2 cursor-pointer disabled:opacity-50 font-sans"
+              className="btn-ghost text-xs"
               id="export-bracket-btn"
             >
-              Descargar Bracket 📸
+              <Icon name="download" size={15} />
+              Descargar Bracket
             </button>
             <button
               onClick={saveAll}
               disabled={saving}
-              className="bg-yellow-400 text-gray-950 font-display text-xl px-8 py-3 rounded-xl hover:bg-yellow-300 transition-all disabled:opacity-50 tracking-widest uppercase cursor-pointer"
+              className="btn-gold text-sm"
             >
               {saving ? 'Guardando...' : 'Guardar todo'}
             </button>
@@ -643,17 +647,18 @@ export default function BracketPage() {
         } />
 
         {/* Legend */}
-        <div className="bg-gray-900/45 border border-gray-850 rounded-3xl p-5 mb-8 text-xs text-gray-400 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center backdrop-blur-md font-sans">
-          <div className="flex flex-wrap gap-2.5 items-center">
-            <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Puntos por acierto:</span>
-            <span className="bg-gray-950 border border-gray-800 px-2 py-1 rounded-lg"><span className="text-blue-400 font-black">1 pt</span> · Octavos</span>
-            <span className="bg-gray-950 border border-gray-800 px-2 py-1 rounded-lg"><span className="text-purple-400 font-black">2 pts</span> · Cuartos</span>
-            <span className="bg-gray-950 border border-gray-800 px-2 py-1 rounded-lg"><span className="text-orange-400 font-black">4 pts</span> · Semis</span>
-            <span className="bg-gray-950 border border-gray-800 px-2 py-1 rounded-lg"><span className="text-yellow-450 font-black">6 pts</span> · Finalista</span>
-            <span className="bg-gray-950 border border-gray-800 px-2 py-1 rounded-lg"><span className="text-yellow-400 font-black">10 pts</span> · Campeón</span>
+        <div className="glass rounded-2xl p-4 md:p-5 mb-8 text-xs text-gray-400 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center font-sans fade-up-1">
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="font-condensed font-extrabold text-gray-500 uppercase tracking-[0.18em] text-[10px]">Puntos por acierto:</span>
+            <span className="chip"><span className="text-us">1 pt</span><span className="text-gray-500">· Octavos</span></span>
+            <span className="chip"><span className="text-mx">2 pts</span><span className="text-gray-500">· Cuartos</span></span>
+            <span className="chip"><span className="text-ca">4 pts</span><span className="text-gray-500">· Semis</span></span>
+            <span className="chip"><span className="text-gold">6 pts</span><span className="text-gray-500">· Finalista</span></span>
+            <span className="chip border-gold/30 bg-gold/10"><span className="text-gold">10 pts</span><span className="text-gold/70">· Campeón</span></span>
           </div>
-          <div className="text-yellow-400/80 font-bold text-[10px] uppercase tracking-wider">
-            ⚡ Haz click en un equipo para avanzarlo de ronda
+          <div className="text-gold/80 font-condensed font-extrabold text-[10px] uppercase tracking-wider flex items-center gap-1.5">
+            <Icon name="zap" size={13} className="text-gold flex-shrink-0" />
+            Haz click en un equipo para avanzarlo de ronda
           </div>
         </div>
 
@@ -662,17 +667,17 @@ export default function BracketPage() {
             <Spinner />
           </div>
         ) : (
-          <div className="overflow-x-auto pb-6 border border-gray-900/60 rounded-3xl bg-gray-950/40 backdrop-blur-sm shadow-2xl scrollbar-thin scrollbar-thumb-gray-800">
-            <div id="bracket-grid" className="inline-flex flex-col py-8 min-w-max px-6 bg-gray-950">
-              
+          <div className="overflow-x-auto pb-6 border border-white/8 rounded-3xl bg-ink-900/60 shadow-2xl fade-up-2">
+            <div id="bracket-grid" className="inline-flex flex-col py-8 min-w-max px-6 bg-ink-950">
+
               {/* Column Headers Row */}
-              <div className="flex items-center gap-0 border-b border-gray-900/40 pb-4 mb-8 text-center select-none font-barlow font-black text-xs uppercase tracking-widest text-gray-500">
+              <div className="flex items-center gap-0 border-b border-white/8 pb-4 mb-8 text-center select-none font-condensed font-black text-xs uppercase tracking-[0.18em] text-gray-500">
                 <div className="w-[160px]"><p>32avos</p></div>
                 <div className="w-[176px]"><p>16avos</p></div>
                 <div className="w-[176px]"><p>Cuartos</p></div>
                 <div className="w-[176px]"><p>Semis</p></div>
                 <div className="w-[160px]"><p>Final</p></div>
-                <div className="w-[176px]"><p className="text-yellow-400">Campeón</p></div>
+                <div className="w-[176px]"><p className="text-gold">Campeón</p></div>
                 <div className="w-[160px]"><p>Final</p></div>
                 <div className="w-[176px]"><p>Semis</p></div>
                 <div className="w-[176px]"><p>Cuartos</p></div>
@@ -861,23 +866,24 @@ export default function BracketPage() {
                 <div className="flex flex-col items-center justify-center w-[176px] h-[832px] flex-shrink-0">
                   <div className="flex items-center w-full">
                     {/* Champion Card */}
-                    <div className="flex-1 flex flex-col items-center p-4 bg-gradient-to-b from-yellow-500/5 to-transparent border border-yellow-500/20 rounded-3xl backdrop-blur-md shadow-2xl relative overflow-hidden group hover:border-yellow-400/40 transition-all duration-300">
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-450/5 rounded-full blur-xl" />
-                      
-                      <p className="text-yellow-400 text-[9px] font-black uppercase tracking-widest mb-3.5 select-none font-sans">Campeón del Mundo</p>
+                    <div className="flex-1 flex flex-col items-center p-4 pt-5 bg-gradient-to-b from-gold/10 via-panel to-panel border border-gold/30 rounded-3xl shadow-[0_0_45px_-12px_rgba(255,195,0,0.35)] relative overflow-hidden group hover:border-gold/50 transition-all duration-300">
+                      <div className="tri-stripe absolute top-0 left-0 right-0" aria-hidden="true" />
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-gold/10 rounded-full blur-2xl pointer-events-none" aria-hidden="true" />
+
+                      <p className="trophy-text font-display text-[10px] uppercase tracking-[0.2em] mb-3.5 select-none">Campeón del Mundo</p>
                       <Slot
                         team={champion}
-                        placeholder="CAMPEÓN 🏆"
+                        placeholder="CAMPEÓN"
                         size="lg"
                         correct={isCorrect('champion', 0, champion)}
                         wrong={isWrong('champion', 0, champion)}
                       />
                       {champion ? (
                         <div className="flex flex-col items-center mt-4 animate-bounce duration-1000">
-                          <p className="text-4xl no-invert filter drop-shadow-md">🏆</p>
+                          <p className="text-4xl no-invert filter drop-shadow-[0_0_12px_rgba(255,195,0,0.5)]">🏆</p>
                         </div>
                       ) : (
-                        <div className="h-10 w-10 flex items-center justify-center mt-4 text-gray-800 no-invert select-none opacity-40">
+                        <div className="h-10 w-10 flex items-center justify-center mt-4 text-2xl no-invert select-none opacity-25 grayscale">
                           🏆
                         </div>
                       )}

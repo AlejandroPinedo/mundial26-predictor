@@ -162,3 +162,6 @@ dist/
 *.jpg
 *.jpeg
 !frontend/public/**
+
+# Claude Code local config
+.claude/

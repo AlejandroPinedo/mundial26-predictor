@@ -5,6 +5,7 @@ import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
 import { getPointsBadge } from '../utils/points'
 import PageHeader from '../components/PageHeader'
+import Icon from '../components/Icon'
 
 type Prediction = {
   id: string
@@ -116,137 +117,146 @@ export default function ComparePage() {
   })
 
   return (
-    <div className="min-h-screen bg-[#020817] text-white">
-      <div className="max-w-6xl mx-auto p-4 md:p-8 font-sans">
-        
-        {/* Back navigation */}
-        <Link
-          to="/groups"
-          className="text-yellow-400 text-sm hover:underline mb-6 inline-block font-semibold"
-          id="back-to-groups-compare-btn"
-        >
-          ← Volver a Grupos
-        </Link>
+    <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 font-sans">
 
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <Spinner />
+      {/* Back navigation */}
+      <Link
+        to="/groups"
+        className="inline-flex items-center gap-1.5 text-gold text-xs font-condensed font-extrabold uppercase tracking-[0.15em] hover:underline mb-6"
+        id="back-to-groups-compare-btn"
+      >
+        <Icon name="chevronLeft" size={14} strokeWidth={2.6} />
+        Volver a Grupos
+      </Link>
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <Spinner />
+        </div>
+      ) : (
+        <>
+          <PageHeader title="COMPARADOR" subtitle={`Predicciones cara a cara vs ${username}`} icon="⚔️" />
+
+          {/* VS Hero: head to head */}
+          <div className="ticket-card mb-8 fade-up-1">
+            <span className="wm-26 -right-4 -bottom-10" aria-hidden="true">26</span>
+            <div className="relative z-10 p-5 md:p-7 pl-4 md:pl-7">
+
+              <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2 md:gap-6">
+                {/* My side (CA red) */}
+                <div className="text-center min-w-0">
+                  <p className="font-display text-2xl md:text-4xl text-ca uppercase leading-none truncate">Tú</p>
+                  <div className="mt-3">
+                    <span className="scoreboard inline-block px-3 py-1 rounded-lg text-xl md:text-2xl leading-none">
+                      {myTotalComparedPoints}
+                    </span>
+                    <span className="block mt-1.5 text-[9px] font-condensed font-extrabold uppercase tracking-[0.18em] text-gray-500">
+                      Tus puntos
+                    </span>
+                  </div>
+                </div>
+
+                {/* Center VS */}
+                <div className="text-center pt-1 md:pt-2">
+                  <span className="font-display text-lg md:text-2xl text-gray-600 select-none">VS</span>
+                </div>
+
+                {/* Other side (US blue) */}
+                <div className="text-center min-w-0">
+                  <p className="font-display text-2xl md:text-4xl text-us uppercase leading-none truncate">{username}</p>
+                  <div className="mt-3">
+                    <span className="scoreboard inline-block px-3 py-1 rounded-lg text-xl md:text-2xl leading-none">
+                      {otherTotalComparedPoints}
+                    </span>
+                    <span className="block mt-1.5 text-[9px] font-condensed font-extrabold uppercase tracking-[0.18em] text-gray-500">
+                      Puntos de {username}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pitch-divider mt-5 mb-4" />
+
+              {/* Head-to-head record */}
+              <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+                <span className="chip text-mx border-mx/25 bg-mx/10">{myWins} victorias directas</span>
+                <span className="chip text-gold border-gold/25 bg-gold/10">{ties} empates</span>
+                <span className="chip text-us border-us/25 bg-us/10">{otherWins} victorias de {username}</span>
+              </div>
+              <p className="text-center text-[10px] text-gray-500 mt-2.5 font-medium">
+                Acumulado en partidos disputados
+              </p>
+            </div>
           </div>
-        ) : (
-          <>
-            <PageHeader title="COMPARADOR" subtitle={`Predicciones cara a cara vs ${username}`} icon="⚔️" />
 
-            {/* Direct Comparison Stats Banner */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              
-              {/* My Score Card */}
-              <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 flex flex-col justify-between shadow-lg relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-2 h-full bg-yellow-400" />
-                <div>
-                  <span className="text-gray-500 uppercase font-bold text-[10px] tracking-wider block">Tus Puntos (Comparados)</span>
-                  <span className="text-yellow-400 font-black text-3xl font-barlow">{myTotalComparedPoints} pts</span>
-                </div>
-                <p className="text-[10px] text-gray-400 mt-2 font-medium">Acumulado en partidos disputados</p>
-              </div>
+          {/* Filter Tabs */}
+          <div className="flex gap-2 mb-6 flex-wrap fade-up-2">
+            {(
+              [
+                { code: 'all', label: 'Todos los partidos' },
+                { code: 'played', label: `Jugados (${played.length})` },
+                { code: 'pending', label: `Pendientes (${comparedMatches.length - played.length})` },
+              ] as const
+            ).map(({ code, label }) => (
+              <button
+                key={code}
+                onClick={() => setFilter(code)}
+                className={`px-4 py-2 rounded-xl text-[11px] font-condensed font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                  filter === code
+                    ? 'bg-gold text-ink-950 shadow-[0_4px_16px_-4px_rgba(255,195,0,0.5)]'
+                    : 'bg-panel border border-white/8 text-gray-400 hover:text-white hover:border-white/20'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
 
-              {/* Other Score Card */}
-              <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 flex flex-col justify-between shadow-lg relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-2 h-full bg-rose-500" />
-                <div>
-                  <span className="text-gray-500 uppercase font-bold text-[10px] tracking-wider block">Puntos de {username}</span>
-                  <span className="text-rose-500 font-black text-3xl font-barlow">{otherTotalComparedPoints} pts</span>
-                </div>
-                <p className="text-[10px] text-gray-400 mt-2 font-medium">Acumulado en partidos disputados</p>
-              </div>
+          {/* Matches List */}
+          {filteredMatches.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 fade-up-3">
+              {filteredMatches.map(m => {
+                const hasResult = m.homeScore !== null
+                const myPts = m.myPred?.points
+                const otherPts = m.otherPred?.points
 
-              {/* Direct Wins Card */}
-              <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 flex flex-col justify-between shadow-lg relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-2 h-full bg-green-500" />
-                <div>
-                  <span className="text-gray-500 uppercase font-bold text-[10px] tracking-wider block">Victorias Directas</span>
-                  <span className="text-green-500 font-black text-3xl font-barlow">{myWins}</span>
-                </div>
-                <p className="text-[10px] text-gray-400 mt-2 font-medium">Partidos donde tuviste mejor marcador</p>
-              </div>
+                // Determine winner of this match comparison
+                let outcome: 'win' | 'lose' | 'tie' | 'none' = 'none'
+                if (hasResult) {
+                  const myPointsVal = myPts ?? 0
+                  const otherPointsVal = otherPts ?? 0
+                  if (myPointsVal > otherPointsVal) outcome = 'win'
+                  else if (otherPointsVal > myPointsVal) outcome = 'lose'
+                  else outcome = 'tie'
+                }
 
-              {/* Ratio / Outcome Card */}
-              <div className="bg-gray-900 border border-gray-800 rounded-3xl p-5 flex flex-col justify-between shadow-lg relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-2 h-full bg-blue-500" />
-                <div>
-                  <span className="text-gray-500 uppercase font-bold text-[10px] tracking-wider block">Victorias de {username} / Empates</span>
-                  <span className="text-blue-500 font-black text-3xl font-barlow">
-                    {otherWins} / <span className="text-gray-400">{ties}</span>
-                  </span>
-                </div>
-                <p className="text-[10px] text-gray-400 mt-2 font-medium">Partidos donde {username} fue mejor / empataron</p>
-              </div>
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="flex gap-2 mb-6">
-              {(
-                [
-                  { code: 'all', label: 'Todos los partidos' },
-                  { code: 'played', label: `Jugados (${played.length})` },
-                  { code: 'pending', label: `Pendientes (${comparedMatches.length - played.length})` },
-                ] as const
-              ).map(({ code, label }) => (
-                <button
-                  key={code}
-                  onClick={() => setFilter(code)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
-                    filter === code
-                      ? 'bg-yellow-400 text-gray-950 shadow-md shadow-yellow-500/10'
-                      : 'bg-gray-900 border border-gray-800 text-gray-400 hover:text-white hover:border-gray-700'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* Matches List */}
-            {filteredMatches.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredMatches.map(m => {
-                  const hasResult = m.homeScore !== null
-                  const myPts = m.myPred?.points
-                  const otherPts = m.otherPred?.points
-
-                  // Determine winner of this match comparison
-                  let outcome: 'win' | 'lose' | 'tie' | 'none' = 'none'
-                  if (hasResult) {
-                    const myPointsVal = myPts ?? 0
-                    const otherPointsVal = otherPts ?? 0
-                    if (myPointsVal > otherPointsVal) outcome = 'win'
-                    else if (otherPointsVal > myPointsVal) outcome = 'lose'
-                    else outcome = 'tie'
-                  }
-
-                  return (
-                    <div
-                      key={m.matchId}
-                      className={`bg-gray-900 border rounded-3xl p-5 flex flex-col gap-4 relative overflow-hidden transition-all duration-300 ${
-                        outcome === 'win'
-                          ? 'border-green-500/40 hover:border-green-500/60 shadow-lg shadow-green-500/5'
-                          : outcome === 'lose'
-                          ? 'border-rose-500/40 hover:border-rose-500/60 shadow-lg shadow-rose-500/5'
-                          : outcome === 'tie'
-                          ? 'border-yellow-400/40 hover:border-yellow-400/60'
-                          : 'border-gray-800 hover:border-gray-700'
-                      }`}
-                    >
-                      {/* Top metadata */}
-                      <div className="flex justify-between items-start text-[10px] text-gray-500 font-bold uppercase tracking-wider">
-                        <div className="flex flex-col gap-0.5">
-                          <span>{m.stage}</span>
-                          {m.stadiumName && (
-                            <span className="text-gray-600 flex items-center gap-1 font-medium select-none normal-case">
-                              🏟️ {m.stadiumName}
-                            </span>
-                          )}
-                        </div>
-                        <span>
+                return (
+                  <div
+                    key={m.matchId}
+                    className={`bg-panel border rounded-2xl p-5 flex flex-col gap-4 relative overflow-hidden transition-all duration-300 ${
+                      outcome === 'win'
+                        ? 'border-mx/35 hover:border-mx/55'
+                        : outcome === 'lose'
+                        ? 'border-ca/35 hover:border-ca/55'
+                        : outcome === 'tie'
+                        ? 'border-gold/35 hover:border-gold/55'
+                        : 'border-white/8 hover:border-white/15'
+                    }`}
+                  >
+                    {/* Top metadata */}
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <span className="chip text-us border-us/20 bg-us/[0.08] self-start">{m.stage}</span>
+                        {m.stadiumName && (
+                          <span className="text-[10px] text-gray-500 flex items-center gap-1 font-medium">
+                            <Icon name="stadium" size={11} />
+                            {m.stadiumName}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                        <span className="text-[10px] text-gray-500 font-condensed font-extrabold uppercase tracking-wider flex items-center gap-1">
+                          <Icon name="clock" size={11} />
                           {new Date(m.matchDate).toLocaleDateString('es', {
                             day: 'numeric',
                             month: 'short',
@@ -254,140 +264,142 @@ export default function ComparePage() {
                             minute: '2-digit',
                           })}
                         </span>
+                        {hasResult && (
+                          <>
+                            {outcome === 'win' && (
+                              <span className="chip text-mx border-mx/30 bg-mx/10">¡Ganaste!</span>
+                            )}
+                            {outcome === 'lose' && (
+                              <span className="chip text-ca border-ca/30 bg-ca/10">Perdiste</span>
+                            )}
+                            {outcome === 'tie' && (
+                              <span className="chip text-gold border-gold/30 bg-gold/10">Empate</span>
+                            )}
+                          </>
+                        )}
                       </div>
-
-                      {/* Main Teams Match Score */}
-                      <div className="flex justify-between items-center font-barlow font-black text-lg tracking-wide py-1">
-                        <div className="flex items-center gap-2 flex-1">
-                          <span className="text-2xl no-invert">{getFlag(m.homeTeam)}</span>
-                          <span className="truncate uppercase">{m.homeTeam}</span>
-                        </div>
-
-                        <div className="flex items-center justify-center bg-gray-950/80 px-4 py-1.5 rounded-2xl border border-gray-800 min-w-20 text-center font-sans text-sm">
-                          {hasResult ? (
-                            <span className="text-white font-bold">
-                              {m.homeScore} - {m.awayScore}
-                            </span>
-                          ) : (
-                            <span className="text-gray-500 text-xs uppercase font-bold tracking-widest">VS</span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-2 flex-1 justify-end">
-                          <span className="truncate uppercase">{m.awayTeam}</span>
-                          <span className="text-2xl no-invert">{getFlag(m.awayTeam)}</span>
-                        </div>
-                      </div>
-
-                      {/* Side-by-side Predictions */}
-                      <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-800/60">
-                        {/* My Prediction */}
-                        <div
-                          className={`p-3 rounded-2xl border ${
-                            outcome === 'win'
-                              ? 'bg-green-500/5 border-green-500/20'
-                              : outcome === 'tie'
-                              ? 'bg-yellow-400/5 border-yellow-400/10'
-                              : 'bg-gray-950/40 border-gray-800/80'
-                          }`}
-                        >
-                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Tu Predicción</span>
-                          {m.myPred ? (
-                            <div className="flex flex-col gap-1">
-                              <span className="text-sm font-black text-yellow-400 font-barlow">
-                                {m.myPred.home} - {m.myPred.away}
-                              </span>
-                              {hasResult && (
-                                <span
-                                  className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full inline-block self-start ${
-                                    myPts === 3
-                                      ? 'bg-green-700/20 text-green-400 border border-green-700/40'
-                                      : myPts === 1
-                                      ? 'bg-blue-700/20 text-blue-400 border border-blue-700/40'
-                                      : 'bg-gray-800 text-gray-400 border border-gray-700'
-                                  }`}
-                                >
-                                  {myPts} pts — {getPointsBadge(myPts ?? 0)}
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-600 font-bold italic">Sin pred. ⚠️</span>
-                          )}
-                        </div>
-
-                        {/* Other User Prediction */}
-                        <div
-                          className={`p-3 rounded-2xl border ${
-                            outcome === 'lose'
-                              ? 'bg-rose-500/5 border-rose-500/20'
-                              : outcome === 'tie'
-                              ? 'bg-yellow-400/5 border-yellow-400/10'
-                              : 'bg-gray-950/40 border-gray-800/80'
-                          }`}
-                        >
-                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">
-                            Pred. de {username}
-                          </span>
-                          {m.otherPred ? (
-                            <div className="flex flex-col gap-1">
-                              <span className="text-sm font-black text-rose-400 font-barlow">
-                                {m.otherPred.home} - {m.otherPred.away}
-                              </span>
-                              {hasResult && (
-                                <span
-                                  className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full inline-block self-start ${
-                                    otherPts === 3
-                                      ? 'bg-green-700/20 text-green-400 border border-green-700/40'
-                                      : otherPts === 1
-                                      ? 'bg-blue-700/20 text-blue-400 border border-blue-700/40'
-                                      : 'bg-gray-800 text-gray-400 border border-gray-700'
-                                  }`}
-                                >
-                                  {otherPts} pts — {getPointsBadge(otherPts ?? 0)}
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-600 font-bold italic">Sin pred. ⚠️</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Direct winner badge overlay */}
-                      {hasResult && (
-                        <div className="absolute right-4 top-4">
-                          {outcome === 'win' && (
-                            <span className="text-xs font-black uppercase tracking-widest text-green-400 bg-green-500/10 border border-green-500/25 px-2 py-0.5 rounded-full">
-                              ¡Ganaste! 🏆
-                            </span>
-                          )}
-                          {outcome === 'lose' && (
-                            <span className="text-xs font-black uppercase tracking-widest text-rose-400 bg-rose-500/10 border border-rose-500/25 px-2 py-0.5 rounded-full">
-                              Perdiste ❌
-                            </span>
-                          )}
-                          {outcome === 'tie' && (
-                            <span className="text-xs font-black uppercase tracking-widest text-yellow-400 bg-yellow-400/10 border border-yellow-400/25 px-2 py-0.5 rounded-full">
-                              Empate 🤝
-                            </span>
-                          )}
-                        </div>
-                      )}
                     </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-20 bg-gray-900 border border-gray-800 rounded-3xl">
-                <span className="text-5xl block mb-3 no-invert">🥅</span>
-                <h3 className="text-lg font-bold text-white mb-1">No hay partidos en esta categoría</h3>
-                <p className="text-gray-400 text-sm">Prueba seleccionando una pestaña de filtro diferente.</p>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+
+                    {/* Main Teams Match Score */}
+                    <div className="flex justify-between items-center gap-2 font-condensed font-extrabold text-base md:text-lg tracking-wide py-1">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-2xl no-invert">{getFlag(m.homeTeam)}</span>
+                        <span className="truncate uppercase text-white">{m.homeTeam}</span>
+                      </div>
+
+                      <div className="flex-shrink-0">
+                        {hasResult ? (
+                          <span className="scoreboard px-3 py-1 rounded-lg text-sm md:text-base leading-none">
+                            {m.homeScore} - {m.awayScore}
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-gray-500 text-[10px] font-condensed font-extrabold uppercase tracking-[0.25em]">
+                            VS
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
+                        <span className="truncate uppercase text-white">{m.awayTeam}</span>
+                        <span className="text-2xl no-invert">{getFlag(m.awayTeam)}</span>
+                      </div>
+                    </div>
+
+                    {/* Side-by-side Predictions */}
+                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/5">
+                      {/* My Prediction */}
+                      <div
+                        className={`p-3 rounded-xl border ${
+                          outcome === 'win'
+                            ? 'bg-mx/[0.05] border-mx/20'
+                            : outcome === 'tie'
+                            ? 'bg-gold/[0.04] border-gold/15'
+                            : 'bg-ink-950/60 border-white/8'
+                        }`}
+                      >
+                        <span className="text-[9px] text-ca font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1.5">
+                          Tu Predicción
+                        </span>
+                        {m.myPred ? (
+                          <div className="flex flex-col gap-1.5">
+                            <span className="font-display text-base text-white">
+                              {m.myPred.home} - {m.myPred.away}
+                            </span>
+                            {hasResult && (
+                              <span
+                                className={`chip self-start ${
+                                  myPts === 3
+                                    ? 'text-gold border-gold/30 bg-gold/10'
+                                    : myPts === 1
+                                    ? 'text-mx border-mx/30 bg-mx/10'
+                                    : 'text-gray-500'
+                                }`}
+                              >
+                                {myPts} pts — {getPointsBadge(myPts ?? 0)}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-600 font-bold italic">
+                            Sin pred. <span className="no-invert">⚠️</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Other User Prediction */}
+                      <div
+                        className={`p-3 rounded-xl border ${
+                          outcome === 'lose'
+                            ? 'bg-ca/[0.05] border-ca/20'
+                            : outcome === 'tie'
+                            ? 'bg-gold/[0.04] border-gold/15'
+                            : 'bg-ink-950/60 border-white/8'
+                        }`}
+                      >
+                        <span className="text-[9px] text-us font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1.5 truncate">
+                          Pred. de {username}
+                        </span>
+                        {m.otherPred ? (
+                          <div className="flex flex-col gap-1.5">
+                            <span className="font-display text-base text-white">
+                              {m.otherPred.home} - {m.otherPred.away}
+                            </span>
+                            {hasResult && (
+                              <span
+                                className={`chip self-start ${
+                                  otherPts === 3
+                                    ? 'text-gold border-gold/30 bg-gold/10'
+                                    : otherPts === 1
+                                    ? 'text-mx border-mx/30 bg-mx/10'
+                                    : 'text-gray-500'
+                                }`}
+                              >
+                                {otherPts} pts — {getPointsBadge(otherPts ?? 0)}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-600 font-bold italic">
+                            Sin pred. <span className="no-invert">⚠️</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-20 bg-panel border border-white/8 rounded-2xl fade-up-2">
+              <Icon name="target" size={44} className="mx-auto text-gray-600 mb-4" />
+              <h3 className="text-white font-condensed font-extrabold uppercase tracking-wide text-base mb-1">
+                No hay partidos en esta categoría
+              </h3>
+              <p className="text-gray-400 text-sm">Prueba seleccionando una pestaña de filtro diferente.</p>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }

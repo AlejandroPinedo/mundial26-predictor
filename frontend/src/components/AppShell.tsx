@@ -31,9 +31,9 @@ export default function AppShell({ children }: Props) {
   }, [token])
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-ink-950 text-white">
       <Sidebar unpredicted={unpredicted} />
-      <main className="md:ml-56 pb-16 md:pb-0">
+      <main className="md:ml-56 pb-16 md:pb-0 relative">
         {children}
       </main>
       <BottomNav unpredicted={unpredicted} />
