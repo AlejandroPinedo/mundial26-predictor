@@ -4,8 +4,8 @@
   "description": "Predice los marcadores del Mundial 2026",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#111827",
-  "theme_color": "#111827",
+  "background_color": "#07060E",
+  "theme_color": "#07060E",
   "icons": [
     {
       "src": "/favicon.svg",

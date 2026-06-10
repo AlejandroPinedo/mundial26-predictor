@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Skeleton from '../components/Skeleton'
+import Icon from '../components/Icon'
 import { useAuth } from '../context/AuthContext'
 import { getFlag } from '../utils/flags'
 
@@ -65,181 +66,206 @@ export default function HomePage() {
   // Remove unused Spinner import - using Skeleton instead
 
   return (
-    <div className="min-h-screen bg-[#020817] text-white font-sans">
-      <div className="max-w-7xl mx-auto p-4 md:p-8">
+    <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
 
-        {/* Hero — Stadium scoreboard style */}
-        <div className="relative overflow-hidden rounded-2xl mb-6 select-none"
-          style={{ background: 'linear-gradient(135deg, #0a0f1a 0%, #07090f 100%)', border: '1px solid rgba(250,204,21,0.12)' }}>
-          {/* Top gold stripe */}
-          <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(90deg, #facc15, #f97316, #facc15)' }} />
-          {/* Ambient glow */}
-          <div className="absolute top-0 right-0 w-96 h-96 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse, rgba(250,204,21,0.06) 0%, transparent 70%)' }} />
+      {/* ── Hero: estado del torneo + cuenta regresiva ─────────── */}
+      <section className="relative overflow-hidden rounded-2xl bg-panel border border-white/8 mb-6 fade-up select-none">
+        <div className="tri-stripe" />
+        <span className="wm-26 -right-4 -bottom-12" aria-hidden="true">26</span>
 
-          <div className="relative p-6 md:p-10">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="w-2 h-2 rounded-full bg-green-400 live-dot" />
-              <span className="text-green-400 text-[10px] font-bold uppercase tracking-[0.2em]">En curso · FIFA World Cup 2026</span>
-            </div>
-
-            <h1 className="font-display text-5xl md:text-7xl text-white leading-none uppercase">{user?.username}</h1>
-            <p className="text-gray-500 text-sm mb-6">Tu zona de predicciones del Mundial 2026</p>
-
-            {started ? (
-              <div className="flex items-center gap-3 mb-6 px-4 py-2.5 rounded-xl w-fit"
-                style={{ background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.2)' }}>
-                <span className="w-2 h-2 rounded-full bg-yellow-400 live-dot" />
-                <span className="text-yellow-400 font-bold text-sm uppercase tracking-wider">🏆 Torneo en curso</span>
-              </div>
-            ) : (
-              <div className="flex gap-3 mb-6">
-                {[{ v: days, l: 'días' }, { v: hours, l: 'hrs' }, { v: minutes, l: 'min' }, { v: seconds, l: 'seg' }].map(({ v, l }) => (
-                  <div key={l} className="scoreboard scanlines px-4 py-3 rounded-xl text-center min-w-[60px] relative">
-                    <div className="text-2xl tabular-nums leading-none">{String(v).padStart(2, '0')}</div>
-                    <div className="text-yellow-400/50 text-[9px] uppercase tracking-widest mt-1 font-sans">{l}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-3">
-              <Link to="/matches" className="font-display text-lg px-6 py-2.5 rounded-xl tracking-wider transition-all cursor-pointer"
-                style={{ background: '#facc15', color: '#030712' }}>
-                VER PARTIDOS →
-              </Link>
-              <Link to="/bracket" className="font-display text-lg px-6 py-2.5 rounded-xl tracking-wider transition-all cursor-pointer text-gray-300 hover:text-white"
-                style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)' }}>
-                MI BRACKET
-              </Link>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText('https://mundial26-predictor.vercel.app')
-                  toast.success('Link copiado — ¡compártelo!')
-                }}
-                className="border border-gray-800 text-gray-400 font-bold px-6 py-3 rounded-2xl hover:border-yellow-400/30 hover:text-yellow-400 transition-all bg-gray-900/30 text-sm cursor-pointer flex items-center gap-2">
-                🔗 Invitar amigos
-              </button>
-            </div>
+        <div className="relative z-10 p-6 md:p-10">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-mx live-dot flex-shrink-0" />
+            <span className="text-mx text-[10px] font-condensed font-extrabold uppercase tracking-[0.22em]">
+              En curso · FIFA World Cup 2026
+            </span>
           </div>
-        </div>
 
-        {/* Quick Stats — scoreboard style */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          {[
-            { value: '48', label: 'Equipos', to: '/teams', color: 'text-yellow-400' },
-            { value: '12', label: 'Grupos', to: '/matches', color: 'text-green-400' },
-            { value: '104', label: 'Partidos', to: '/matches', color: 'text-blue-400' },
-            { value: '16', label: 'Estadios', to: '/stadiums', color: 'text-orange-400' },
-          ].map(stat => (
-            <Link key={stat.label} to={stat.to}
-              className="ticket-card rounded-xl p-4 text-center hover:-translate-y-0.5 transition-all">
-              <div className={`font-display text-5xl leading-none ${stat.color}`}>{stat.value}</div>
-              <div className="text-gray-600 text-[10px] uppercase tracking-widest mt-1">{stat.label}</div>
-            </Link>
-          ))}
-        </div>
+          <h1 className="font-display text-5xl md:text-7xl text-white leading-none uppercase tracking-tight">
+            {user?.username}
+          </h1>
+          <p className="text-gray-500 text-sm mt-2 mb-7 font-sans">Tu zona de predicciones del Mundial 2026</p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* My Progress */}
-          {stats && (
-            <div className="bg-gray-900/50 border border-gray-800/80 rounded-3xl p-6 shadow-md">
-              <h2 className="font-barlow font-black text-base text-yellow-400/90 uppercase tracking-wider mb-5 flex items-center gap-2">
-                📈 Tu Rendimiento
-              </h2>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { v: stats.total_points, l: 'Puntos', c: 'text-yellow-400' },
-                  { v: stats.total_predictions, l: 'Predicciones', c: 'text-white' },
-                  { v: myRank > 0 ? `#${myRank}` : '--', l: 'Posición Global', c: 'text-emerald-400' },
-                  { v: `${stats.total_predictions ? stats.total_points : 0}`, l: 'Total Acumulado', c: 'text-gray-400' },
-                ].map(({ v, l, c }) => (
-                  <div key={l} className="bg-gray-950/40 border border-gray-850/60 rounded-2xl p-4 text-center">
-                    <div className={`text-2xl font-barlow font-black leading-none mb-1 ${c}`}>{v}</div>
-                    <div className="text-gray-500 text-[10px] uppercase font-bold tracking-wider">{l}</div>
+          {started ? (
+            <div className="flex items-center gap-3 mb-7 px-4 py-2.5 rounded-xl w-fit bg-gold/10 border border-gold/25">
+              <span className="w-2 h-2 rounded-full bg-gold live-dot flex-shrink-0" />
+              <span className="text-gold font-condensed font-extrabold text-sm uppercase tracking-wider">
+                <span className="no-invert">🏆</span> Torneo en curso
+              </span>
+            </div>
+          ) : (
+            <div className="mb-7">
+              <p className="text-gray-600 text-[10px] font-condensed font-extrabold uppercase tracking-[0.22em] mb-2">
+                Cuenta regresiva al pitazo inicial
+              </p>
+              <div className="flex flex-wrap gap-2 md:gap-3">
+                {[{ v: days, l: 'días' }, { v: hours, l: 'hrs' }, { v: minutes, l: 'min' }, { v: seconds, l: 'seg' }].map(({ v, l }) => (
+                  <div key={l} className="scoreboard px-4 py-3 rounded-xl text-center min-w-[64px] border border-gold/15">
+                    <div className="text-3xl md:text-4xl tabular-nums leading-none">{String(v).padStart(2, '0')}</div>
+                    <div className="text-gold/50 text-[9px] font-condensed font-extrabold uppercase tracking-[0.2em] mt-1.5">{l}</div>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Top 5 ranking */}
-          <div className="ticket-card rounded-2xl overflow-hidden p-6 flex flex-col justify-between">
-            <div>
-              <div className="flex justify-between items-center mb-5">
-                <h2 className="font-barlow font-black text-base text-yellow-400/90 uppercase tracking-wider flex items-center gap-2">
-                  🏆 Top Global
-                </h2>
-                <Link to="/leaderboard" className="text-yellow-400 text-xs font-bold hover:underline">Ver todo →</Link>
-              </div>
-              {loading ? (
-                <div className="py-2"><Skeleton rows={5} /></div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {leaderboard.map((e, i) => (
-                    <div key={e.username}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-2xl border border-transparent transition-all ${
-                        e.username === user?.username ? 'bg-yellow-400/5 border-yellow-400/10' : ''
-                      }`}
-                    >
-                      <span className="text-sm w-5 text-center font-bold">
-                        {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : <span className="text-gray-650">{i + 1}</span>}
-                      </span>
-                      <div className="w-7 h-7 rounded-xl bg-gray-850 border border-gray-800 flex items-center justify-center text-[10px] font-black uppercase text-gray-400">
-                        {e.username[0]}
-                      </div>
-                      <span className="flex-1 text-sm font-bold text-white truncate">
-                        {e.username}
-                        {e.username === user?.username && (
-                          <span className="text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-400 px-1.5 py-0.5 rounded-full ml-1.5">tú</span>
-                        )}
-                      </span>
-                      <span className="font-display text-lg text-yellow-400">{e.total_points} pts</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          <div className="flex flex-wrap gap-3">
+            <Link to="/matches" className="btn-gold text-sm">
+              Ver partidos
+              <Icon name="chevronRight" size={15} />
+            </Link>
+            <Link to="/bracket" className="btn-ghost text-sm">
+              <Icon name="trophy" size={15} />
+              Mi bracket
+            </Link>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText('https://mundial26-predictor.vercel.app')
+                toast.success('Link copiado — ¡compártelo!')
+              }}
+              className="btn-ghost text-sm">
+              <Icon name="share" size={15} />
+              Invitar amigos
+            </button>
           </div>
         </div>
+      </section>
 
-        {/* Upcoming matches */}
-        {nextMatches.length > 0 && (
-          <div className="bg-gray-900/50 border border-gray-800/80 rounded-3xl p-6 shadow-md">
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="font-barlow font-black text-base text-yellow-400/90 uppercase tracking-wider flex items-center gap-2">
-                🔥 Siguientes Partidos
+      {/* ── Stat tiles del torneo ──────────────────────────────── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 fade-up-1">
+        {[
+          { value: '48', label: 'Equipos', to: '/teams', color: 'text-gold' },
+          { value: '12', label: 'Grupos', to: '/matches', color: 'text-mx' },
+          { value: '104', label: 'Partidos', to: '/matches', color: 'text-us' },
+          { value: '16', label: 'Estadios', to: '/stadiums', color: 'text-ca' },
+        ].map(stat => (
+          <Link key={stat.label} to={stat.to}
+            className="bg-panel border border-white/8 rounded-2xl p-4 text-center hover-lift">
+            <div className={`font-display text-4xl md:text-5xl leading-none ${stat.color}`}>{stat.value}</div>
+            <div className="text-gray-500 text-[10px] font-condensed font-extrabold uppercase tracking-[0.18em] mt-2">{stat.label}</div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6">
+        {/* ── Resumen de perfil: tu rendimiento ────────────────── */}
+        {stats && (
+          <section className="bg-panel border border-white/8 rounded-2xl p-6 fade-up-2">
+            <div className="flex items-center gap-2 mb-5">
+              <Icon name="trending" size={16} className="text-gold" />
+              <h2 className="font-condensed font-extrabold text-xs text-gray-300 uppercase tracking-[0.18em]">
+                Tu Rendimiento
               </h2>
-              <Link to="/matches" className="text-yellow-400 text-xs font-bold hover:underline">Ver todos →</Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {nextMatches.map(m => (
-                <Link key={m.id} to="/matches"
-                  className="ticket-card rounded-xl p-4 flex-shrink-0 hover-lift flex flex-col justify-between"
-                >
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="text-center flex-1 min-w-0">
-                      <div className="text-2xl mb-1 no-invert">{getFlag(m.home_team)}</div>
-                      <div className="text-xs font-bold truncate text-white uppercase">{m.home_team}</div>
-                    </div>
-                    <div className="text-gray-600 text-xs px-3 font-semibold select-none">VS</div>
-                    <div className="text-center flex-1 min-w-0">
-                      <div className="text-2xl mb-1 no-invert">{getFlag(m.away_team)}</div>
-                      <div className="text-xs font-bold truncate text-white uppercase">{m.away_team}</div>
-                    </div>
-                  </div>
-                  <div className="text-center border-t border-gray-900/60 pt-3 flex flex-col gap-0.5 select-none">
-                    <span className="text-gray-500 text-[10px] font-bold">
-                      {new Date(m.match_date).toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    <span className="text-yellow-400/70 text-[9px] font-black uppercase tracking-wider">Grupo {m.group_name}</span>
-                  </div>
-                </Link>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { v: stats.total_points, l: 'Puntos', c: 'text-gold' },
+                { v: stats.total_predictions, l: 'Predicciones', c: 'text-white' },
+                { v: myRank > 0 ? `#${myRank}` : '--', l: 'Posición Global', c: 'text-mx' },
+                { v: `${stats.total_predictions ? stats.total_points : 0}`, l: 'Total Acumulado', c: 'text-gray-400' },
+              ].map(({ v, l, c }) => (
+                <div key={l} className="bg-ink-900 border border-white/6 rounded-xl p-4 text-center">
+                  <div className={`font-display text-2xl md:text-3xl leading-none mb-1.5 ${c}`}>{v}</div>
+                  <div className="text-gray-500 text-[10px] font-condensed font-extrabold uppercase tracking-[0.14em]">{l}</div>
+                </div>
               ))}
             </div>
-          </div>
+          </section>
         )}
+
+        {/* ── Top 5 ranking global ─────────────────────────────── */}
+        <section className="relative overflow-hidden bg-panel border border-white/8 rounded-2xl p-6 fade-up-3 flex flex-col">
+          <div className="flex justify-between items-center mb-5">
+            <div className="flex items-center gap-2">
+              <Icon name="trophy" size={16} className="text-gold" />
+              <h2 className="font-condensed font-extrabold text-xs text-gray-300 uppercase tracking-[0.18em]">
+                Top Global
+              </h2>
+            </div>
+            <Link to="/leaderboard"
+              className="inline-flex items-center gap-1 text-gold text-[11px] font-condensed font-extrabold uppercase tracking-[0.12em] hover:underline">
+              Ver todo
+              <Icon name="chevronRight" size={13} />
+            </Link>
+          </div>
+          {loading ? (
+            <div className="py-2"><Skeleton rows={5} /></div>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {leaderboard.map((e, i) => (
+                <div key={e.username}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-xl border transition-all ${
+                    e.username === user?.username ? 'bg-gold/5 border-gold/20' : 'border-transparent'
+                  }`}
+                >
+                  <span className="w-6 text-center flex-shrink-0">
+                    {i < 3
+                      ? <span className="no-invert text-base">{i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</span>
+                      : <span className="font-display text-sm text-gray-600">{i + 1}</span>}
+                  </span>
+                  <div className="w-7 h-7 rounded-lg bg-panel-2 border border-white/8 flex items-center justify-center text-[10px] font-condensed font-extrabold uppercase text-gray-400 flex-shrink-0">
+                    {e.username[0]}
+                  </div>
+                  <span className="flex-1 text-sm font-semibold text-white truncate">
+                    {e.username}
+                    {e.username === user?.username && (
+                      <span className="chip text-gold border-gold/30 bg-gold/10 ml-1.5">tú</span>
+                    )}
+                  </span>
+                  <span className="font-display text-base text-gold whitespace-nowrap">{e.total_points} pts</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
+
+      {/* ── Siguientes partidos (tickets) ──────────────────────── */}
+      {nextMatches.length > 0 && (
+        <section className="fade-up-4">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <Icon name="flame" size={16} className="text-ca" />
+              <h2 className="font-condensed font-extrabold text-xs text-gray-300 uppercase tracking-[0.18em]">
+                Siguientes Partidos
+              </h2>
+            </div>
+            <Link to="/matches"
+              className="inline-flex items-center gap-1 text-gold text-[11px] font-condensed font-extrabold uppercase tracking-[0.12em] hover:underline">
+              Ver todos
+              <Icon name="chevronRight" size={13} />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {nextMatches.map(m => (
+              <Link key={m.id} to="/matches"
+                className="ticket-card hover-lift p-4 pr-7 flex flex-col justify-between"
+              >
+                <div className="flex justify-center mb-3">
+                  <span className="chip text-us border-us/30 bg-us/10">Grupo {m.group_name}</span>
+                </div>
+                <div className="flex justify-between items-center mb-4">
+                  <div className="text-center flex-1 min-w-0">
+                    <div className="text-2xl mb-1 no-invert">{getFlag(m.home_team)}</div>
+                    <div className="text-[11px] font-condensed font-bold truncate text-white uppercase tracking-wide">{m.home_team}</div>
+                  </div>
+                  <div className="font-display text-xs text-gray-600 px-3 select-none">VS</div>
+                  <div className="text-center flex-1 min-w-0">
+                    <div className="text-2xl mb-1 no-invert">{getFlag(m.away_team)}</div>
+                    <div className="text-[11px] font-condensed font-bold truncate text-white uppercase tracking-wide">{m.away_team}</div>
+                  </div>
+                </div>
+                <div className="border-t border-white/6 pt-2.5 select-none">
+                  <span className="flex items-center justify-center gap-1.5 text-gray-500 text-[10px] font-condensed font-bold uppercase tracking-wide">
+                    <Icon name="clock" size={11} />
+                    {new Date(m.match_date).toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }
