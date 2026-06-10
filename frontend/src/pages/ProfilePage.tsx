@@ -14,12 +14,16 @@ type Stats = {
   played: string
 }
 
+const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/
+
 export default function ProfilePage() {
-  const { user } = useAuth()
+  const { user, login } = useAuth()
   const [stats, setStats] = useState<Stats | null>(null)
   const [rank, setRank] = useState<string | null>(null)
   const [totalPlayers, setTotalPlayers] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [nameForm, setNameForm] = useState(user?.username ?? '')
+  const [changingName, setChangingName] = useState(false)
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
   const [changingPw, setChangingPw] = useState(false)
 
@@ -32,6 +36,28 @@ export default function ProfilePage() {
   const accuracy = stats && Number(stats.played) > 0
     ? Math.round((Number(stats.correct_results) / Number(stats.played)) * 100)
     : 0
+
+  async function handleChangeUsername(e: React.FormEvent) {
+    e.preventDefault()
+    const trimmed = nameForm.trim()
+    if (trimmed === user?.username) { toast.error('Ese ya es tu nombre de usuario'); return }
+    if (!USERNAME_REGEX.test(trimmed)) {
+      toast.error('De 3 a 20 caracteres: solo letras, números y guion bajo')
+      return
+    }
+    setChangingName(true)
+    try {
+      const res = await apiFetch('/auth/change-username', {
+        method: 'POST',
+        body: JSON.stringify({ newUsername: trimmed }),
+      })
+      login(res.token, res.user)
+      setNameForm(res.user.username)
+      toast.success('Nombre de usuario actualizado')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error')
+    } finally { setChangingName(false) }
+  }
 
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault()
@@ -119,8 +145,32 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Cambiar nombre de usuario */}
+      <div className="glass rounded-2xl p-6 fade-up-2 mb-6">
+        <div className="flex items-center gap-3 mb-1">
+          <span className="w-9 h-9 rounded-xl bg-mx/10 border border-mx/25 flex items-center justify-center text-mx flex-shrink-0">
+            <Icon name="user" size={16} />
+          </span>
+          <h2 className="font-display text-2xl text-white uppercase tracking-wide leading-none">Nombre de usuario</h2>
+        </div>
+        <p className="text-gray-500 text-xs mb-5 mt-2">
+          ¿Entraste con Google o GitHub? Se te asignó un nombre automático — cámbialo aquí.
+          Es el nombre que aparece en el ranking, los grupos y el chat. De 3 a 20 caracteres: letras, números y guion bajo.
+        </p>
+        <form onSubmit={handleChangeUsername} className="flex flex-col sm:flex-row gap-3">
+          <input type="text" placeholder="Tu nuevo nombre de usuario"
+            maxLength={20} autoComplete="username"
+            className="flex-1 bg-white/[0.04] border border-white/10 focus:border-gold/40 text-white placeholder:text-gray-600 px-4 py-2.5 rounded-xl text-sm outline-none transition"
+            value={nameForm}
+            onChange={e => setNameForm(e.target.value)} />
+          <button type="submit" disabled={changingName || nameForm.trim() === user?.username} className="btn-gold text-sm">
+            {changingName ? 'Guardando...' : 'Cambiar nombre'}
+          </button>
+        </form>
+      </div>
+
       {/* Cambiar contraseña */}
-      <div className="glass rounded-2xl p-6 fade-up-2">
+      <div className="glass rounded-2xl p-6 fade-up-3">
         <div className="flex items-center gap-3 mb-1">
           <span className="w-9 h-9 rounded-xl bg-gold/10 border border-gold/25 flex items-center justify-center text-gold flex-shrink-0">
             <Icon name="lock" size={16} />
