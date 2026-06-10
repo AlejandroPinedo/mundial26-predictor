@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PageHeader from '../components/PageHeader'
 
 interface Stadium {
   name: string
@@ -244,18 +245,13 @@ export default function StadiumsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#020817] text-white">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
+        <PageHeader title="ESTADIOS" subtitle="16 sedes · USA · México · Canadá 2026" icon="🏟️" />
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-barlow font-black uppercase tracking-wide text-yellow-400">
-              Estadios 🏟️
-            </h1>
-            <p className="text-gray-400 text-sm mt-1 font-sans">
-              Las 16 sedes oficiales de la Copa Mundial de la FIFA 2026 en EE. UU., México y Canadá
-            </p>
-          </div>
+          <div />
 
           {/* Quick Stats Summary */}
           <div className="flex items-center gap-4 bg-gray-900/50 border border-gray-800/80 px-4 py-2.5 rounded-2xl text-xs text-gray-400 self-start md:self-auto font-sans">

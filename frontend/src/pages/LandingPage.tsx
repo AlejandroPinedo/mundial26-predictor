@@ -105,11 +105,11 @@ export default function LandingPage() {
           { icon: '👥', label: 'Grupos Privados', desc: 'Crea tu propia liga y chatea en tiempo real con tus amigos.' },
         ].map((item, i) => (
           <div key={item.label}
-            className={`px-6 py-8 text-center flex flex-col items-center gap-2 ${
+            className={`bg-gray-900/50 border border-white/[0.06] px-6 py-8 text-center flex flex-col items-center gap-2 ${
               i < 2 ? 'border-b md:border-b-0 md:border-r border-gray-900/60' : ''
             }`}>
             <div className="text-3xl mb-1 no-invert">{item.icon}</div>
-            <h3 className="font-barlow font-black text-white text-base uppercase tracking-wider">{item.label}</h3>
+            <h3 className="font-display text-white text-base uppercase tracking-wider">{item.label}</h3>
             <p className="text-gray-500 text-xs leading-relaxed max-w-xs">{item.desc}</p>
           </div>
         ))}

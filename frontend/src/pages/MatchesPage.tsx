@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import PredictionProgress from '../components/PredictionProgress'
+import PageHeader from '../components/PageHeader'
 import { getFlag } from '../utils/flags'
 import { useRealtimeMatches } from '../hooks/useRealtimeMatches'
 import { calculateGroupStandings, getBestThirdPlacedTeams, type TeamStats, type ThirdPlaceStats } from '../utils/standings'
@@ -220,32 +221,38 @@ export default function MatchesPage() {
   const thirds = getBestThirdPlacedTeams(standings)
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#020817] text-white font-sans">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
 
+        <PageHeader title="PARTIDOS" subtitle="Fase de grupos · Copa Mundial FIFA 2026" live badge="FIFA WC26" icon="⚽" />
         <PredictionProgress predicted={predicted} total={totalPending} />
 
         {nextMatch && (
-          <div className="relative overflow-hidden bg-gradient-to-r from-yellow-400/20 to-yellow-600/10 border border-yellow-400/30 rounded-2xl p-5 mb-6">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/5 rounded-full -translate-y-8 translate-x-8" />
-            <p className="text-yellow-400 text-xs font-bold uppercase tracking-widest mb-3 font-barlow">⚡ Próximo partido</p>
+          <div className="ticket-card rounded-2xl p-5 mb-6 overflow-hidden">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-400 live-dot" />
+              <span className="text-orange-400 text-[10px] font-bold uppercase tracking-[0.2em]">Próximo partido</span>
+              <span className="ml-auto text-gray-600 text-xs">Grupo {nextMatch.group_name}</span>
+            </div>
             <div className="flex justify-between items-center">
-              <div className="text-center">
-                <p className="text-2xl mb-1 no-invert">{getFlag(nextMatch.home_team)}</p>
-                <p className="font-bold text-sm">{nextMatch.home_team}</p>
+              <div className="text-center flex-1">
+                <p className="text-3xl mb-1 no-invert">{getFlag(nextMatch.home_team)}</p>
+                <p className="font-display text-sm text-white uppercase tracking-wide">{nextMatch.home_team}</p>
               </div>
-              <div className="text-center px-4">
-                <p className="text-gray-400 text-xs font-bold">
-                  {new Date(nextMatch.match_date).toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short' })}
+              <div className="text-center px-6">
+                <div className="scoreboard scanlines px-4 py-2 rounded-lg text-2xl relative">
+                  VS
+                </div>
+                <p className="text-gray-600 text-[10px] mt-2 uppercase tracking-wider">
+                  {new Date(nextMatch.match_date).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
                 </p>
-                <p className="text-white font-bold">
+                <p className="text-yellow-400 font-bold text-sm">
                   {new Date(nextMatch.match_date).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
                 </p>
-                <p className="text-gray-650 text-xs">Grupo {nextMatch.group_name}</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl mb-1 no-invert">{getFlag(nextMatch.away_team)}</p>
-                <p className="font-bold text-sm">{nextMatch.away_team}</p>
+              <div className="text-center flex-1">
+                <p className="text-3xl mb-1 no-invert">{getFlag(nextMatch.away_team)}</p>
+                <p className="font-display text-sm text-white uppercase tracking-wide">{nextMatch.away_team}</p>
               </div>
             </div>
           </div>
@@ -270,7 +277,7 @@ export default function MatchesPage() {
             return (
               <button key={g} onClick={() => setActiveGroup(g)}
                 className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold transition flex-shrink-0 ${
-                  activeGroup === g ? 'bg-yellow-400 text-gray-950' : 'bg-gray-800 text-gray-400 hover:text-white'
+                  activeGroup === g ? 'bg-yellow-400 text-gray-950 shadow-lg shadow-yellow-400/20' : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'
                 }`}>
                 Grupo {g}
                 {groupUnpredicted > 0 && (
@@ -311,60 +318,57 @@ export default function MatchesPage() {
 
                   return (
                     <div key={match.id}
-                      className={`rounded-2xl p-4 transition ${
-                        isNext ? 'bg-yellow-400/10 border border-yellow-400/20' :
-                        played ? 'bg-gray-900/60' : 'bg-gray-900'
+                      className={`ticket-card rounded-xl overflow-hidden transition-all hover:-translate-y-0.5 ${
+                        isNext ? 'border-yellow-400/25 shadow-lg shadow-yellow-400/5' :
+                        played ? 'opacity-80' : ''
                       }`}>
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2 flex-1">
-                          <span className="text-2xl no-invert">{getFlag(match.home_team)}</span>
-                          <span className="font-bold text-sm truncate max-w-[120px]">{match.home_team}</span>
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-2xl no-invert flex-shrink-0">{getFlag(match.home_team)}</span>
+                            <span className="font-display text-sm text-white uppercase tracking-wide truncate">{match.home_team}</span>
+                          </div>
+                          <div className="text-center px-3 flex-shrink-0">
+                            {played ? (
+                              <div className="scoreboard scanlines px-3 py-1 rounded-lg text-sm relative">
+                                {match.home_score} - {match.away_score}
+                              </div>
+                            ) : (
+                              <span className="text-gray-600 text-xs font-bold uppercase tracking-widest">vs</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
+                            <span className="font-display text-sm text-white uppercase tracking-wide truncate text-right">{match.away_team}</span>
+                            <span className="text-2xl no-invert flex-shrink-0">{getFlag(match.away_team)}</span>
+                          </div>
                         </div>
-                        <div className="text-center px-2">
-                          {played ? (
-                            <span className="bg-gray-800 px-3 py-1 rounded-lg font-bold text-white text-sm">
-                              {match.home_score} - {match.away_score}
-                            </span>
-                          ) : (
-                            <span className="text-gray-600 text-xs">vs</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 flex-1 justify-end">
-                          <span className="font-bold text-sm truncate max-w-[120px]">{match.away_team}</span>
-                          <span className="text-2xl no-invert">{getFlag(match.away_team)}</span>
-                        </div>
-                      </div>
 
-                      <div className="flex flex-col items-center justify-center gap-1 mb-3">
-                        <div className="flex items-center justify-center gap-2">
-                          <p className="text-gray-600 text-xs font-medium">
+                        <div className="flex items-center justify-center gap-3 mb-3">
+                          <p className="text-gray-600 text-[10px] uppercase tracking-wider">
                             {new Date(match.match_date).toLocaleDateString('es', {
                               weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
                             })}
                           </p>
                           {deadline && !played && !started && (
-                            <span className={`text-xs font-bold ${deadline.color}`}><span className="no-invert">⏰</span> {deadline.label}</span>
+                            <span className={`text-[10px] font-bold ${deadline.color} flex items-center gap-1`}>
+                              <span className="no-invert">⏰</span>{deadline.label}
+                            </span>
                           )}
                         </div>
-                        {match.stadium_name && (
-                          <p className="text-[10px] text-gray-500 font-medium flex items-center gap-1">
-                            <span>🏟️</span> {match.stadium_name}
-                          </p>
-                        )}
-                      </div>
 
-                      {pred && (
-                        <p className="text-sm text-yellow-400 mb-2 text-center">
-                          Tu pred: {pred.predicted_home} - {pred.predicted_away}
-                          {pred.points !== null && (
-                            <span className={`ml-2 px-2 py-0.5 rounded text-xs font-bold ${
-                              pred.points === 3 ? 'bg-green-700 text-green-200' :
-                              pred.points === 1 ? 'bg-blue-700 text-blue-200' :
-                              'bg-gray-700 text-gray-300'
-                            }`}>{pred.points} pts</span>
-                          )}
-                        </p>
-                      )}
+                        {pred && (
+                          <div className="flex items-center justify-center gap-2 mb-2">
+                            <span className="text-yellow-400/70 text-xs">Tu pred:</span>
+                            <span className="text-yellow-400 font-bold text-sm">{pred.predicted_home} — {pred.predicted_away}</span>
+                            {pred.points !== null && (
+                              <span className={`px-2 py-0.5 rounded-lg text-xs font-bold ${
+                                pred.points === 3 ? 'bg-green-500/20 text-green-400' :
+                                pred.points === 1 ? 'bg-blue-500/20 text-blue-400' :
+                                'bg-gray-700/50 text-gray-400'
+                              }`}>{pred.points}pts</span>
+                            )}
+                          </div>
+                        )}
 
                       {!played && !started && (
                         <div className="flex gap-2 items-center justify-center">
@@ -389,6 +393,7 @@ export default function MatchesPage() {
                           <p className="text-green-400 text-xs font-bold">En vivo</p>
                         </div>
                       )}
+                      </div>
                     </div>
                   )
                 })}

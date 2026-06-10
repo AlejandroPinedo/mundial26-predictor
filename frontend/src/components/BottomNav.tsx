@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 interface Props { unpredicted?: number }
 
@@ -25,6 +26,7 @@ const moreItems = [
 
 export default function BottomNav({ unpredicted = 0 }: Props) {
   const { user } = useAuth()
+  const { theme, toggle } = useTheme()
   const [showMore, setShowMore] = useState(false)
   if (!user) return null
 
@@ -44,6 +46,13 @@ export default function BottomNav({ unpredicted = 0 }: Props) {
                   <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">{item.label}</span>
                 </Link>
               ))}
+              <button onClick={toggle}
+                className="flex flex-col items-center gap-1 py-3 rounded-2xl bg-gray-800 hover:bg-gray-700 transition">
+                <span className="text-xl no-invert">{theme === 'dark' ? '☀️' : '🌙'}</span>
+                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wide">
+                  {theme === 'dark' ? 'Claro' : 'Oscuro'}
+                </span>
+              </button>
             </div>
           </div>
         </div>

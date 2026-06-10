@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiFetch } from '../api/client'
 import Skeleton from '../components/Skeleton'
 import { getFlag } from '../utils/flags'
+import PageHeader from '../components/PageHeader'
 
 const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L']
 
@@ -95,14 +96,9 @@ export default function StandingsPage() {
   const [activeGroup, setActiveGroup] = useState('A')
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#020817] text-white">
       <div className="max-w-4xl mx-auto p-4 md:p-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-barlow font-black uppercase tracking-wide text-yellow-400">
-            Clasificaciones 📊
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">Tabla de posiciones por grupo. Se actualiza con cada resultado.</p>
-        </div>
+        <PageHeader title="CLASIFICACIONES" subtitle="Tabla de posiciones por grupo · FIFA WC26" icon="🏅" live badge="Live" />
 
         <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
           {GROUPS.map(g => (
@@ -115,8 +111,8 @@ export default function StandingsPage() {
           ))}
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-          <h2 className="font-barlow font-black uppercase tracking-wider text-sm text-yellow-400 mb-4">
+        <div className="ticket-card rounded-2xl overflow-hidden p-4">
+          <h2 className="font-display text-2xl text-yellow-400 mb-4">
             Grupo {activeGroup}
           </h2>
           <GroupTable group={activeGroup} />

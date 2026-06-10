@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
 import { getPointsBadge } from '../utils/points'
+import PageHeader from '../components/PageHeader'
 
 type Prediction = {
   id: string
@@ -115,7 +116,7 @@ export default function ComparePage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#020817] text-white">
       <div className="max-w-6xl mx-auto p-4 md:p-8 font-sans">
         
         {/* Back navigation */}
@@ -133,15 +134,7 @@ export default function ComparePage() {
           </div>
         ) : (
           <>
-            {/* Header */}
-            <div className="mb-8">
-              <h1 className="text-4xl font-barlow font-black uppercase tracking-wide text-yellow-400 flex items-center gap-3">
-                🤜🤛 Frente a Frente
-              </h1>
-              <p className="text-gray-400 text-sm mt-1">
-                Comparando tus predicciones con las de <span className="text-white font-bold">{username}</span>
-              </p>
-            </div>
+            <PageHeader title="COMPARADOR" subtitle={`Predicciones cara a cara vs ${username}`} icon="⚔️" />
 
             {/* Direct Comparison Stats Banner */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
