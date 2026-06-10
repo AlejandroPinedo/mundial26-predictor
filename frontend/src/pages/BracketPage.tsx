@@ -681,7 +681,7 @@ export default function BracketPage() {
               </div>
 
               {/* Bracket Grid */}
-              <div className="flex items-center gap-0">
+              <div className="flex items-start gap-0">
                 
                 {/* 1. R32 LEFT */}
                 <div className="flex flex-col gap-4 py-0 w-[160px] items-start">
@@ -718,7 +718,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 2. R16 LEFT */}
-                <div className="flex flex-col gap-4 py-4 w-[176px] items-start">
+                <div className="flex flex-col gap-[120px] pt-[52px] w-[176px] items-start">
                   {r16L_Indices.map((idx, index) => {
                     const top = predictions.round16[2 * idx]
                     const bottom = predictions.round16[2 * idx + 1]
@@ -760,7 +760,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 3. QF LEFT */}
-                <div className="flex flex-col gap-4 py-4 w-[176px] items-start">
+                <div className="flex flex-col gap-[328px] pt-[156px] w-[176px] items-start">
                   {qfL_Indices.map((idx, index) => {
                     const top = predictions.quarter[2 * idx]
                     const bottom = predictions.quarter[2 * idx + 1]
@@ -802,7 +802,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 4. SEMIFINAL LEFT */}
-                <div className="flex flex-col py-4 w-[176px] items-start">
+                <div className="flex flex-col pt-[364px] w-[176px] items-start">
                   <div className="flex flex-col">
                     <Match
                       top={sfL_top}
@@ -835,7 +835,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 5. FINALIST LEFT */}
-                <div className="flex flex-col py-4 w-[160px]">
+                <div className="flex flex-col pt-[392px] w-[160px]">
                   <div className="flex flex-col">
                     <WinnerSlot
                       team={finalistL}
@@ -886,7 +886,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 7. FINALIST RIGHT */}
-                <div className="flex flex-col py-4 w-[160px] items-end">
+                <div className="flex flex-col pt-[392px] w-[160px] items-end">
                   <WinnerSlot
                     team={finalistR}
                     placeholder={getPlaceholder('finalist', 1)}
@@ -899,7 +899,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 8. SEMIFINAL RIGHT */}
-                <div className="flex flex-col py-4 w-[176px] items-end">
+                <div className="flex flex-col pt-[364px] w-[176px] items-end">
                   <div className="flex flex-col">
                     <Match
                       top={sfR_top}
@@ -932,7 +932,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 9. QF RIGHT */}
-                <div className="flex flex-col gap-4 py-4 w-[176px] items-end">
+                <div className="flex flex-col gap-[328px] pt-[156px] w-[176px] items-end">
                   {qfR_Indices.map((idx, index) => {
                     const top = predictions.quarter[2 * idx]
                     const bottom = predictions.quarter[2 * idx + 1]
@@ -975,7 +975,7 @@ export default function BracketPage() {
                 </div>
 
                 {/* 10. R16 RIGHT */}
-                <div className="flex flex-col gap-4 py-4 w-[176px] items-end">
+                <div className="flex flex-col gap-[120px] pt-[52px] w-[176px] items-end">
                   {r16R_Indices.map((idx, index) => {
                     const top = predictions.round16[2 * idx]
                     const bottom = predictions.round16[2 * idx + 1]

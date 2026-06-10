@@ -11,7 +11,11 @@ interface Props {
 export default function MatchScoreInput({ score, homeTeam, awayTeam, onChange, disabled }: Props) {
   if (!homeTeam || !awayTeam) return null
 
-  const isDraw = score.home !== null && score.away !== null && score.home === score.away
+  // Treat null as 0 — 0-0 is a draw and always shows penalties
+  const h = score.home ?? 0
+  const a = score.away ?? 0
+  const isDraw = h === a
+
   const penaltiesInvalid = isDraw &&
     score.homePen !== null && score.awayPen !== null &&
     score.homePen === score.awayPen
@@ -23,19 +27,17 @@ export default function MatchScoreInput({ score, homeTeam, awayTeam, onChange, d
       <div className="flex items-center gap-1.5 justify-center">
         <input
           type="number" min={0} max={20}
-          value={score.home ?? ''}
-          onChange={e => onChange({ home: e.target.value === '' ? null : Number(e.target.value) })}
+          value={score.home ?? 0}
+          onChange={e => onChange({ home: e.target.value === '' ? 0 : Number(e.target.value) })}
           disabled={disabled}
-          placeholder="0"
           className={inputClass}
         />
         <span className="text-gray-600 text-[10px] font-bold select-none">—</span>
         <input
           type="number" min={0} max={20}
-          value={score.away ?? ''}
-          onChange={e => onChange({ away: e.target.value === '' ? null : Number(e.target.value) })}
+          value={score.away ?? 0}
+          onChange={e => onChange({ away: e.target.value === '' ? 0 : Number(e.target.value) })}
           disabled={disabled}
-          placeholder="0"
           className={inputClass}
         />
       </div>
