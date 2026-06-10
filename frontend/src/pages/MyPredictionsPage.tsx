@@ -5,6 +5,7 @@ import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getPointsBadge } from '../utils/points'
 import { getFlag } from '../utils/flags'
+import PageHeader from '../components/PageHeader'
 
 type Prediction = {
   id: string
@@ -68,38 +69,36 @@ export default function MyPredictionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#020817] text-white">
       <div className="max-w-5xl mx-auto p-4 md:p-8 font-sans">
         
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8 gap-4 flex-wrap">
-          <div>
-            <h1 className="text-4xl font-barlow font-black uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">
-              Mis Predicciones 🎯
-            </h1>
-            <p className="text-gray-400 text-sm mt-1">
-              Aquí puedes ver tu historial completo de pronósticos enviados.
-            </p>
-          </div>
-          
-          {predictions.length > 0 && (
-            <div className="flex items-center gap-4 bg-gray-900 border border-gray-800 p-2.5 rounded-2xl select-none">
-              <div className="text-right">
-                <span className="text-gray-500 uppercase font-black text-[9px] tracking-wider block">Puntaje Total</span>
-                <span className="text-yellow-400 font-barlow font-black text-2xl leading-none">
-                  {totalPoints} <span className="text-xs font-sans text-gray-500 font-normal">pts</span>
-                </span>
-              </div>
-              <span className="w-px h-8 bg-gray-800" />
-              <button
-                onClick={handleShare}
-                className="bg-yellow-400 text-gray-950 font-bold px-4 py-2 rounded-xl hover:bg-yellow-300 transition text-xs cursor-pointer flex items-center gap-1.5"
-              >
-                Compartir 📋
-              </button>
+        <PageHeader title="MIS PREDICCIONES" subtitle="Tu historial de pronósticos · Mundial 2026" icon="🎯" action={
+          predictions.length > 0 ? (
+            <button
+              onClick={handleShare}
+              className="bg-yellow-400 text-gray-950 font-bold px-4 py-2 rounded-xl hover:bg-yellow-300 transition text-xs cursor-pointer flex items-center gap-1.5"
+            >
+              Compartir 📋
+            </button>
+          ) : undefined
+        } />
+
+        {!loading && predictions.length > 0 && (
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            <div className="ticket-card rounded-xl p-3 text-center">
+              <div className="font-display text-3xl text-yellow-400">{totalPoints}</div>
+              <div className="text-gray-600 text-[10px] uppercase tracking-widest">Puntos</div>
             </div>
-          )}
-        </div>
+            <div className="ticket-card rounded-xl p-3 text-center">
+              <div className="font-display text-3xl text-white">{played.length}</div>
+              <div className="text-gray-600 text-[10px] uppercase tracking-widest">Jugados</div>
+            </div>
+            <div className="ticket-card rounded-xl p-3 text-center">
+              <div className="font-display text-3xl text-green-400">{pending.length}</div>
+              <div className="text-gray-600 text-[10px] uppercase tracking-widest">Pendientes</div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center py-20">
@@ -125,7 +124,7 @@ export default function MyPredictionsPage() {
             {/* Pending Section */}
             {pending.length > 0 && (
               <div>
-                <h2 className="font-barlow font-black uppercase tracking-wider text-gray-400 mb-4 text-base">
+                <h2 className="font-displayr text-gray-400 mb-4 text-base">
                   Predicciones Pendientes ({pending.length})
                 </h2>
                 
@@ -141,7 +140,7 @@ export default function MyPredictionsPage() {
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between gap-3 py-1.5 font-barlow font-black text-sm">
+                      <div className="flex items-center justify-between gap-3 py-1.5 font-display text-base">
                         <div className="flex items-center gap-1.5 flex-1 min-w-0">
                           <span className="text-xl no-invert leading-none flex-shrink-0">{getFlag(p.home_team)}</span>
                           <span className="truncate uppercase">{p.home_team}</span>
@@ -172,7 +171,7 @@ export default function MyPredictionsPage() {
             {/* Played Section */}
             {played.length > 0 && (
               <div>
-                <h2 className="font-barlow font-black uppercase tracking-wider text-gray-400 mb-4 text-base">
+                <h2 className="font-displayr text-gray-400 mb-4 text-base">
                   Predicciones Evaluadas ({played.length})
                 </h2>
                 
@@ -202,7 +201,7 @@ export default function MyPredictionsPage() {
                         </div>
 
                         {/* Match Result Scoreboard */}
-                        <div className="flex items-center justify-between gap-3 py-1 font-barlow font-black text-sm">
+                        <div className="flex items-center justify-between gap-3 py-1 font-display text-base">
                           <div className="flex items-center gap-1.5 flex-1 min-w-0">
                             <span className="text-xl no-invert leading-none flex-shrink-0">{getFlag(p.home_team)}</span>
                             <span className="truncate uppercase">{p.home_team}</span>

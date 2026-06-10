@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import PageHeader from '../components/PageHeader'
 
 const sections = [
   {
@@ -69,7 +70,7 @@ export default function RulesPage() {
   const { user } = useAuth()
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-[#020817] text-white">
       <div className="max-w-4xl mx-auto p-4 md:p-8">
         {!user && (
           <Link to="/" className="text-yellow-400 text-sm hover:underline mb-6 inline-block font-semibold">
@@ -77,15 +78,10 @@ export default function RulesPage() {
           </Link>
         )}
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-barlow font-black uppercase tracking-wide text-yellow-400 mb-2">
-            Guía del Juego 📖
-          </h1>
-          <p className="text-gray-400">Todo lo que necesitas saber para dominar el Mundial26 Predictor.</p>
-        </div>
+        <PageHeader title="GUÍA DEL JUEGO" subtitle="Sistema de puntos y reglas" icon="📖" />
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
-          <h2 className="text-xl font-barlow font-black uppercase tracking-wider text-yellow-400 mb-4">
+          <h2 className="text-xl font-displayr text-yellow-400 mb-4">
             Sistema de puntos — Fase de Grupos
           </h2>
           <div className="flex flex-col gap-3 mb-4">
@@ -108,7 +104,7 @@ export default function RulesPage() {
         </div>
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
-          <h2 className="text-xl font-barlow font-black uppercase tracking-wider text-yellow-400 mb-4">
+          <h2 className="text-xl font-displayr text-yellow-400 mb-4">
             Sistema de puntos — Playoffs
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -132,7 +128,7 @@ export default function RulesPage() {
         <div className="grid md:grid-cols-2 gap-4 mb-6">
           {sections.map(section => (
             <div key={section.title} className={`bg-gray-900 border ${section.border} rounded-2xl p-5`}>
-              <h2 className={`font-barlow font-black uppercase tracking-wider text-base mb-3 ${section.color}`}>
+              <h2 className={`font-displayr text-base mb-3 ${section.color}`}>
                 {section.icon} {section.title}
               </h2>
               <ul className="flex flex-col gap-2">
@@ -148,7 +144,7 @@ export default function RulesPage() {
         </div>
 
         <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-2xl p-5">
-          <h2 className="font-barlow font-black uppercase tracking-wider text-yellow-400 mb-3">
+          <h2 className="font-displayr text-yellow-400 mb-3">
             💡 Tips para ganar
           </h2>
           <div className="grid md:grid-cols-3 gap-3 text-sm text-gray-300">

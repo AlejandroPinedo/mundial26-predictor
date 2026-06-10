@@ -65,52 +65,52 @@ export default function HomePage() {
   // Remove unused Spinner import - using Skeleton instead
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white font-sans">
+    <div className="min-h-screen bg-[#020817] text-white font-sans">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
 
-        {/* Hero Card */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900/60 to-gray-950/80 border border-gray-800/80 p-6 md:p-10 mb-6 backdrop-blur-md shadow-xl select-none">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-yellow-400/5 rounded-full -translate-y-20 translate-x-20 blur-[90px] pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-yellow-600/5 rounded-full translate-y-20 -translate-x-20 blur-[80px] pointer-events-none" />
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 rounded-full px-3 py-1 text-yellow-400 text-xs font-black mb-4 uppercase tracking-wider">
-              <span className="no-invert">🏆</span> USA · CANADA · MÉXICO 2026
-            </div>
-            <h1 className="text-3xl md:text-5xl font-barlow font-black uppercase tracking-wide mb-2">
-               Bienvenido, <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">{user?.username}</span> <span className="no-invert">👋</span>
-            </h1>
-            <p className="text-gray-400 mb-6 max-w-lg text-sm md:text-base leading-relaxed">
-              Predice los marcadores oficiales, compite con tus amigos y demuestra que tienes el control del fixture mundialista.
-            </p>
+        {/* Hero — Stadium scoreboard style */}
+        <div className="relative overflow-hidden rounded-2xl mb-6 select-none"
+          style={{ background: 'linear-gradient(135deg, #0a0f1a 0%, #07090f 100%)', border: '1px solid rgba(250,204,21,0.12)' }}>
+          {/* Top gold stripe */}
+          <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(90deg, #facc15, #f97316, #facc15)' }} />
+          {/* Ambient glow */}
+          <div className="absolute top-0 right-0 w-96 h-96 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse, rgba(250,204,21,0.06) 0%, transparent 70%)' }} />
 
-            {!started ? (
-              <div className="flex gap-3 mb-6">
-                {[
-                  { v: days, l: 'días' },
-                  { v: hours, l: 'hrs' },
-                  { v: minutes, l: 'min' },
-                  { v: seconds, l: 'seg' }
-                ].map(({ v, l }) => (
-                  <div key={l} className="bg-gray-950/70 border border-gray-800/60 rounded-2xl px-4 py-3 text-center min-w-[60px] shadow-md">
-                    <div className="text-2xl font-barlow font-black text-yellow-400 tabular-nums leading-none">{String(v).padStart(2, '0')}</div>
-                    <div className="text-gray-500 text-[10px] uppercase font-bold tracking-wider mt-1">{l}</div>
-                  </div>
-                ))}
+          <div className="relative p-6 md:p-10">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="w-2 h-2 rounded-full bg-green-400 live-dot" />
+              <span className="text-green-400 text-[10px] font-bold uppercase tracking-[0.2em]">En curso · FIFA World Cup 2026</span>
+            </div>
+
+            <h1 className="font-display text-5xl md:text-7xl text-white leading-none uppercase">{user?.username}</h1>
+            <p className="text-gray-500 text-sm mb-6">Tu zona de predicciones del Mundial 2026</p>
+
+            {started ? (
+              <div className="flex items-center gap-3 mb-6 px-4 py-2.5 rounded-xl w-fit"
+                style={{ background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.2)' }}>
+                <span className="w-2 h-2 rounded-full bg-yellow-400 live-dot" />
+                <span className="text-yellow-400 font-bold text-sm uppercase tracking-wider">🏆 Torneo en curso</span>
               </div>
             ) : (
-              <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/30 rounded-2xl px-4 py-2 mb-6">
-                <span className="text-yellow-400 font-bold flex items-center gap-1.5 text-xs uppercase tracking-wider">
-                  <span className="no-invert">🏆</span> ¡El torneo ya comenzó!
-                </span>
+              <div className="flex gap-3 mb-6">
+                {[{ v: days, l: 'días' }, { v: hours, l: 'hrs' }, { v: minutes, l: 'min' }, { v: seconds, l: 'seg' }].map(({ v, l }) => (
+                  <div key={l} className="scoreboard scanlines px-4 py-3 rounded-xl text-center min-w-[60px] relative">
+                    <div className="text-2xl tabular-nums leading-none">{String(v).padStart(2, '0')}</div>
+                    <div className="text-yellow-400/50 text-[9px] uppercase tracking-widest mt-1 font-sans">{l}</div>
+                  </div>
+                ))}
               </div>
             )}
 
             <div className="flex flex-wrap gap-3">
-              <Link to="/matches" className="bg-yellow-400 text-gray-950 font-black px-6 py-3 rounded-2xl hover:bg-yellow-300 transition-all shadow-lg hover:shadow-yellow-400/15 text-sm uppercase tracking-wider font-barlow cursor-pointer">
-                Ver partidos →
+              <Link to="/matches" className="font-display text-lg px-6 py-2.5 rounded-xl tracking-wider transition-all cursor-pointer"
+                style={{ background: '#facc15', color: '#030712' }}>
+                VER PARTIDOS →
               </Link>
-              <Link to="/bracket" className="border border-gray-800 text-gray-300 font-bold px-6 py-3 rounded-2xl hover:border-gray-650 hover:text-white transition-all bg-gray-900/30 backdrop-blur text-sm cursor-pointer">
-                Mi bracket
+              <Link to="/bracket" className="font-display text-lg px-6 py-2.5 rounded-xl tracking-wider transition-all cursor-pointer text-gray-300 hover:text-white"
+                style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)' }}>
+                MI BRACKET
               </Link>
               <button
                 onClick={() => {
@@ -124,21 +124,18 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {/* Quick Stats — scoreboard style */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {[
-            { icon: '🌍', value: '48', label: 'Equipos', to: '/teams' },
-            { icon: '🔠', value: '12', label: 'Grupos', to: '/matches' },
-            { icon: '⚽', value: '104', label: 'Partidos', to: '/matches' },
-            { icon: '🏟️', value: '16', label: 'Sedes', to: '/stadiums' },
+            { value: '48', label: 'Equipos', to: '/teams', color: 'text-yellow-400' },
+            { value: '12', label: 'Grupos', to: '/matches', color: 'text-green-400' },
+            { value: '104', label: 'Partidos', to: '/matches', color: 'text-blue-400' },
+            { value: '16', label: 'Estadios', to: '/stadiums', color: 'text-orange-400' },
           ].map(stat => (
             <Link key={stat.label} to={stat.to}
-              className="bg-gray-900/50 border border-gray-800/80 rounded-3xl p-5 premium-glow shadow-md"
-              id={`stat-card-${stat.label.toLowerCase()}`}
-            >
-              <div className="text-2xl mb-2 no-invert">{stat.icon}</div>
-              <div className="text-2xl font-barlow font-black text-white leading-none mb-1">{stat.value}</div>
-              <div className="text-gray-500 text-xs font-bold uppercase tracking-wider">{stat.label}</div>
+              className="ticket-card rounded-xl p-4 text-center hover:-translate-y-0.5 transition-all">
+              <div className={`font-display text-5xl leading-none ${stat.color}`}>{stat.value}</div>
+              <div className="text-gray-600 text-[10px] uppercase tracking-widest mt-1">{stat.label}</div>
             </Link>
           ))}
         </div>
@@ -167,7 +164,7 @@ export default function HomePage() {
           )}
 
           {/* Top 5 ranking */}
-          <div className="bg-gray-900/50 border border-gray-800/80 rounded-3xl p-6 shadow-md flex flex-col justify-between">
+          <div className="ticket-card rounded-2xl overflow-hidden p-6 flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-center mb-5">
                 <h2 className="font-barlow font-black text-base text-yellow-400/90 uppercase tracking-wider flex items-center gap-2">
@@ -197,7 +194,7 @@ export default function HomePage() {
                           <span className="text-[9px] font-black uppercase tracking-wider bg-yellow-400/10 text-yellow-400 px-1.5 py-0.5 rounded-full ml-1.5">tú</span>
                         )}
                       </span>
-                      <span className="text-yellow-400 font-bold text-sm">{e.total_points} pts</span>
+                      <span className="font-display text-lg text-yellow-400">{e.total_points} pts</span>
                     </div>
                   ))}
                 </div>
@@ -218,7 +215,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {nextMatches.map(m => (
                 <Link key={m.id} to="/matches"
-                  className="bg-gray-950/40 border border-gray-850/60 rounded-3xl p-4 premium-glow shadow-sm flex flex-col justify-between"
+                  className="ticket-card rounded-xl p-4 flex-shrink-0 hover-lift flex flex-col justify-between"
                 >
                   <div className="flex justify-between items-center mb-4">
                     <div className="text-center flex-1 min-w-0">

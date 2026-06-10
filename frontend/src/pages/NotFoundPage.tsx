@@ -1,17 +1,13 @@
-import { Link } from 'react-router-dom'
-
 export default function NotFoundPage() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center p-6">
-      <div className="text-center">
-        <div className="text-8xl mb-4">⚽</div>
-        <h1 className="text-6xl font-barlow font-black text-yellow-400 mb-2">404</h1>
-        <p className="text-gray-400 text-lg mb-2">Esta página no existe</p>
-        <p className="text-gray-600 text-sm mb-8">El árbitro ha pitado fuera de juego.</p>
-        <Link to="/home"
-          className="bg-yellow-400 text-gray-950 font-black px-8 py-3 rounded-2xl hover:bg-yellow-300 transition">
-          Volver al inicio
-        </Link>
+    <div className="min-h-screen bg-[#020817] flex items-center justify-center font-sans">
+      <div className="text-center px-6">
+        <div className="font-display text-[180px] text-white/5 leading-none select-none">404</div>
+        <div className="font-display text-6xl text-yellow-400 -mt-12 relative z-10 uppercase">Fuera de Juego</div>
+        <p className="text-gray-500 mt-3 mb-8 text-sm">El árbitro ha pitado. Esta página no existe.</p>
+        <a href="/home" className="bg-yellow-400 text-gray-950 font-display text-xl px-8 py-3 rounded-xl hover:bg-yellow-300 transition tracking-widest inline-block uppercase">
+          Volver al Estadio
+        </a>
       </div>
     </div>
   )
