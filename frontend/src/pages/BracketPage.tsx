@@ -309,17 +309,41 @@ export default function BracketPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [scores, setScores] = useState<BracketScores>({})
+  const [activeMatchKey, setActiveMatchKey] = useState<string | null>(null)
 
   function getScore(round: string, matchIndex: number): MatchScore {
     return scores[`${round}_${matchIndex}`] ?? { home: null, away: null, homePen: null, awayPen: null }
   }
 
-  function setScore(round: string, matchIndex: number, update: Partial<MatchScore>) {
+  function handleScoreChange(
+    round: string,
+    matchIndex: number,
+    slotIdx: number,
+    homeTeam: string | null,
+    awayTeam: string | null,
+    update: Partial<MatchScore>
+  ) {
     const key = `${round}_${matchIndex}`
-    setScores(prev => ({
-      ...prev,
-      [key]: { ...(prev[key] ?? { home: null, away: null, homePen: null, awayPen: null }), ...update },
-    }))
+    const current = scores[key] ?? { home: 0, away: 0, homePen: null, awayPen: null }
+    const s = { ...current, ...update }
+    setScores(prev => ({ ...prev, [key]: s }))
+
+    if (!homeTeam || !awayTeam) return
+
+    const h = s.home ?? 0
+    const a = s.away ?? 0
+
+    if (h > a) {
+      advanceTeam(round, slotIdx, homeTeam)
+    } else if (a > h) {
+      advanceTeam(round, slotIdx, awayTeam)
+    } else {
+      // Draw — check penalties
+      if (s.homePen !== null && s.awayPen !== null && s.homePen !== s.awayPen) {
+        advanceTeam(round, slotIdx, s.homePen > s.awayPen ? homeTeam : awayTeam)
+      }
+      // Equal penalties: don't advance yet
+    }
   }
 
   const exportBracket = async () => {
@@ -672,20 +696,22 @@ export default function BracketPage() {
                           top={match.home} bottom={match.away}
                           topPlaceholder="?" bottomPlaceholder="?"
                           isTopHighlighted={isTopSelected} isBottomHighlighted={isBottomSelected}
-                          onTopClick={() => advanceTeam('round32', idx, match.home)}
-                          onBottomClick={() => advanceTeam('round32', idx, match.away)}
+                          onTopClick={() => setActiveMatchKey(prev => prev === `round32_${idx}` ? null : `round32_${idx}`)}
+                          onBottomClick={() => setActiveMatchKey(prev => prev === `round32_${idx}` ? null : `round32_${idx}`)}
                           linePos={index % 2 === 0 ? 'bottom' : 'top'}
                           connectRight={false} connectLeft={false}
                           round="round32"
                           label={match.label || `M${73 + idx}`}
                           side="left"
                         />
-                        <MatchScoreInput
-                          score={getScore('round32', idx)}
-                          homeTeam={match.home ?? null}
-                          awayTeam={match.away ?? null}
-                          onChange={update => setScore('round32', idx, update)}
-                        />
+                        {activeMatchKey === `round32_${idx}` && match.home && match.away && (
+                          <MatchScoreInput
+                            score={getScore('round32', idx)}
+                            homeTeam={match.home ?? null}
+                            awayTeam={match.away ?? null}
+                            onChange={update => handleScoreChange('round32', idx, idx, match.home, match.away, update)}
+                          />
+                        )}
                       </div>
                     )
                   })}
@@ -712,20 +738,22 @@ export default function BracketPage() {
                           isBottomCorrect={isCorrect('round16', 2 * idx + 1, bottom)}
                           isTopWrong={isWrong('round16', 2 * idx, top)}
                           isBottomWrong={isWrong('round16', 2 * idx + 1, bottom)}
-                          onTopClick={() => advanceTeam('round16', 2 * idx, top)}
-                          onBottomClick={() => advanceTeam('round16', 2 * idx + 1, bottom)}
+                          onTopClick={() => setActiveMatchKey(prev => prev === `round16_${idx}` ? null : `round16_${idx}`)}
+                          onBottomClick={() => setActiveMatchKey(prev => prev === `round16_${idx}` ? null : `round16_${idx}`)}
                           linePos={index % 2 === 0 ? 'bottom' : 'top'}
                           connectLeft={false} connectRight={false}
                           round="round16"
                           label={`M${89 + idx}`}
                           side="left"
                         />
-                        <MatchScoreInput
-                          score={getScore('round16', idx)}
-                          homeTeam={top ?? null}
-                          awayTeam={bottom ?? null}
-                          onChange={update => setScore('round16', idx, update)}
-                        />
+                        {activeMatchKey === `round16_${idx}` && top && bottom && (
+                          <MatchScoreInput
+                            score={getScore('round16', idx)}
+                            homeTeam={top ?? null}
+                            awayTeam={bottom ?? null}
+                            onChange={update => handleScoreChange('round16', idx, 2 * idx, top, bottom, update)}
+                          />
+                        )}
                       </div>
                     )
                   })}
@@ -752,20 +780,22 @@ export default function BracketPage() {
                           isBottomCorrect={isCorrect('quarter', 2 * idx + 1, bottom)}
                           isTopWrong={isWrong('quarter', 2 * idx, top)}
                           isBottomWrong={isWrong('quarter', 2 * idx + 1, bottom)}
-                          onTopClick={() => advanceTeam('quarter', 2 * idx, top)}
-                          onBottomClick={() => advanceTeam('quarter', 2 * idx + 1, bottom)}
+                          onTopClick={() => setActiveMatchKey(prev => prev === `quarter_${idx}` ? null : `quarter_${idx}`)}
+                          onBottomClick={() => setActiveMatchKey(prev => prev === `quarter_${idx}` ? null : `quarter_${idx}`)}
                           linePos={index % 2 === 0 ? 'bottom' : 'top'}
                           connectLeft={false} connectRight={false}
                           round="quarter"
                           label={`M${97 + idx}`}
                           side="left"
                         />
-                        <MatchScoreInput
-                          score={getScore('quarter', idx)}
-                          homeTeam={top}
-                          awayTeam={bottom}
-                          onChange={update => setScore('quarter', idx, update)}
-                        />
+                        {activeMatchKey === `quarter_${idx}` && top && bottom && (
+                          <MatchScoreInput
+                            score={getScore('quarter', idx)}
+                            homeTeam={top}
+                            awayTeam={bottom}
+                            onChange={update => handleScoreChange('quarter', idx, 2 * idx, top, bottom, update)}
+                          />
+                        )}
                       </div>
                     )
                   })}
@@ -785,20 +815,22 @@ export default function BracketPage() {
                       isBottomCorrect={isCorrect('semi', 1, sfL_bottom)}
                       isTopWrong={isWrong('semi', 0, sfL_top)}
                       isBottomWrong={isWrong('semi', 1, sfL_bottom)}
-                      onTopClick={() => advanceTeam('semi', 0, sfL_top)}
-                      onBottomClick={() => advanceTeam('semi', 1, sfL_bottom)}
+                      onTopClick={() => setActiveMatchKey(prev => prev === 'semi_0' ? null : 'semi_0')}
+                      onBottomClick={() => setActiveMatchKey(prev => prev === 'semi_0' ? null : 'semi_0')}
                       linePos="center"
                       connectLeft={false} connectRight={false}
                       round="semi"
                       label="M101"
                       side="left"
                     />
-                    <MatchScoreInput
-                      score={getScore('semi', 0)}
-                      homeTeam={sfL_top}
-                      awayTeam={sfL_bottom}
-                      onChange={update => setScore('semi', 0, update)}
-                    />
+                    {activeMatchKey === 'semi_0' && sfL_top && sfL_bottom && (
+                      <MatchScoreInput
+                        score={getScore('semi', 0)}
+                        homeTeam={sfL_top}
+                        awayTeam={sfL_bottom}
+                        onChange={update => handleScoreChange('semi', 0, 0, sfL_top, sfL_bottom, update)}
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -812,14 +844,16 @@ export default function BracketPage() {
                       correct={isCorrect('finalist', 0, finalistL)}
                       wrong={isWrong('finalist', 0, finalistL)}
                       connectLeft={false} connectRight={false}
-                      onClick={() => advanceTeam('finalist', 0, finalistL)}
+                      onClick={() => setActiveMatchKey(prev => prev === 'finalist_0' ? null : 'finalist_0')}
                     />
-                    <MatchScoreInput
-                      score={getScore('finalist', 0)}
-                      homeTeam={finalistL}
-                      awayTeam={finalistR}
-                      onChange={update => setScore('finalist', 0, update)}
-                    />
+                    {activeMatchKey === 'finalist_0' && finalistL && finalistR && (
+                      <MatchScoreInput
+                        score={getScore('finalist', 0)}
+                        homeTeam={finalistL}
+                        awayTeam={finalistR}
+                        onChange={update => handleScoreChange('finalist', 0, 0, finalistL, finalistR, update)}
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -860,7 +894,7 @@ export default function BracketPage() {
                     correct={isCorrect('finalist', 1, finalistR)}
                     wrong={isWrong('finalist', 1, finalistR)}
                     connectLeft={false} connectRight={false}
-                    onClick={() => advanceTeam('finalist', 1, finalistR)}
+                    onClick={() => setActiveMatchKey(prev => prev === 'finalist_0' ? null : 'finalist_0')}
                   />
                 </div>
 
@@ -878,20 +912,22 @@ export default function BracketPage() {
                       isBottomCorrect={isCorrect('semi', 3, sfR_bottom)}
                       isTopWrong={isWrong('semi', 2, sfR_top)}
                       isBottomWrong={isWrong('semi', 3, sfR_bottom)}
-                      onTopClick={() => advanceTeam('semi', 2, sfR_top)}
-                      onBottomClick={() => advanceTeam('semi', 3, sfR_bottom)}
+                      onTopClick={() => setActiveMatchKey(prev => prev === 'semi_1' ? null : 'semi_1')}
+                      onBottomClick={() => setActiveMatchKey(prev => prev === 'semi_1' ? null : 'semi_1')}
                       linePos="center"
                       connectLeft={false} connectRight={false}
                       round="semi"
                       label="M102"
                       side="right"
                     />
-                    <MatchScoreInput
-                      score={getScore('semi', 1)}
-                      homeTeam={sfR_top}
-                      awayTeam={sfR_bottom}
-                      onChange={update => setScore('semi', 1, update)}
-                    />
+                    {activeMatchKey === 'semi_1' && sfR_top && sfR_bottom && (
+                      <MatchScoreInput
+                        score={getScore('semi', 1)}
+                        homeTeam={sfR_top}
+                        awayTeam={sfR_bottom}
+                        onChange={update => handleScoreChange('semi', 1, 2, sfR_top, sfR_bottom, update)}
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -917,20 +953,22 @@ export default function BracketPage() {
                           isBottomCorrect={isCorrect('quarter', 2 * idx + 1, bottom)}
                           isTopWrong={isWrong('quarter', 2 * idx, top)}
                           isBottomWrong={isWrong('quarter', 2 * idx + 1, bottom)}
-                          onTopClick={() => advanceTeam('quarter', 2 * idx, top)}
-                          onBottomClick={() => advanceTeam('quarter', 2 * idx + 1, bottom)}
+                          onTopClick={() => setActiveMatchKey(prev => prev === `quarter_${matchIndex}` ? null : `quarter_${matchIndex}`)}
+                          onBottomClick={() => setActiveMatchKey(prev => prev === `quarter_${matchIndex}` ? null : `quarter_${matchIndex}`)}
                           linePos={index % 2 === 0 ? 'bottom' : 'top'}
                           connectLeft={false} connectRight={false}
                           round="quarter"
                           label={`M${97 + idx}`}
                           side="right"
                         />
-                        <MatchScoreInput
-                          score={getScore('quarter', matchIndex)}
-                          homeTeam={top}
-                          awayTeam={bottom}
-                          onChange={update => setScore('quarter', matchIndex, update)}
-                        />
+                        {activeMatchKey === `quarter_${matchIndex}` && top && bottom && (
+                          <MatchScoreInput
+                            score={getScore('quarter', matchIndex)}
+                            homeTeam={top}
+                            awayTeam={bottom}
+                            onChange={update => handleScoreChange('quarter', matchIndex, 2 * idx, top, bottom, update)}
+                          />
+                        )}
                       </div>
                     )
                   })}
@@ -957,20 +995,22 @@ export default function BracketPage() {
                           isBottomCorrect={isCorrect('round16', 2 * idx + 1, bottom)}
                           isTopWrong={isWrong('round16', 2 * idx, top)}
                           isBottomWrong={isWrong('round16', 2 * idx + 1, bottom)}
-                          onTopClick={() => advanceTeam('round16', 2 * idx, top)}
-                          onBottomClick={() => advanceTeam('round16', 2 * idx + 1, bottom)}
+                          onTopClick={() => setActiveMatchKey(prev => prev === `round16_${idx}` ? null : `round16_${idx}`)}
+                          onBottomClick={() => setActiveMatchKey(prev => prev === `round16_${idx}` ? null : `round16_${idx}`)}
                           linePos={index % 2 === 0 ? 'bottom' : 'top'}
                           connectLeft={false} connectRight={false}
                           round="round16"
                           label={`M${89 + idx}`}
                           side="right"
                         />
-                        <MatchScoreInput
-                          score={getScore('round16', idx)}
-                          homeTeam={top ?? null}
-                          awayTeam={bottom ?? null}
-                          onChange={update => setScore('round16', idx, update)}
-                        />
+                        {activeMatchKey === `round16_${idx}` && top && bottom && (
+                          <MatchScoreInput
+                            score={getScore('round16', idx)}
+                            homeTeam={top ?? null}
+                            awayTeam={bottom ?? null}
+                            onChange={update => handleScoreChange('round16', idx, 2 * idx, top, bottom, update)}
+                          />
+                        )}
                       </div>
                     )
                   })}
@@ -989,20 +1029,22 @@ export default function BracketPage() {
                           top={match.home} bottom={match.away}
                           topPlaceholder="?" bottomPlaceholder="?"
                           isTopHighlighted={isTopSelected} isBottomHighlighted={isBottomSelected}
-                          onTopClick={() => advanceTeam('round32', idx, match.home)}
-                          onBottomClick={() => advanceTeam('round32', idx, match.away)}
+                          onTopClick={() => setActiveMatchKey(prev => prev === `round32_${idx}` ? null : `round32_${idx}`)}
+                          onBottomClick={() => setActiveMatchKey(prev => prev === `round32_${idx}` ? null : `round32_${idx}`)}
                           linePos={index % 2 === 0 ? 'bottom' : 'top'}
                           connectRight={false} connectLeft={false}
                           round="round32"
                           label={match.label || `M${73 + idx}`}
                           side="right"
                         />
-                        <MatchScoreInput
-                          score={getScore('round32', idx)}
-                          homeTeam={match.home ?? null}
-                          awayTeam={match.away ?? null}
-                          onChange={update => setScore('round32', idx, update)}
-                        />
+                        {activeMatchKey === `round32_${idx}` && match.home && match.away && (
+                          <MatchScoreInput
+                            score={getScore('round32', idx)}
+                            homeTeam={match.home ?? null}
+                            awayTeam={match.away ?? null}
+                            onChange={update => handleScoreChange('round32', idx, idx, match.home, match.away, update)}
+                          />
+                        )}
                       </div>
                     )
                   })}
