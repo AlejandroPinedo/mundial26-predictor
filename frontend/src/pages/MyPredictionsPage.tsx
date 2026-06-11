@@ -5,6 +5,7 @@ import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getPointsBadge } from '../utils/points'
 import { getFlag } from '../utils/flags'
+import { LIMA_TZ } from '../utils/dates'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 
@@ -143,7 +144,7 @@ export default function MyPredictionsPage() {
                       <span className="text-[9px] font-condensed font-extrabold text-gray-500 uppercase tracking-wider text-right">
                         {p.group_name ? `Grupo ${p.group_name}` : p.stage || 'Mundial 2026'}
                         {' · '}
-                        {new Date(p.match_date).toLocaleDateString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        {new Date(p.match_date).toLocaleDateString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: LIMA_TZ })}
                       </span>
                     </div>
 
@@ -212,7 +213,7 @@ export default function MyPredictionsPage() {
                           {p.group_name ? `Grupo ${p.group_name}` : p.stage || 'Mundial 2026'}
                         </span>
                         <span>
-                          {new Date(p.match_date).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
+                          {new Date(p.match_date).toLocaleDateString('es', { day: 'numeric', month: 'short', timeZone: LIMA_TZ })}
                         </span>
                       </div>
 

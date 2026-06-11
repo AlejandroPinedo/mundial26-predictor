@@ -165,3 +165,4 @@ dist/
 
 # Claude Code local config
 .claude/
+backend/scripts/matches-backup.json

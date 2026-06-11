@@ -6,6 +6,7 @@ import PredictionProgress from '../components/PredictionProgress'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 import { getFlag } from '../utils/flags'
+import { LIMA_TZ } from '../utils/dates'
 import { useRealtimeMatches } from '../hooks/useRealtimeMatches'
 import { calculateGroupStandings, getBestThirdPlacedTeams, type TeamStats, type ThirdPlaceStats } from '../utils/standings'
 
@@ -232,7 +233,7 @@ export default function MatchesPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 font-sans">
 
-      <PageHeader title="PARTIDOS" subtitle="Fase de grupos · Copa Mundial FIFA 2026" live badge="FIFA WC26" icon="⚽" />
+      <PageHeader title="PARTIDOS" subtitle="Fase de grupos · Copa Mundial FIFA 2026 · Horarios en hora de Perú (GMT-5)" live badge="FIFA WC26" icon="⚽" />
 
       <div className="mb-6 fade-up-1">
         <PredictionProgress predicted={predicted} total={totalPending} />
@@ -257,10 +258,10 @@ export default function MatchesPage() {
               <div className="text-center px-4 sm:px-6 flex-shrink-0">
                 <div className="scoreboard px-4 py-2 rounded-lg text-2xl">VS</div>
                 <p className="text-gray-500 text-[10px] mt-2 font-condensed font-extrabold uppercase tracking-[0.18em]">
-                  {new Date(nextMatch.match_date).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
+                  {new Date(nextMatch.match_date).toLocaleDateString('es', { day: 'numeric', month: 'short', timeZone: LIMA_TZ })}
                 </p>
                 <p className="text-gold font-display text-base leading-tight">
-                  {new Date(nextMatch.match_date).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(nextMatch.match_date).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', timeZone: LIMA_TZ })}
                 </p>
               </div>
               <div className="text-center flex-1 min-w-0">
@@ -361,7 +362,7 @@ export default function MatchesPage() {
                         <div className="flex items-center gap-3">
                           <p className="text-gray-500 text-[10px] font-condensed font-bold uppercase tracking-[0.14em]">
                             {new Date(match.match_date).toLocaleDateString('es', {
-                              weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                              weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: LIMA_TZ
                             })}
                           </p>
                           {deadline && !played && !started && (
