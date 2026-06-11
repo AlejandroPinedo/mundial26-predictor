@@ -21,6 +21,7 @@ const moreItems: { to: string; icon: IconName; label: string }[] = [
   { to: '/my', icon: 'target', label: 'Mis predicciones' },
   { to: '/standings', icon: 'medal', label: 'Clasificaciones' },
   { to: '/stats', icon: 'trending', label: 'Estadísticas' },
+  { to: '/simulator', icon: 'zap', label: 'Simulador' },
   { to: '/profile', icon: 'user', label: 'Perfil' },
   { to: '/rules', icon: 'book', label: 'Guía' },
 ]
