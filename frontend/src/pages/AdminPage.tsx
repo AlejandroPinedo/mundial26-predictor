@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 import { getFlag } from '../utils/flags'
+import { LIMA_TZ } from '../utils/dates'
 
 type Match = {
   id: string
@@ -115,7 +116,7 @@ export default function AdminPage() {
                         </span>
                         <span className="flex items-center gap-2 flex-shrink-0">
                           <span className="text-[10px] text-gray-500 font-condensed font-bold uppercase tracking-wider">
-                            {new Date(m.match_date).toLocaleDateString('es')}
+                            {new Date(m.match_date).toLocaleDateString('es', { timeZone: LIMA_TZ })}
                           </span>
                           {selected === m.id && <Icon name="check" size={14} className="text-gold" />}
                         </span>
@@ -209,7 +210,7 @@ export default function AdminPage() {
                     <span className="no-invert">{getFlag(m.away_team)}</span> {m.away_team}
                   </span>
                   <span className="text-[9px] text-gray-500 font-condensed font-extrabold uppercase tracking-wider mt-1">
-                    {new Date(m.match_date).toLocaleDateString('es')}
+                    {new Date(m.match_date).toLocaleDateString('es', { timeZone: LIMA_TZ })}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 pr-3">
