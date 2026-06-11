@@ -5,7 +5,7 @@ import { apiFetch } from '../api/client'
 import Skeleton from '../components/Skeleton'
 import Icon from '../components/Icon'
 import { useAuth } from '../context/AuthContext'
-import { getFlag } from '../utils/flags'
+import Flag from '../components/Flag'
 import { LIMA_TZ } from '../utils/dates'
 
 const KICKOFF = new Date('2026-06-11T19:00:00Z')
@@ -247,12 +247,12 @@ export default function HomePage() {
                 </div>
                 <div className="flex justify-between items-center mb-4">
                   <div className="text-center flex-1 min-w-0">
-                    <div className="text-2xl mb-1 no-invert">{getFlag(m.home_team)}</div>
+                    <div className="mb-1"><Flag team={m.home_team} className="h-4.5" /></div>
                     <div className="text-[11px] font-condensed font-bold truncate text-white uppercase tracking-wide">{m.home_team}</div>
                   </div>
                   <div className="font-display text-xs text-gray-600 px-3 select-none">VS</div>
                   <div className="text-center flex-1 min-w-0">
-                    <div className="text-2xl mb-1 no-invert">{getFlag(m.away_team)}</div>
+                    <div className="mb-1"><Flag team={m.away_team} className="h-4.5" /></div>
                     <div className="text-[11px] font-condensed font-bold truncate text-white uppercase tracking-wide">{m.away_team}</div>
                   </div>
                 </div>

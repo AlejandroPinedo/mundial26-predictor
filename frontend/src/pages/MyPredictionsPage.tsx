@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getPointsBadge } from '../utils/points'
-import { getFlag } from '../utils/flags'
+import Flag from '../components/Flag'
 import { LIMA_TZ } from '../utils/dates'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
@@ -150,7 +150,7 @@ export default function MyPredictionsPage() {
 
                     <div className="flex items-center justify-between gap-3 py-1.5 relative z-10">
                       <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                        <span className="text-xl no-invert leading-none flex-shrink-0">{getFlag(p.home_team)}</span>
+                        <Flag team={p.home_team} className="h-4 flex-shrink-0" />
                         <span className="truncate uppercase font-display text-sm text-white">{p.home_team}</span>
                       </div>
 
@@ -160,7 +160,7 @@ export default function MyPredictionsPage() {
 
                       <div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
                         <span className="truncate uppercase font-display text-sm text-white text-right">{p.away_team}</span>
-                        <span className="text-xl no-invert leading-none flex-shrink-0">{getFlag(p.away_team)}</span>
+                        <Flag team={p.away_team} className="h-4 flex-shrink-0" />
                       </div>
                     </div>
 
@@ -220,7 +220,7 @@ export default function MyPredictionsPage() {
                       {/* Match Result Scoreboard */}
                       <div className="flex items-center justify-between gap-3 py-1 relative z-10">
                         <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                          <span className="text-xl no-invert leading-none flex-shrink-0">{getFlag(p.home_team)}</span>
+                          <Flag team={p.home_team} className="h-4 flex-shrink-0" />
                           <span className="truncate uppercase font-display text-sm text-white">{p.home_team}</span>
                         </div>
 
@@ -230,7 +230,7 @@ export default function MyPredictionsPage() {
 
                         <div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
                           <span className="truncate uppercase font-display text-sm text-white text-right">{p.away_team}</span>
-                          <span className="text-xl no-invert leading-none flex-shrink-0">{getFlag(p.away_team)}</span>
+                          <Flag team={p.away_team} className="h-4 flex-shrink-0" />
                         </div>
                       </div>
 
@@ -286,7 +286,7 @@ export default function MyPredictionsPage() {
                   <div className="flex flex-wrap gap-2">
                     {teams.map(team => (
                       <span key={team} className="flex items-center gap-1.5 bg-panel-2 border border-white/10 rounded-xl px-3 py-1 text-xs font-medium text-gray-200">
-                        <span className="no-invert">{getFlag(team)}</span>
+                        <Flag team={team} className="h-3 flex-shrink-0" />
                         <span>{team}</span>
                       </span>
                     ))}

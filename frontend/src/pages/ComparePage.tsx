@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
-import { getFlag } from '../utils/flags'
+import Flag from '../components/Flag'
 import { getPointsBadge } from '../utils/points'
 import { LIMA_TZ } from '../utils/dates'
 import PageHeader from '../components/PageHeader'
@@ -285,7 +285,7 @@ export default function ComparePage() {
                     {/* Main Teams Match Score */}
                     <div className="flex justify-between items-center gap-2 font-condensed font-extrabold text-base md:text-lg tracking-wide py-1">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="text-2xl no-invert">{getFlag(m.homeTeam)}</span>
+                        <Flag team={m.homeTeam} className="h-4.5 flex-shrink-0" />
                         <span className="truncate uppercase text-white">{m.homeTeam}</span>
                       </div>
 
@@ -303,7 +303,7 @@ export default function ComparePage() {
 
                       <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
                         <span className="truncate uppercase text-white">{m.awayTeam}</span>
-                        <span className="text-2xl no-invert">{getFlag(m.awayTeam)}</span>
+                        <Flag team={m.awayTeam} className="h-4.5 flex-shrink-0" />
                       </div>
                     </div>
 
