@@ -5,7 +5,7 @@ import Spinner from '../components/Spinner'
 import PredictionProgress from '../components/PredictionProgress'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
-import { getFlag } from '../utils/flags'
+import Flag from '../components/Flag'
 import { LIMA_TZ } from '../utils/dates'
 import { useRealtimeMatches } from '../hooks/useRealtimeMatches'
 import { calculateGroupStandings, getBestThirdPlacedTeams, type TeamStats, type ThirdPlaceStats } from '../utils/standings'
@@ -53,7 +53,7 @@ function StandingsTable({ teams }: { teams: TeamStats[] }) {
                     <span className={idx < 2 ? 'text-mx' : idx === 2 ? 'text-us' : 'text-gray-600'}>{idx + 1}</span>
                   </td>
                   <td className="py-2.5 flex items-center gap-1.5 font-medium truncate">
-                    <span className="text-lg flex-shrink-0 no-invert">{getFlag(t.team)}</span>
+                    <Flag team={t.team} className="h-3.5 flex-shrink-0" />
                     <span className="truncate max-w-[110px] text-gray-200">{t.team}</span>
                   </td>
                   <td className="py-2.5 text-center text-gray-400">{t.mp}</td>
@@ -106,7 +106,7 @@ function BestThirdsModal({ thirds, onClose }: { thirds: ThirdPlaceStats[]; onClo
                     </td>
                     <td className="py-2.5 text-gray-400 font-condensed font-bold text-center uppercase">Grupo {t.group}</td>
                     <td className="py-2.5 flex items-center gap-1.5 font-medium truncate">
-                      <span className="text-lg flex-shrink-0 no-invert">{getFlag(t.team)}</span>
+                      <Flag team={t.team} className="h-3.5 flex-shrink-0" />
                       <span className="truncate max-w-[120px] text-gray-200">{t.team}</span>
                     </td>
                     <td className="py-2.5 text-center text-gray-400">{t.mp}</td>
@@ -252,7 +252,7 @@ export default function MatchesPage() {
             </div>
             <div className="flex justify-between items-center max-w-3xl mx-auto">
               <div className="text-center flex-1 min-w-0">
-                <p className="text-4xl mb-1.5 no-invert">{getFlag(nextMatch.home_team)}</p>
+                <p className="mb-1.5"><Flag team={nextMatch.home_team} className="h-7" /></p>
                 <p className="font-display text-sm md:text-base text-white uppercase tracking-wide truncate">{nextMatch.home_team}</p>
               </div>
               <div className="text-center px-4 sm:px-6 flex-shrink-0">
@@ -265,7 +265,7 @@ export default function MatchesPage() {
                 </p>
               </div>
               <div className="text-center flex-1 min-w-0">
-                <p className="text-4xl mb-1.5 no-invert">{getFlag(nextMatch.away_team)}</p>
+                <p className="mb-1.5"><Flag team={nextMatch.away_team} className="h-7" /></p>
                 <p className="font-display text-sm md:text-base text-white uppercase tracking-wide truncate">{nextMatch.away_team}</p>
               </div>
             </div>
@@ -375,7 +375,7 @@ export default function MatchesPage() {
 
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <span className="text-2xl no-invert flex-shrink-0">{getFlag(match.home_team)}</span>
+                          <Flag team={match.home_team} className="h-4.5 flex-shrink-0" />
                           <span className="font-display text-sm text-white uppercase tracking-wide truncate">{match.home_team}</span>
                         </div>
                         <div className="text-center px-3 flex-shrink-0">
@@ -394,7 +394,7 @@ export default function MatchesPage() {
                         </div>
                         <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
                           <span className="font-display text-sm text-white uppercase tracking-wide truncate text-right">{match.away_team}</span>
-                          <span className="text-2xl no-invert flex-shrink-0">{getFlag(match.away_team)}</span>
+                          <Flag team={match.away_team} className="h-4.5 flex-shrink-0" />
                         </div>
                       </div>
 

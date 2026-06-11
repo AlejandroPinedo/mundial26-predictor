@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../api/client'
 import Skeleton from '../components/Skeleton'
-import { getFlag } from '../utils/flags'
+import Flag from '../components/Flag'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 
@@ -74,7 +74,7 @@ function GroupTable({ group }: { group: string }) {
               </td>
               <td className="py-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-base leading-none no-invert">{getFlag(s.team)}</span>
+                  <Flag team={s.team} className="h-3 flex-shrink-0" />
                   <span className="font-condensed font-bold text-xs uppercase tracking-wide text-gray-100 truncate max-w-[80px] sm:max-w-none">{s.team}</span>
                 </div>
               </td>

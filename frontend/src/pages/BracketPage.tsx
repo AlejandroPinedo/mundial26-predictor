@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
-import { getFlag } from '../utils/flags'
+import Flag from '../components/Flag'
 import { calculateRoundOf32 } from '../utils/standings'
 import { R32_TO_R16_SLOT, parseTeamName } from '../utils/bracketStructure'
 import { toPng } from 'html-to-image'
@@ -91,7 +91,7 @@ function Slot({
     >
       {team ? (
         <>
-          <span className="text-base leading-none flex-shrink-0 no-invert">{getFlag(team)}</span>
+          <Flag team={team} className="h-3 flex-shrink-0" />
           <span className="truncate flex-1 text-left uppercase font-condensed font-semibold tracking-wide">{team}</span>
           {highlight && <span className="text-[10px] text-gold ml-auto select-none">✓</span>}
         </>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
-import { getFlag } from '../utils/flags'
+import Flag from '../components/Flag'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 
@@ -131,7 +131,7 @@ export default function TeamsPage() {
                   <div className="flex flex-col gap-1">
                     {teams.map(team => (
                       <div key={team} className="flex items-center gap-3 px-2.5 py-2 rounded-xl border border-transparent hover:bg-white/[0.04] hover:border-white/8 transition duration-150">
-                        <span className="text-3xl leading-none no-invert flex-shrink-0">{getFlag(team)}</span>
+                        <Flag team={team} className="h-5.5 flex-shrink-0" />
                         <span className="font-condensed font-bold text-sm text-gray-200 uppercase tracking-wide">{team}</span>
                       </div>
                     ))}
@@ -153,7 +153,7 @@ export default function TeamsPage() {
 function TeamCard({ team }: { team: string }) {
   return (
     <div className="bg-panel border border-white/8 rounded-2xl p-5 flex flex-col items-center gap-3 hover-lift group overflow-hidden">
-      <span className="text-5xl leading-none no-invert select-none group-hover:scale-110 transition-transform duration-300">{getFlag(team)}</span>
+      <Flag team={team} className="h-9 group-hover:scale-110 transition-transform duration-300" />
       <span className="font-condensed font-extrabold text-xs text-center text-gray-200 uppercase tracking-wider truncate w-full">{team}</span>
     </div>
   )

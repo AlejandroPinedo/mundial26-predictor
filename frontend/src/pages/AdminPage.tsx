@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
-import { getFlag } from '../utils/flags'
+import Flag from '../components/Flag'
 import { LIMA_TZ } from '../utils/dates'
 
 type Match = {
@@ -108,10 +108,10 @@ export default function AdminPage() {
                         }`}
                       >
                         <span className="flex items-center gap-2 min-w-0 text-[13px]">
-                          <span className="no-invert text-base leading-none flex-shrink-0">{getFlag(m.home_team)}</span>
+                          <Flag team={m.home_team} className="h-3 flex-shrink-0" />
                           <span className="font-condensed font-bold uppercase tracking-wide truncate">{m.home_team}</span>
                           <span className="text-gray-600 text-[9px] font-condensed font-extrabold uppercase flex-shrink-0">vs</span>
-                          <span className="no-invert text-base leading-none flex-shrink-0">{getFlag(m.away_team)}</span>
+                          <Flag team={m.away_team} className="h-3 flex-shrink-0" />
                           <span className="font-condensed font-bold uppercase tracking-wide truncate">{m.away_team}</span>
                         </span>
                         <span className="flex items-center gap-2 flex-shrink-0">
@@ -134,10 +134,10 @@ export default function AdminPage() {
                   <Icon name="ball" size={11} /> Partido seleccionado
                 </span>
                 <span className="flex items-center gap-2 text-sm font-condensed font-bold uppercase tracking-wide min-w-0">
-                  <span className="no-invert leading-none flex-shrink-0">{getFlag(selectedMatch.home_team)}</span>
+                  <Flag team={selectedMatch.home_team} className="h-3.5 flex-shrink-0" />
                   <span className="truncate">{selectedMatch.home_team}</span>
                   <span className="text-gray-500 text-[10px]">vs</span>
-                  <span className="no-invert leading-none flex-shrink-0">{getFlag(selectedMatch.away_team)}</span>
+                  <Flag team={selectedMatch.away_team} className="h-3.5 flex-shrink-0" />
                   <span className="truncate">{selectedMatch.away_team}</span>
                 </span>
               </div>
@@ -205,9 +205,9 @@ export default function AdminPage() {
               <div key={m.id} className="ticket-card p-4 flex justify-between items-center gap-3 hover-lift">
                 <div className="flex flex-col min-w-0 flex-1">
                   <span className="font-condensed font-bold text-white text-[13px] truncate uppercase tracking-wide">
-                    <span className="no-invert">{getFlag(m.home_team)}</span> {m.home_team}
+                    <Flag team={m.home_team} className="h-3" /> {m.home_team}
                     <span className="text-gray-600 text-[9px] mx-1.5">vs</span>
-                    <span className="no-invert">{getFlag(m.away_team)}</span> {m.away_team}
+                    <Flag team={m.away_team} className="h-3" /> {m.away_team}
                   </span>
                   <span className="text-[9px] text-gray-500 font-condensed font-extrabold uppercase tracking-wider mt-1">
                     {new Date(m.match_date).toLocaleDateString('es', { timeZone: LIMA_TZ })}
