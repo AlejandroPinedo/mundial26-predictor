@@ -118,7 +118,7 @@ export default function ComparePage() {
   })
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 font-sans">
+    <div className="max-w-6xl 2xl:max-w-7xl mx-auto px-4 md:px-8 py-6 font-sans">
 
       {/* Back navigation */}
       <Link

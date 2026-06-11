@@ -60,7 +60,7 @@ export default function TeamsPage() {
 
   return (
     <div className="min-h-screen bg-ink-950 text-white">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 font-sans">
+      <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 md:px-8 py-6 font-sans">
 
         <PageHeader title="EQUIPOS" subtitle="48 selecciones · Copa Mundial FIFA 2026" icon="🌍" />
 
@@ -113,7 +113,7 @@ export default function TeamsPage() {
             </div>
           )
         ) : view === 'groups' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 fade-up-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5 fade-up-2">
             {Object.entries(teamsByGroup).sort(([a], [b]) => a.localeCompare(b)).map(([group, teams]) => (
               <section key={group} className="relative bg-panel border border-white/8 rounded-2xl overflow-hidden">
                 <div className="tri-stripe" />
