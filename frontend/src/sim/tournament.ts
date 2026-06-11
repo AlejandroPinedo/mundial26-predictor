@@ -2,7 +2,7 @@ import { calculateGroupStandings, getBestThirdPlacedTeams, allocateThirds, build
 import { R32_TO_R16_SLOT } from '../utils/bracketStructure'
 import { getElo, HOST_NATIONS, HOST_ELO_BOOST } from '../utils/ratings'
 import { getSquadElo, blendRating } from '../utils/squads'
-import { simulateScore, resolveShootout } from './matchSim'
+import { simulateScore, resolveShootout, winExpectancy } from './matchSim'
 import type { RNG } from './rng'
 
 export type ApiMatch = {
@@ -19,12 +19,20 @@ export type SimConfig = {
   surprise: number      // 0..100 → tau = 1 + s/50
   squadWeight: number   // 0..100 → w = sw/100, mezcla Elo selección vs Elo plantilla
   hostBoost: boolean
+  momentum: boolean     // rachas: el Elo se actualiza partido a partido dentro de cada mundial simulado
   seed: number
 }
 
 // Etapa máxima alcanzada por equipo en una iteración.
 export const STAGE = { GROUP: 0, R32: 1, R16: 2, QF: 3, SF: 4, FINAL: 5, CHAMPION: 6 } as const
 export const STAGE_COUNT = 7
+
+// Resultado de grupo por equipo en una iteración.
+export const GROUP_POS = { FIRST: 0, SECOND: 1, THIRD_QUALIFIED: 2, ELIMINATED: 3 } as const
+
+// Factor K del momentum (mitad del K estándar de eloratings para torneos:
+// las rachas pesan sin volverse caóticas).
+const MOMENTUM_K = 32
 
 export type Prepared = {
   matches: ApiMatch[]
@@ -73,8 +81,11 @@ export function prepareTournament(matches: ApiMatch[], config: SimConfig): Prepa
 
 export type IterationResult = {
   stageReached: Uint8Array
-  groupWinners: number[]
+  groupPos: Uint8Array               // GROUP_POS por equipo
+  finalistA: number                  // índice del campeón
+  finalistB: number                  // índice del subcampeón
   championIdx: number
+  simScores: Record<string, [number, number]>  // marcadores simulados de los partidos SIN resultado real
   degenerate: boolean
 }
 
@@ -84,32 +95,57 @@ type SimPrediction = { match_id: string; predicted_home: number; predicted_away:
 // por la condición de Hall de los pools, pero el bucle nunca debe romperse).
 const WINNER_GROUPS_WITH_THIRD = ['E', 'I', 'A', 'L', 'G', 'D', 'B', 'K']
 
-export function simulateOnce(prep: Prepared, tau: number, rng: RNG): IterationResult {
+export function simulateOnce(prep: Prepared, tau: number, momentum: boolean, rng: RNG): IterationResult {
   const { matches, teams, teamIndex, elos } = prep
-  const eloOf = (team: string) => elos[teamIndex.get(team) ?? -1] ?? 1500
+  // Con momentum, cada mundial arranca con los ratings base y los va actualizando.
+  const live = momentum ? Float64Array.from(elos) : elos
+  const eloOf = (team: string) => live[teamIndex.get(team) ?? -1] ?? 1500
 
-  // 1) Fase de grupos: simular solo los partidos sin resultado real
+  const applyMomentum = (home: string, away: string, h: number, a: number) => {
+    if (!momentum) return
+    const hi = teamIndex.get(home)
+    const ai = teamIndex.get(away)
+    if (hi === undefined || ai === undefined) return
+    const expected = winExpectancy(live[hi] - live[ai], tau)
+    const result = h > a ? 1 : h < a ? 0 : 0.5
+    const delta = MOMENTUM_K * (result - expected)
+    live[hi] += delta
+    live[ai] -= delta
+  }
+
+  // 1) Fase de grupos: simular en orden cronológico solo los partidos sin resultado real.
+  //    Los jugados también alimentan el momentum (la racha real cuenta).
   const predictions: Record<string, SimPrediction> = {}
+  const simScores: Record<string, [number, number]> = {}
   for (const m of matches) {
     if (m.home_score === null || m.away_score === null) {
       const [h, a] = simulateScore(eloOf(m.home_team), eloOf(m.away_team), tau, rng)
       predictions[m.id] = { match_id: m.id, predicted_home: h, predicted_away: a }
+      simScores[m.id] = [h, a]
+      applyMomentum(m.home_team, m.away_team, h, a)
+    } else {
+      applyMomentum(m.home_team, m.away_team, m.home_score, m.away_score)
     }
   }
 
   const standings = calculateGroupStandings(matches, predictions)
   const stageReached = new Uint8Array(teams.length) // STAGE.GROUP por defecto
-  const groupWinners: number[] = []
-  for (const table of Object.values(standings)) {
-    if (table[0]) groupWinners.push(teamIndex.get(table[0].team)!)
+  const groupPos = new Uint8Array(teams.length).fill(GROUP_POS.ELIMINATED)
+
+  // 2) Posiciones de grupo y Ronda de 32
+  const thirds = getBestThirdPlacedTeams(standings)
+  const bestThirdGroups = new Set(thirds.slice(0, 8).map(t => t.group))
+  for (const [group, table] of Object.entries(standings)) {
+    if (table[0]) groupPos[teamIndex.get(table[0].team)!] = GROUP_POS.FIRST
+    if (table[1]) groupPos[teamIndex.get(table[1].team)!] = GROUP_POS.SECOND
+    if (table[2] && bestThirdGroups.has(group)) {
+      groupPos[teamIndex.get(table[2].team)!] = GROUP_POS.THIRD_QUALIFIED
+    }
   }
 
-  // 2) Ronda de 32: cruces oficiales (con fallback si la asignación de terceros falla)
   let degenerate = false
-  const thirds = getBestThirdPlacedTeams(standings)
-  const bestThirdGroups = thirds.slice(0, 8).map(t => t.group)
   let r32: { home: string; away: string }[]
-  if (allocateThirds(bestThirdGroups) !== null) {
+  if (allocateThirds([...bestThirdGroups]) !== null) {
     r32 = buildRoundOf32(standings)
   } else {
     degenerate = true
@@ -131,6 +167,7 @@ export function simulateOnce(prep: Prepared, tau: number, rng: RNG): IterationRe
     const eh = eloOf(home)
     const ea = eloOf(away)
     const [h, a] = simulateScore(eh, ea, tau, rng)
+    applyMomentum(home, away, h, a)
     if (h > a) return home
     if (a > h) return away
     return resolveShootout(eh, ea, tau, rng) === 'home' ? home : away
@@ -160,8 +197,14 @@ export function simulateOnce(prep: Prepared, tau: number, rng: RNG): IterationRe
     slots = next
   }
 
+  // En la última pasada `slots` quedó con el campeón; los finalistas son los 2 con stage FINAL+
   const champion = slots[0]
   mark(champion, STAGE.CHAMPION)
+  const championIdx = teamIndex.get(champion)!
+  let finalistB = -1
+  for (let i = 0; i < stageReached.length; i++) {
+    if (stageReached[i] === STAGE.FINAL) { finalistB = i; break }
+  }
 
-  return { stageReached, groupWinners, championIdx: teamIndex.get(champion)!, degenerate }
+  return { stageReached, groupPos, finalistA: championIdx, finalistB, championIdx, simScores, degenerate }
 }

@@ -8,8 +8,11 @@ const post = (msg: WorkerResponse) => self.postMessage(msg)
 self.onmessage = (e: MessageEvent<WorkerRequest>) => {
   if (e.data.type !== 'run') return
   try {
-    const results = runSimulation(e.data.matches, e.data.config, (done, total) =>
-      post({ type: 'progress', done, total })
+    const results = runSimulation(
+      e.data.matches,
+      e.data.config,
+      (done, total) => post({ type: 'progress', done, total }),
+      e.data.user
     )
     post({ type: 'done', results })
   } catch (err) {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import type { ApiMatch, SimConfig } from '../sim/tournament'
 import type { SimResults } from '../sim/aggregate'
+import type { UserInputs } from '../sim/userScore'
 import type { WorkerRequest, WorkerResponse } from '../sim/protocol'
 
 export function useSimulationWorker() {
@@ -17,7 +18,7 @@ export function useSimulationWorker() {
     setProgress(0)
   }, [])
 
-  const run = useCallback((matches: ApiMatch[], config: SimConfig) => {
+  const run = useCallback((matches: ApiMatch[], config: SimConfig, user?: UserInputs) => {
     workerRef.current?.terminate()
     setRunning(true)
     setProgress(0)
@@ -49,7 +50,7 @@ export function useSimulationWorker() {
       workerRef.current = null
     }
 
-    const request: WorkerRequest = { type: 'run', matches, config }
+    const request: WorkerRequest = { type: 'run', matches, config, user }
     worker.postMessage(request)
   }, [])
 

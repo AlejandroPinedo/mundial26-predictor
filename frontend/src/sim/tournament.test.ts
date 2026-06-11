@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mulberry32 } from './rng'
-import { prepareTournament, simulateOnce, STAGE, type ApiMatch, type SimConfig } from './tournament'
+import { prepareTournament, simulateOnce, STAGE, GROUP_POS, type ApiMatch, type SimConfig } from './tournament'
 import { runSimulation } from './runner'
 
 // Grupos reales del Mundial 2026 (mismos nombres que la BD/flags.ts)
@@ -38,7 +38,7 @@ function buildFixture(): ApiMatch[] {
   return matches
 }
 
-const CONFIG: SimConfig = { iterations: 300, surprise: 0, squadWeight: 0, hostBoost: false, seed: 42 }
+const CONFIG: SimConfig = { iterations: 300, surprise: 0, squadWeight: 0, hostBoost: false, momentum: false, seed: 42 }
 
 describe('prepareTournament', () => {
   it('validates and indexes the 48 teams', () => {
@@ -69,8 +69,7 @@ describe('simulateOnce — invariantes por iteración', () => {
     const prep = prepareTournament(buildFixture(), CONFIG)
     const rng = mulberry32(7)
     for (let i = 0; i < 20; i++) {
-      const r = simulateOnce(prep, 1, rng)
-      expect(r.groupWinners).toHaveLength(12)
+      const r = simulateOnce(prep, 1, false, rng)
       const countAtLeast = (s: number) => r.stageReached.filter(v => v >= s).length
       expect(countAtLeast(STAGE.R32)).toBe(32)
       expect(countAtLeast(STAGE.R16)).toBe(16)
@@ -79,7 +78,29 @@ describe('simulateOnce — invariantes por iteración', () => {
       expect(countAtLeast(STAGE.FINAL)).toBe(2)
       expect(countAtLeast(STAGE.CHAMPION)).toBe(1)
       expect(r.stageReached[r.championIdx]).toBe(STAGE.CHAMPION)
+      // Posiciones de grupo: 12 primeros, 12 segundos, 8 mejores terceros, 16 eliminados
+      const posCount = (p: number) => r.groupPos.filter(v => v === p).length
+      expect(posCount(GROUP_POS.FIRST)).toBe(12)
+      expect(posCount(GROUP_POS.SECOND)).toBe(12)
+      expect(posCount(GROUP_POS.THIRD_QUALIFIED)).toBe(8)
+      expect(posCount(GROUP_POS.ELIMINATED)).toBe(16)
+      // Finalistas: distintos, ambos llegaron a la final, el campeón es el finalista A
+      expect(r.finalistA).not.toBe(r.finalistB)
+      expect(r.finalistA).toBe(r.championIdx)
+      expect(r.stageReached[r.finalistB]).toBe(STAGE.FINAL)
+      // Marcadores simulados: exactamente los 72 partidos sin resultado real
+      expect(Object.keys(r.simScores)).toHaveLength(72)
     }
+  })
+
+  it('momentum keeps determinism and base ratings untouched', () => {
+    const prep = prepareTournament(buildFixture(), CONFIG)
+    const before = Float64Array.from(prep.elos)
+    const a = simulateOnce(prep, 1, true, mulberry32(11))
+    const b = simulateOnce(prep, 1, true, mulberry32(11))
+    expect([...a.stageReached]).toEqual([...b.stageReached])
+    expect(a.championIdx).toBe(b.championIdx)
+    expect([...prep.elos]).toEqual([...before])
   })
 })
 
@@ -139,5 +160,37 @@ describe('aggregate — consistencia de probabilidades', () => {
     const sumWinGroup = results.teams.reduce((s, t) => s + t.winGroup, 0)
     expect(sumChampion).toBeCloseTo(1, 6)
     expect(sumWinGroup).toBeCloseTo(12, 6)
+  })
+
+  it('group position probabilities sum to 1 per team', () => {
+    const results = runSimulation(buildFixture(), { ...CONFIG, iterations: 300 })
+    for (const t of results.teams) {
+      expect(t.winGroup + t.second + t.thirdQualified + t.eliminated).toBeCloseTo(1, 6)
+    }
+  })
+
+  it('top finals are valid matchups with sane frequencies', () => {
+    const results = runSimulation(buildFixture(), { ...CONFIG, iterations: 400 })
+    expect(results.topFinals.length).toBeGreaterThan(0)
+    expect(results.topFinals.length).toBeLessThanOrEqual(5)
+    let prev = 1
+    for (const f of results.topFinals) {
+      expect(f.teamA).not.toBe(f.teamB)
+      expect(f.p).toBeGreaterThan(0)
+      expect(f.p).toBeLessThanOrEqual(prev)
+      expect(f.aWinShare).toBeGreaterThanOrEqual(0.5)
+      expect(f.aWinShare).toBeLessThanOrEqual(1)
+      prev = f.p
+    }
+    const sumTop = results.topFinals.reduce((s, f) => s + f.p, 0)
+    expect(sumTop).toBeLessThanOrEqual(1)
+  })
+
+  it('momentum produces a different but valid distribution', () => {
+    const base = runSimulation(buildFixture(), { ...CONFIG, iterations: 300 })
+    const mom = runSimulation(buildFixture(), { ...CONFIG, iterations: 300, momentum: true })
+    expect(mom.teams.reduce((s, t) => s + t.champion, 0)).toBeCloseTo(1, 6)
+    // Misma semilla pero modelo distinto → resultados distintos
+    expect(mom.teams).not.toEqual(base.teams)
   })
 })
