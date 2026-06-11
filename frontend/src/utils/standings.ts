@@ -170,7 +170,12 @@ export function calculateRoundOf32(
   matches: Match[],
   predictions: Record<string, Prediction>
 ): R32Matchup[] {
-  const standings = calculateGroupStandings(matches, predictions)
+  return buildRoundOf32(calculateGroupStandings(matches, predictions))
+}
+
+// Construye los 16 cruces oficiales de 32avos a partir de unas tablas ya calculadas.
+// Separado de calculateRoundOf32 para que el simulador reutilice los standings de cada iteración.
+export function buildRoundOf32(standings: Record<string, TeamStats[]>): R32Matchup[] {
   const thirds = getBestThirdPlacedTeams(standings)
   const bestThirdGroups = thirds.slice(0, 8).map(t => t.group)
   const thirdAlloc = allocateThirds(bestThirdGroups) || {}

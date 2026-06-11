@@ -20,6 +20,7 @@ export default function Sidebar({ unpredicted = 0 }: Props) {
     { to: '/leaderboard', icon: 'chart', label: 'Ranking' },
     { to: '/standings', icon: 'medal', label: 'Clasificaciones' },
     { to: '/stats', icon: 'trending', label: 'Estadísticas' },
+    { to: '/simulator', icon: 'zap', label: 'Simulador' },
     { to: '/my', icon: 'target', label: 'Mis predicciones' },
     { to: '/groups', icon: 'users', label: 'Grupos privados' },
     { to: '/teams', icon: 'globe', label: 'Equipos' },

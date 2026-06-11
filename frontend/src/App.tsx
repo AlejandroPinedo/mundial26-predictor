@@ -29,6 +29,7 @@ const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const StadiumsPage = lazy(() => import('./pages/StadiumsPage'))
 const ComparePage = lazy(() => import('./pages/ComparePage'))
 const StatsPage = lazy(() => import('./pages/StatsPage'))
+const SimulatorPage = lazy(() => import('./pages/SimulatorPage'))
 const StandingsPage = lazy(() => import('./pages/StandingsPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
@@ -92,6 +93,7 @@ export default function App() {
               <Route path="/stadiums" element={<Protected><StadiumsPage /></Protected>} />
               <Route path="/compare/:username" element={<Protected><ComparePage /></Protected>} />
               <Route path="/stats" element={<Protected><StatsPage /></Protected>} />
+              <Route path="/simulator" element={<Protected><SimulatorPage /></Protected>} />
               <Route path="/standings" element={<Protected><StandingsPage /></Protected>} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>

@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
 import { calculateRoundOf32 } from '../utils/standings'
+import { R32_TO_R16_SLOT, parseTeamName } from '../utils/bracketStructure'
 import { toPng } from 'html-to-image'
 import { useAuth } from '../context/AuthContext'
 import PageHeader from '../components/PageHeader'
@@ -17,34 +18,6 @@ type Predictions = {
   semi: (string | null)[]
   finalist: (string | null)[]
   champion: (string | null)[]
-}
-
-const R32_TO_R16_SLOT = [
-  2,  // Match 73 -> R16 Match 90 home (slot 2)
-  0,  // Match 74 -> R16 Match 89 home (slot 0)
-  3,  // Match 75 -> R16 Match 90 away (slot 3)
-  4,  // Match 76 -> R16 Match 91 home (slot 4)
-  1,  // Match 77 -> R16 Match 89 away (slot 1)
-  5,  // Match 78 -> R16 Match 91 away (slot 5)
-  6,  // Match 79 -> R16 Match 92 home (slot 6)
-  7,  // Match 80 -> R16 Match 92 away (slot 7)
-  8,  // Match 81 -> R16 Match 93 home (slot 8)
-  9,  // Match 82 -> R16 Match 93 away (slot 9)
-  10, // Match 83 -> R16 Match 94 home (slot 10)
-  11, // Match 84 -> R16 Match 94 away (slot 11)
-  14, // Match 85 -> R16 Match 96 home (slot 14)
-  12, // Match 86 -> R16 Match 95 home (slot 12)
-  15, // Match 87 -> R16 Match 96 away (slot 15)
-  13  // Match 88 -> R16 Match 95 away (slot 13)
-]
-
-function parseTeamName(prefixedName: string | null): string | null {
-  if (!prefixedName) return null
-  const parts = prefixedName.split(':')
-  if (parts.length > 1 && !isNaN(Number(parts[0]))) {
-    return parts.slice(1).join(':')
-  }
-  return prefixedName
 }
 
 function getPlaceholder(round: string, idx: number): string {
