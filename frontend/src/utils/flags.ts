@@ -54,6 +54,73 @@ const FLAGS: Record<string, string> = {
   'Venezuela': '🇻🇪'
 };
 
+// Códigos ISO 3166-1 alpha-2 (gb-eng/gb-sct para Inglaterra/Escocia).
+// Windows no renderiza emojis de bandera, así que la UI usa imágenes
+// locales en /flags/<code>.png vía components/Flag.tsx.
+const FLAG_CODES: Record<string, string> = {
+  'Alemania': 'de',
+  'Arabia Saudí': 'sa',
+  'Argelia': 'dz',
+  'Argentina': 'ar',
+  'Australia': 'au',
+  'Austria': 'at',
+  'Bolivia': 'bo',
+  'Bosnia y Herzegovina': 'ba',
+  'Brasil': 'br',
+  'Bélgica': 'be',
+  'Cabo Verde': 'cv',
+  'Canadá': 'ca',
+  'Catar': 'qa',
+  'Chile': 'cl',
+  'Colombia': 'co',
+  'Corea del Sur': 'kr',
+  'Costa de Marfil': 'ci',
+  'Croacia': 'hr',
+  'Curazao': 'cw',
+  'Ecuador': 'ec',
+  'Egipto': 'eg',
+  'Escocia': 'gb-sct',
+  'España': 'es',
+  'Estados Unidos': 'us',
+  'Francia': 'fr',
+  'Ghana': 'gh',
+  'Haití': 'ht',
+  'Honduras': 'hn',
+  'Inglaterra': 'gb-eng',
+  'Irak': 'iq',
+  'Irán': 'ir',
+  'Japón': 'jp',
+  'Jordania': 'jo',
+  'Marruecos': 'ma',
+  'México': 'mx',
+  'Noruega': 'no',
+  'Nueva Zelanda': 'nz',
+  'Panamá': 'pa',
+  'Paraguay': 'py',
+  'Países Bajos': 'nl',
+  'Perú': 'pe',
+  'Portugal': 'pt',
+  'República Checa': 'cz',
+  'República Democrática del Congo': 'cd',
+  'Senegal': 'sn',
+  'Sudáfrica': 'za',
+  'Suecia': 'se',
+  'Suiza': 'ch',
+  'Turquía': 'tr',
+  'Túnez': 'tn',
+  'Uruguay': 'uy',
+  'Uzbekistán': 'uz',
+  'Venezuela': 've'
+}
+
 export function getFlag(team: string): string {
   return FLAGS[team] || '🏳️'
+}
+
+export function getFlagCode(team: string): string | null {
+  return FLAG_CODES[team] || null
+}
+
+export function getAllTeams(): string[] {
+  return Object.keys(FLAGS)
 }

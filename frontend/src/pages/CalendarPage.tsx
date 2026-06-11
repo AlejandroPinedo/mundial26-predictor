@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
-import { getFlag } from '../utils/flags'
+import Flag from '../components/Flag'
 import { LIMA_TZ } from '../utils/dates'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
@@ -380,7 +380,7 @@ export default function CalendarPage() {
                         <div className="flex items-center justify-between gap-3 py-2 relative z-10">
                           {/* Home Team */}
                           <div className="flex-1 flex flex-col items-center gap-1 text-center min-w-0">
-                            <span className="text-3xl no-invert leading-none mb-1">{getFlag(m.home_team)}</span>
+                            <Flag team={m.home_team} className="h-5.5 mb-1" />
                             <span className="text-xs font-condensed font-bold text-white truncate w-full">{m.home_team}</span>
                           </div>
 
@@ -440,7 +440,7 @@ export default function CalendarPage() {
 
                           {/* Away Team */}
                           <div className="flex-1 flex flex-col items-center gap-1 text-center min-w-0">
-                            <span className="text-3xl no-invert leading-none mb-1">{getFlag(m.away_team)}</span>
+                            <Flag team={m.away_team} className="h-5.5 mb-1" />
                             <span className="text-xs font-condensed font-bold text-white truncate w-full">{m.away_team}</span>
                           </div>
                         </div>

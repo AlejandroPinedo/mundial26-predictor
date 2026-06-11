@@ -3,7 +3,7 @@ import { apiFetch } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 import Spinner from '../components/Spinner'
-import { getFlag } from '../utils/flags'
+import Flag from '../components/Flag'
 import { getElo } from '../utils/ratings'
 import { SQUADS, getSquadElo } from '../utils/squads'
 import { parseTeamName } from '../utils/bracketStructure'
@@ -67,7 +67,7 @@ function GroupsView({ results, groups }: { results: SimResults; groups: Record<s
                     <div key={team}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="flex items-center gap-1.5 text-[11px] font-condensed font-bold uppercase tracking-wide text-gray-300 truncate">
-                          <span className="no-invert">{getFlag(team)}</span> {team}
+                          <Flag team={team} className="h-3 flex-shrink-0" /> {team}
                         </span>
                         <span className="text-[10px] font-condensed font-bold text-gray-500 tabular-nums">
                           clasifica {pct(1 - t.eliminated)}
@@ -107,11 +107,11 @@ function FinalsView({ results }: { results: SimResults }) {
             <span className="font-display text-lg text-gray-600 w-6 text-center">{i + 1}</span>
             <div className="flex-1 flex items-center justify-center gap-3 min-w-[220px]">
               <span className="flex items-center gap-2 font-condensed font-extrabold uppercase tracking-wide text-sm text-white">
-                <span className="no-invert text-2xl">{getFlag(f.teamA)}</span> {f.teamA}
+                <Flag team={f.teamA} className="h-4.5 flex-shrink-0" /> {f.teamA}
               </span>
               <span className="scoreboard px-2.5 py-1 rounded-lg text-xs">VS</span>
               <span className="flex items-center gap-2 font-condensed font-extrabold uppercase tracking-wide text-sm text-white">
-                {f.teamB} <span className="no-invert text-2xl">{getFlag(f.teamB)}</span>
+                {f.teamB} <Flag team={f.teamB} className="h-4.5 flex-shrink-0" />
               </span>
             </div>
             <div className="text-right">
@@ -379,7 +379,7 @@ export default function SimulatorPage() {
                   }`}>
                   {isFirst && <div className="tri-stripe absolute top-0 left-0 right-0" />}
                   {isFirst && <Icon name="crown" size={18} className="text-gold mx-auto mb-1" />}
-                  <p className={`no-invert ${isFirst ? 'text-4xl' : 'text-3xl'} mb-1`}>{getFlag(t.team)}</p>
+                  <p className="mb-1"><Flag team={t.team} className={isFirst ? 'h-7' : 'h-5.5'} /></p>
                   <p className="font-condensed font-extrabold uppercase tracking-wide text-xs text-gray-300 truncate">{t.team}</p>
                   <p className={`font-display leading-none mt-1.5 ${isFirst ? 'text-4xl trophy-text' : 'text-2xl text-gray-300'}`}>
                     {pct(t.champion)}
@@ -394,7 +394,7 @@ export default function SimulatorPage() {
           {myChampionStats && myChampionRank && (
             <div className="ticket-card rounded-2xl p-4 mb-6 fade-up-2 border-gold/30">
               <div className="relative z-10 flex items-center gap-3 flex-wrap">
-                <span className="no-invert text-2xl">{getFlag(myChampionStats.team)}</span>
+                <Flag team={myChampionStats.team} className="h-4.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-condensed font-extrabold uppercase tracking-[0.18em] text-gold">Tu campeón del bracket</p>
                   <p className="font-display text-lg text-white uppercase truncate">{myChampionStats.team}</p>
@@ -461,7 +461,7 @@ export default function SimulatorPage() {
                             <td className="px-4 py-2.5">
                               <div className="flex items-center gap-2.5 min-w-[150px]">
                                 <span className="font-display text-xs text-gray-600 w-5 text-right">{idx + 1}</span>
-                                <span className="no-invert text-lg">{getFlag(t.team)}</span>
+                                <Flag team={t.team} className="h-3.5 flex-shrink-0" />
                                 <span className={`font-condensed font-bold uppercase tracking-wide text-xs truncate ${isMine ? 'text-gold' : 'text-gray-200'}`}>
                                   {t.team}
                                 </span>

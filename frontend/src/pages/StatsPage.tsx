@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
-import { getFlag } from '../utils/flags'
+import Flag from '../components/Flag'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 
@@ -131,7 +131,7 @@ export default function StatsPage() {
                                     <span className={`font-display text-base w-7 text-center flex-shrink-0 ${index === 0 ? 'text-gold' : 'text-gray-600'}`}>
                                       #{index + 1}
                                     </span>
-                                    <span className="text-xl leading-none no-invert flex-shrink-0">{getFlag(item.team)}</span>
+                                    <Flag team={item.team} className="h-4 flex-shrink-0" />
                                     <span className="font-condensed font-extrabold uppercase tracking-wide text-white truncate">{item.team}</span>
                                     {index === 0 && <Icon name="crown" size={14} className="text-gold flex-shrink-0" />}
                                   </div>
@@ -240,12 +240,12 @@ export default function StatsPage() {
 
                         <div className="flex flex-col gap-1.5 my-3">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-lg no-invert leading-none flex-shrink-0">{getFlag(match.home_team)}</span>
+                            <Flag team={match.home_team} className="h-3.5 flex-shrink-0" />
                             <span className="font-condensed font-extrabold text-sm text-white uppercase tracking-wide truncate">{match.home_team}</span>
                           </div>
                           <span className="font-display text-[9px] text-gray-600 uppercase leading-none py-0.5">vs</span>
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-lg no-invert leading-none flex-shrink-0">{getFlag(match.away_team)}</span>
+                            <Flag team={match.away_team} className="h-3.5 flex-shrink-0" />
                             <span className="font-condensed font-extrabold text-sm text-white uppercase tracking-wide truncate">{match.away_team}</span>
                           </div>
                         </div>
