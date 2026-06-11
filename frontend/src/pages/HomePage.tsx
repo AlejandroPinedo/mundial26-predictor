@@ -6,6 +6,7 @@ import Skeleton from '../components/Skeleton'
 import Icon from '../components/Icon'
 import { useAuth } from '../context/AuthContext'
 import { getFlag } from '../utils/flags'
+import { LIMA_TZ } from '../utils/dates'
 
 const KICKOFF = new Date('2026-06-11T19:00:00Z')
 
@@ -258,7 +259,7 @@ export default function HomePage() {
                 <div className="border-t border-white/6 pt-2.5 select-none">
                   <span className="flex items-center justify-center gap-1.5 text-gray-500 text-[10px] font-condensed font-bold uppercase tracking-wide">
                     <Icon name="clock" size={11} />
-                    {new Date(m.match_date).toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    {new Date(m.match_date).toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: LIMA_TZ })}
                   </span>
                 </div>
               </Link>

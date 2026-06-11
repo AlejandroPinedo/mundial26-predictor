@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
 import { getPointsBadge } from '../utils/points'
+import { LIMA_TZ } from '../utils/dates'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 
@@ -262,6 +263,7 @@ export default function ComparePage() {
                             month: 'short',
                             hour: '2-digit',
                             minute: '2-digit',
+                            timeZone: LIMA_TZ,
                           })}
                         </span>
                         {hasResult && (

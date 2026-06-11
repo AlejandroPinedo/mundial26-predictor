@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getFlag } from '../utils/flags'
+import { LIMA_TZ } from '../utils/dates'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 
@@ -107,27 +108,32 @@ export default function CalendarPage() {
 
   const now = new Date()
 
+  // Día del partido en hora de Perú (YYYY-MM-DD) — 'en-CA' produce formato ISO
+  const limaDay = (iso: string) =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: LIMA_TZ }).format(new Date(iso))
+
+  // dateStr es una clave de día (YYYY-MM-DD): se formatea en UTC para no desplazar el día
   const formatDateLabel = (dateStr: string) => {
     const d = new Date(dateStr)
-    return d.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short' })
+    return d.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })
   }
 
   const getFullDateLabel = (dateStr: string) => {
     const d = new Date(dateStr)
-    return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
   }
 
   const formatTimeLabel = (dateStr: string) => {
     const d = new Date(dateStr)
-    return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })
+    return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: LIMA_TZ })
   }
 
-  // Get distinct dates represented in matches (YYYY-MM-DD)
-  const distinctDates = [...new Set(matches.map((m) => m.match_date.split('T')[0]))].sort()
+  // Get distinct dates represented in matches (YYYY-MM-DD, día de Perú)
+  const distinctDates = [...new Set(matches.map((m) => limaDay(m.match_date)))].sort()
 
   // Filter logic
   const filteredMatches = matches.filter((m) => {
-    const mDate = m.match_date.split('T')[0]
+    const mDate = limaDay(m.match_date)
 
     // Search filter
     const matchesSearch =
@@ -169,7 +175,7 @@ export default function CalendarPage() {
   // Group filtered matches by Date
   const matchesByDate: Record<string, Match[]> = {}
   for (const m of filteredMatches) {
-    const mDate = m.match_date.split('T')[0]
+    const mDate = limaDay(m.match_date)
     if (!matchesByDate[mDate]) matchesByDate[mDate] = []
     matchesByDate[mDate].push(m)
   }
@@ -184,7 +190,7 @@ export default function CalendarPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 pb-24 font-sans">
 
-      <PageHeader title="CALENDARIO" subtitle="Fixture completo · Copa Mundial FIFA 2026" icon="📅" />
+      <PageHeader title="CALENDARIO" subtitle="Fixture completo · Copa Mundial FIFA 2026 · Horarios en hora de Perú (GMT-5)" icon="📅" />
 
       {/* Progress Tracker Card */}
       <div className="flex md:justify-end mb-6 fade-up-1">
