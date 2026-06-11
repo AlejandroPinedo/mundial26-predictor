@@ -231,7 +231,7 @@ export default function MatchesPage() {
   const thirds = getBestThirdPlacedTeams(standings)
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 font-sans">
+    <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 md:px-8 py-6 font-sans">
 
       <PageHeader title="PARTIDOS" subtitle="Fase de grupos · Copa Mundial FIFA 2026 · Horarios en hora de Perú (GMT-5)" live badge="FIFA WC26" icon="⚽" />
 
@@ -250,7 +250,7 @@ export default function MatchesPage() {
               </span>
               <span className="ml-auto chip text-gray-400">Grupo {nextMatch.group_name}</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center max-w-3xl mx-auto">
               <div className="text-center flex-1 min-w-0">
                 <p className="text-4xl mb-1.5 no-invert">{getFlag(nextMatch.home_team)}</p>
                 <p className="font-display text-sm md:text-base text-white uppercase tracking-wide truncate">{nextMatch.home_team}</p>
@@ -327,7 +327,7 @@ export default function MatchesPage() {
               </button>
             )}
 
-            <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-1 2xl:grid-cols-2 gap-3">
               {groupMatches.map(match => {
                 const pred = predictions[match.id]
                 const played = match.home_score !== null
