@@ -71,7 +71,7 @@ export default function MyPredictionsPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 font-sans">
+    <div className="max-w-5xl 2xl:max-w-7xl mx-auto px-4 md:px-8 py-6 font-sans">
 
       <PageHeader title="MIS PREDICCIONES" subtitle="Tu historial de pronósticos · Mundial 2026" icon="🎯" action={
         predictions.length > 0 ? (
@@ -133,7 +133,7 @@ export default function MyPredictionsPage() {
                 <div className="tri-stripe w-12 rounded-full mt-1.5" aria-hidden="true" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
                 {pending.map(p => (
                   <div key={p.id} className="ticket-card rounded-2xl p-4 flex flex-col justify-between hover-lift">
                     <div className="flex justify-between items-center gap-2 mb-2.5 relative z-10">
@@ -192,7 +192,7 @@ export default function MyPredictionsPage() {
                 <div className="tri-stripe w-12 rounded-full mt-1.5" aria-hidden="true" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
                 {played.map(p => {
                   const isExact = p.points === 3
                   const isCorrect = p.points === 1

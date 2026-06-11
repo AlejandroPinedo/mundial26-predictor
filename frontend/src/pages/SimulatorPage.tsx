@@ -45,7 +45,7 @@ function GroupsView({ results, groups }: { results: SimResults; groups: Record<s
     [results]
   )
   return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3">
       {Object.entries(groups).sort().map(([letter, teams]) => (
         <div key={letter} className="bg-panel border border-white/8 rounded-2xl overflow-hidden">
           <div className="tri-stripe" />
@@ -259,7 +259,7 @@ export default function SimulatorPage() {
   ]
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 font-sans text-white">
+    <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 md:px-8 py-6 font-sans text-white">
       <PageHeader
         title="SIMULADOR"
         subtitle="Miles de mundiales simulados en tu navegador · Modelo Elo + Poisson por Montecarlo"

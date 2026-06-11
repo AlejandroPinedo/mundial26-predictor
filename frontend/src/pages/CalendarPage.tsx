@@ -188,7 +188,7 @@ export default function CalendarPage() {
   const completionPercent = totalMatchesCount > 0 ? Math.round((predictedCount / totalMatchesCount) * 100) : 0
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 pb-24 font-sans">
+    <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 md:px-8 py-6 pb-24 font-sans">
 
       <PageHeader title="CALENDARIO" subtitle="Fixture completo · Copa Mundial FIFA 2026 · Horarios en hora de Perú (GMT-5)" icon="📅" />
 
@@ -343,7 +343,7 @@ export default function CalendarPage() {
                 </div>
 
                 {/* Grid of Match Tickets */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
                   {dateMatches.map((m) => {
                     const pred = predictions[m.id]
                     const input = inputs[m.id] || { home: '', away: '' }

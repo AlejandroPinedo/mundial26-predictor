@@ -596,7 +596,7 @@ export default function BracketPage() {
 
   return (
     <div className="min-h-screen text-white">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 pb-20">
+      <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 md:px-8 py-6 pb-20">
 
         <PageHeader title="BRACKET PLAYOFFS" subtitle="Ronda de 32 → Campeón · Copa Mundial 2026" icon="🏆" badge="FIFA WC26" action={
           <div className="flex items-center gap-3 flex-wrap">
