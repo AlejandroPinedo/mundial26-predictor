@@ -32,6 +32,10 @@ export default function BottomNav({ unpredicted = 0 }: Props) {
   const [showMore, setShowMore] = useState(false)
   if (!user) return null
 
+  const items = user.isAdmin
+    ? [...moreItems, { to: '/admin', icon: 'wrench' as IconName, label: 'Admin' }]
+    : moreItems
+
   return (
     <>
       {showMore && (
@@ -41,7 +45,7 @@ export default function BottomNav({ unpredicted = 0 }: Props) {
             <div className="tri-stripe -mx-4 mb-4" />
             <p className="text-gray-500 text-[10px] uppercase tracking-[0.18em] font-condensed font-black mb-3">Más secciones</p>
             <div className="grid grid-cols-4 gap-2">
-              {moreItems.map(item => (
+              {items.map(item => (
                 <Link key={item.to} to={item.to}
                   onClick={() => setShowMore(false)}
                   className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-panel border border-white/6 text-gray-300 hover:border-gold/30 hover:text-gold transition">
