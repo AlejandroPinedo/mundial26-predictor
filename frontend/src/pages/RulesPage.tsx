@@ -65,6 +65,19 @@ const sections = [
       'Cada estadio indica la ciudad, capacidad y partidos que albergará.',
     ],
   },
+  {
+    icon: '🐟',
+    title: 'Pez Oráculo (predicción del modelo)',
+    color: 'text-gold',
+    dot: 'bg-gold',
+    items: [
+      'En cada partido por jugar, el Pez Oráculo muestra su pronóstico: probabilidad de victoria local, empate o visita.',
+      'Toca "Análisis" para desplegar el marcador más probable, los 3 marcadores más probables y los goles esperados (xG).',
+      'Es un modelo estadístico (Poisson + Dixon-Coles) entrenado con ~45 000 partidos internacionales: calcula probabilidades, no adivina.',
+      'Su pronóstico se ajusta solo con los resultados que van ocurriendo en el Mundial.',
+      'Ojo: el marcador más probable (p. ej. 1-1) puede no coincidir con el favorito a ganar, porque una victoria reúne muchos marcadores distintos y suma más que cualquier marcador puntual.',
+    ],
+  },
 ]
 
 export default function RulesPage() {
@@ -193,6 +206,7 @@ export default function RulesPage() {
               'Predice todos los partidos antes del 11 de junio para no perder ninguno.',
               'El bracket de playoffs vale más puntos por acierto — ponle atención.',
               'Crea un grupo privado para competir directamente contra tus amigos.',
+              'Consulta el Pez Oráculo antes de predecir: te da las probabilidades del partido (aunque la sorpresa siempre suma más puntos).',
             ].map((tip, i) => (
               <div key={i} className="flex gap-3">
                 <span className="font-display text-2xl text-gold/40 leading-none flex-shrink-0">{i + 1}</span>

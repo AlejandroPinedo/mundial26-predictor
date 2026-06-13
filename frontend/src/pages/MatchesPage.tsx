@@ -411,7 +411,7 @@ export default function MatchesPage() {
                       </div>
 
                       {pred && (played || started) && (
-                        <div className="flex items-center justify-center gap-2 mb-2">
+                        <div className="flex items-center justify-center gap-2 min-h-[44px]">
                           <span className="text-gray-500 text-[10px] font-condensed font-bold uppercase tracking-wider">Tu pred:</span>
                           <span className="text-gold font-display text-sm">{pred.predicted_home} — {pred.predicted_away}</span>
                           {pred.points !== null && (
