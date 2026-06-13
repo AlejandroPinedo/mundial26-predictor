@@ -40,6 +40,7 @@ The full design brief that guided the redesign lives in [`docs/REDESIGN_PROMPT.m
 | **Standings** | Dynamic group tables with P, W, D, L, GF, GA, GD, Pts |
 | **Playoff bracket** | Interactive predictions from the Round of 32 to the Champion |
 | **Scoring** | Automatic: 3 pts exact score, 1 pt correct outcome |
+| **Match prediction (ML)** | Per-match forecast (Poisson + Dixon-Coles) on each card: 1X2 bar, top-3 scorelines, xG, and a comparison vs your pick — inputs update live as results land |
 | **Leaderboard** | Global ranking with 30s auto-refresh and top-3 podium |
 | **Private groups** | Invite-code leagues with their own leaderboard and group chat |
 | **Head-to-head** | Side-by-side prediction comparison between two players |
@@ -80,8 +81,11 @@ mundial26-predictor/          ← monorepo
 │   │   ├── pages/            ← 21 pages
 │   │   ├── context/          ← AuthContext, ThemeContext
 │   │   ├── api/              ← apiFetch client
-│   │   └── utils/            ← flags, points, scoring, simulate
+│   │   ├── sim/              ← Monte Carlo tournament simulator (Elo + Poisson)
+│   │   ├── predict/          ← per-match ML predictor (model.json + predictMatch.ts)
+│   │   └── utils/            ← flags, points, scoring, ratings, squads
 │   └── public/               ← favicon, PWA manifest
+├── ml/                       ← offline Python training → frontend/src/predict/model.json
 ├── backend/
 │   ├── src/
 │   │   ├── routes/           ← auth, predictions, groups, bracket
@@ -91,6 +95,20 @@ mundial26-predictor/          ← monorepo
 ├── docs/                     ← design brief and plans
 └── .github/workflows/        ← CI pipeline (tests on every PR)
 ```
+
+---
+
+## Match prediction model (ML)
+
+Each match card shows an ML forecast: 1X2 probabilities, the three most likely scorelines, and
+expected goals (xG). A **Poisson regression on goals with a Dixon-Coles low-score correction** is
+trained offline in Python on ~45k historical international matches (eloratings.net-style Elo +
+home advantage as features) and exported to a small `model.json` that the frontend evaluates in
+pure TypeScript — **no ML dependencies in the bundle**. Inputs update live: team Elo is recomputed
+from the results already played, so forecasts react as the tournament unfolds.
+
+On a temporal holdout it beats the simulator's Elo+Poisson baseline (log-loss 0.876 vs 0.916,
+60.2% vs 59.2% accuracy). Training pipeline and how to regenerate the model: [`ml/`](ml/README.md).
 
 ---
 
@@ -195,7 +213,7 @@ Conventional Commits: `feat:`, `fix:`, `ci:`, `chore:`, `docs:`
 
 ```bash
 cd backend && npm test    # calculatePoints unit tests
-cd frontend && npm test   # getPointsBadge unit tests
+cd frontend && npm test   # scoring, simulator and match-predictor unit tests
 ```
 
 GitHub Actions runs both suites automatically on every PR targeting `develop` or `main`.

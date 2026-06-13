@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mulberry32 } from './rng'
-import { samplePoisson } from './poisson'
+import { samplePoisson, poissonPmf } from './poisson'
 
 describe('samplePoisson', () => {
   it('returns 0 for lambda <= 0', () => {
@@ -26,5 +26,36 @@ describe('samplePoisson', () => {
       expect(Number.isInteger(v)).toBe(true)
       expect(v).toBeGreaterThanOrEqual(0)
     }
+  })
+})
+
+describe('poissonPmf', () => {
+  it('sums to ~1 over a wide support', () => {
+    for (const lambda of [0.5, 1.3, 3.0]) {
+      let sum = 0
+      for (let k = 0; k <= 30; k++) sum += poissonPmf(k, lambda)
+      expect(sum).toBeCloseTo(1, 6)
+    }
+  })
+
+  it('matches known values', () => {
+    // P(0; λ) = e^-λ
+    expect(poissonPmf(0, 1.3)).toBeCloseTo(Math.exp(-1.3), 10)
+    // P(2; 2) = e^-2 · 2^2 / 2! = 2 e^-2
+    expect(poissonPmf(2, 2)).toBeCloseTo(2 * Math.exp(-2), 10)
+  })
+
+  it('mean equals lambda', () => {
+    const lambda = 2.4
+    let mean = 0
+    for (let k = 0; k <= 40; k++) mean += k * poissonPmf(k, lambda)
+    expect(mean).toBeCloseTo(lambda, 6)
+  })
+
+  it('handles degenerate lambda and invalid k', () => {
+    expect(poissonPmf(0, 0)).toBe(1)
+    expect(poissonPmf(1, 0)).toBe(0)
+    expect(poissonPmf(-1, 1.3)).toBe(0)
+    expect(poissonPmf(1.5, 1.3)).toBe(0)
   })
 })
