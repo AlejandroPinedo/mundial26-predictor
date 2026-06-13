@@ -13,6 +13,7 @@ import { calculateGroupStandings, getBestThirdPlacedTeams, type TeamStats, type 
 import { HOST_NATIONS } from '../utils/ratings'
 import { currentElo } from '../predict/elo'
 import { predictMatch } from '../predict/predictMatch'
+import { computeForm } from '../utils/recentForm'
 
 type Match = {
   id: string
@@ -163,6 +164,8 @@ export default function MatchesPage() {
   // Elo en vivo: snapshot + resultados ya jugados. Se recalcula al cambiar los marcadores,
   // por lo que las predicciones de los partidos siguientes reaccionan a lo que va pasando.
   const liveElo = useMemo(() => currentElo(matches), [matches])
+  // Forma reciente (descriptiva) por equipo, desde los partidos jugados.
+  const formMap = useMemo(() => computeForm(matches), [matches])
 
   async function handlePredict(matchId: string) {
     const input = inputs[matchId]
@@ -446,6 +449,9 @@ export default function MatchesPage() {
                         <MatchPrediction
                           prediction={prediction}
                           userPred={pred ? { home: pred.predicted_home, away: pred.predicted_away } : null}
+                          homeTeam={match.home_team}
+                          awayTeam={match.away_team}
+                          form={{ home: formMap[match.home_team], away: formMap[match.away_team] }}
                         />
                       )}
                     </div>

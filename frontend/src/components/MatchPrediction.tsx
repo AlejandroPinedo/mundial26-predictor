@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import Icon from './Icon'
 import type { MatchPrediction as Prediction } from '../predict/predictMatch'
+import type { Result, TeamForm } from '../utils/recentForm'
 
 type Props = {
   prediction: Prediction
   userPred?: { home: number; away: number } | null
   className?: string
+  homeTeam?: string
+  awayTeam?: string
+  form?: { home?: TeamForm | null; away?: TeamForm | null }
 }
 
 const pct = (p: number) => Math.round(p * 100)
@@ -20,6 +24,29 @@ function favorite(p: Prediction): { outcome: Outcome; prob: number } {
 
 const FAV_LABEL: Record<Outcome, string> = { home: 'Local', draw: 'Empate', away: 'Visita' }
 const FAV_COLOR: Record<Outcome, string> = { home: 'text-mx', draw: 'text-gray-400', away: 'text-us' }
+const RESULT_COLOR: Record<Result, string> = { W: 'bg-mx', D: 'bg-gray-500', L: 'bg-ca' }
+
+function FormRow({ team, form }: { team: string; form?: TeamForm | null }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-gray-300 text-[10px] font-condensed font-bold uppercase tracking-wide truncate flex-1 min-w-0">{team}</span>
+      {form && form.played > 0 ? (
+        <>
+          <span className="flex items-center gap-1 flex-shrink-0">
+            {form.results.map((r, i) => (
+              <span key={i} className={`w-1.5 h-1.5 rounded-full ${RESULT_COLOR[r]}`} aria-label={r} />
+            ))}
+          </span>
+          <span className="text-gray-400 text-[10px] font-condensed font-bold tabular-nums flex-shrink-0 w-14 text-right">
+            {form.gf.toFixed(1)}–{form.ga.toFixed(1)}
+          </span>
+        </>
+      ) : (
+        <span className="text-gray-600 text-[10px] font-condensed font-bold flex-shrink-0">sin datos</span>
+      )}
+    </div>
+  )
+}
 
 function comparison(prediction: Prediction, userPred: { home: number; away: number }) {
   const { mostLikely, probHome, probDraw, probAway } = prediction
@@ -37,7 +64,7 @@ function comparison(prediction: Prediction, userPred: { home: number; away: numb
   return { text: 'El Pez lo ve posible', cls: 'text-gray-400' }
 }
 
-export default function MatchPrediction({ prediction, userPred, className }: Props) {
+export default function MatchPrediction({ prediction, userPred, className, homeTeam, awayTeam, form }: Props) {
   const [open, setOpen] = useState(false)
   const { probHome, probDraw, probAway, topScores, mostLikely, lambdaHome, lambdaAway } = prediction
   const fav = favorite(prediction)
@@ -98,6 +125,18 @@ export default function MatchPrediction({ prediction, userPred, className }: Pro
               </span>
             ))}
           </div>
+
+          {(form?.home?.played || form?.away?.played) ? (
+            <div className="mt-2.5 pt-2.5 border-t border-white/5">
+              <p className="text-gray-500 text-[10px] font-condensed font-bold uppercase tracking-wider mb-1.5">
+                Forma reciente <span className="text-gray-600">· GF–GC</span>
+              </p>
+              <div className="flex flex-col gap-1">
+                <FormRow team={homeTeam ?? 'Local'} form={form?.home} />
+                <FormRow team={awayTeam ?? 'Visita'} form={form?.away} />
+              </div>
+            </div>
+          ) : null}
 
           {cmp && (
             <div className={`flex items-center gap-1.5 mt-2 text-[10px] font-condensed font-extrabold uppercase tracking-wider ${cmp.cls}`}>

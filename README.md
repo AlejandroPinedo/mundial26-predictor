@@ -40,7 +40,7 @@ The full design brief that guided the redesign lives in [`docs/REDESIGN_PROMPT.m
 | **Standings** | Dynamic group tables with P, W, D, L, GF, GA, GD, Pts |
 | **Playoff bracket** | Interactive predictions from the Round of 32 to the Champion |
 | **Scoring** | Automatic: 3 pts exact score, 1 pt correct outcome |
-| **Pez Oráculo (ML prediction)** | Per-match forecast on each card: a collapsible summary (favoured outcome + likely score) expanding to 1X2 bar, top-3 scorelines, xG and a comparison vs your pick — live-Elo updates (offline-trained Poisson + Dixon-Coles) |
+| **Pez Oráculo (ML prediction)** | Per-match forecast on each card: a collapsible summary (favoured outcome + likely score) expanding to 1X2 bar, top-3 scorelines, xG, recent form and a comparison vs your pick — live-Elo updates (offline-trained Poisson + Dixon-Coles) |
 | **Leaderboard** | Global ranking with 30s auto-refresh and top-3 podium |
 | **Private groups** | Invite-code leagues with their own leaderboard and group chat |
 | **Head-to-head** | Side-by-side prediction comparison between two players |
@@ -102,8 +102,8 @@ mundial26-predictor/          ← monorepo
 
 Each match card shows a forecast badged **"Pez Oráculo"** (a nod to the Oracle Fish from Dragon
 Ball Super): a collapsible one-line summary (favoured outcome + most likely score) that expands to
-1X2 probabilities, the three most likely scorelines, expected goals (xG), and a comparison against
-your own pick. A **Poisson regression on goals with a Dixon-Coles low-score correction** is trained
+1X2 probabilities, the three most likely scorelines, expected goals (xG), each team's recent form
+(last results, goals for/against), and a comparison against your own pick. A **Poisson regression on goals with a Dixon-Coles low-score correction** is trained
 offline in Python on ~45k historical international matches (eloratings.net-style Elo + home
 advantage as features) and exported to a small `model.json` the frontend evaluates in pure
 TypeScript — **no ML dependencies in the bundle**. Inputs update live: team Elo is recomputed from
