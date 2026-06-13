@@ -5,6 +5,7 @@ import type { MatchPrediction as Prediction } from '../predict/predictMatch'
 type Props = {
   prediction: Prediction
   userPred?: { home: number; away: number } | null
+  className?: string
 }
 
 const pct = (p: number) => Math.round(p * 100)
@@ -31,14 +32,14 @@ function comparison(prediction: Prediction, userPred: { home: number; away: numb
   return { text: 'Vas contra el Pez Oráculo', cls: 'text-ca' }
 }
 
-export default function MatchPrediction({ prediction, userPred }: Props) {
+export default function MatchPrediction({ prediction, userPred, className }: Props) {
   const [open, setOpen] = useState(false)
   const { probHome, probDraw, probAway, topScores, mostLikely, lambdaHome, lambdaAway } = prediction
   const fav = favorite(prediction)
   const cmp = userPred ? comparison(prediction, userPred) : null
 
   return (
-    <div className="mt-2.5 pt-2.5 border-t border-white/8">
+    <div className={`pt-2.5 border-t border-white/8 ${className ?? 'mt-2.5'}`}>
       {/* Resumen en una línea (toggle) */}
       <button
         onClick={() => setOpen(o => !o)}

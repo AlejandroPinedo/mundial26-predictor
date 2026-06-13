@@ -349,11 +349,11 @@ export default function MatchesPage() {
 
                 return (
                   <div key={match.id}
-                    className={`ticket-card rounded-2xl transition-all hover:-translate-y-0.5 ${
+                    className={`ticket-card rounded-2xl flex flex-col transition-all hover:-translate-y-0.5 ${
                       isNext ? 'ring-1 ring-gold/30 shadow-lg shadow-gold/5' :
                       played ? 'opacity-75' : ''
                     }`}>
-                    <div className="p-4 sm:p-5 relative z-10">
+                    <div className="p-4 sm:p-5 relative z-10 flex flex-1 flex-col">
                       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
                         {played ? (
                           <span className="chip text-gray-400">
@@ -446,6 +446,7 @@ export default function MatchesPage() {
                         <MatchPrediction
                           prediction={prediction}
                           userPred={pred ? { home: pred.predicted_home, away: pred.predicted_away } : null}
+                          className="mt-auto"
                         />
                       )}
                     </div>
