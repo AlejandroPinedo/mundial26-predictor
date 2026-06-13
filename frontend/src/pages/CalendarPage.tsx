@@ -10,6 +10,7 @@ import Icon from '../components/Icon'
 import { HOST_NATIONS } from '../utils/ratings'
 import { currentElo } from '../predict/elo'
 import { predictMatch } from '../predict/predictMatch'
+import { computeForm } from '../utils/recentForm'
 
 type Match = {
   id: string
@@ -114,6 +115,7 @@ export default function CalendarPage() {
 
   // Elo en vivo (snapshot + resultados jugados) para el pronóstico del modelo.
   const liveElo = useMemo(() => currentElo(matches), [matches])
+  const formMap = useMemo(() => computeForm(matches), [matches])
 
   // Día del partido en hora de Perú (YYYY-MM-DD) — 'en-CA' produce formato ISO
   const limaDay = (iso: string) =>
@@ -503,6 +505,9 @@ export default function CalendarPage() {
                             <MatchPrediction
                               prediction={prediction}
                               userPred={pred ? { home: pred.predicted_home, away: pred.predicted_away } : null}
+                              homeTeam={m.home_team}
+                              awayTeam={m.away_team}
+                              form={{ home: formMap[m.home_team], away: formMap[m.away_team] }}
                             />
                           </div>
                         )}
