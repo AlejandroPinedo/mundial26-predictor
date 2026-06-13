@@ -187,7 +187,8 @@ Conventional Commits: `feat:`, `fix:`, `ci:`, `chore:`, `docs:`
 
 | Version | Highlights |
 |---|---|
-| **v2.0.0** | "WE ARE 26" complete frontend redesign: tri-nation design system, SVG icon set, sports-poster typography, web-font loading fix |
+| **v2.1.0** | "Pez Oráculo" — ML per-match prediction on each match card: 1X2 probabilities, likely scorelines and xG, with live-Elo updates (offline-trained Poisson + Dixon-Coles model, evaluated client-side) |
+| v2.0.0 | "WE ARE 26" complete frontend redesign: tri-nation design system, SVG icon set, sports-poster typography, web-font loading fix |
 | v1.6.x | Full guide, mobile "More" drawer, Compare button from profile |
 | v1.5.x | Group chat, head-to-head compare, venues, standings, R32 bracket, community insights |
 | v1.3.0 | Full redesign: sidebar, bottom nav, home dashboard, teams gallery |
