@@ -166,3 +166,8 @@ dist/
 # Claude Code local config
 .claude/
 backend/scripts/matches-backup.json
+
+# ML pipeline (datos crudos y entorno virtual; model.json SÍ se commitea)
+ml/data/
+ml/.venv/
+ml/__pycache__/

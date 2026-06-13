@@ -1,11 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import Flag from '../components/Flag'
+import MatchPrediction from '../components/MatchPrediction'
 import { LIMA_TZ } from '../utils/dates'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
+import { HOST_NATIONS } from '../utils/ratings'
+import { currentElo } from '../predict/elo'
+import { predictMatch } from '../predict/predictMatch'
 
 type Match = {
   id: string
@@ -107,6 +111,9 @@ export default function CalendarPage() {
   }
 
   const now = new Date()
+
+  // Elo en vivo (snapshot + resultados jugados) para el pronóstico del modelo.
+  const liveElo = useMemo(() => currentElo(matches), [matches])
 
   // Día del partido en hora de Perú (YYYY-MM-DD) — 'en-CA' produce formato ISO
   const limaDay = (iso: string) =>
@@ -354,6 +361,11 @@ export default function CalendarPage() {
                     // Points display
                     const pts = pred?.points ?? 0
 
+                    // Pronóstico del modelo (solo partidos no jugados)
+                    const prediction = m.home_score === null
+                      ? predictMatch(m.home_team, m.away_team, { neutralVenue: !HOST_NATIONS.has(m.home_team), elo: liveElo })
+                      : null
+
                     return (
                       <div
                         key={m.id}
@@ -485,6 +497,15 @@ export default function CalendarPage() {
                             </button>
                           )}
                         </div>
+
+                        {prediction && (
+                          <div className="relative z-10">
+                            <MatchPrediction
+                              prediction={prediction}
+                              userPred={pred ? { home: pred.predicted_home, away: pred.predicted_away } : null}
+                            />
+                          </div>
+                        )}
                       </div>
                     )
                   })}

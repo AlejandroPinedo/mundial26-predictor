@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
@@ -6,9 +6,13 @@ import PredictionProgress from '../components/PredictionProgress'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 import Flag from '../components/Flag'
+import MatchPrediction from '../components/MatchPrediction'
 import { LIMA_TZ } from '../utils/dates'
 import { useRealtimeMatches } from '../hooks/useRealtimeMatches'
 import { calculateGroupStandings, getBestThirdPlacedTeams, type TeamStats, type ThirdPlaceStats } from '../utils/standings'
+import { HOST_NATIONS } from '../utils/ratings'
+import { currentElo } from '../predict/elo'
+import { predictMatch } from '../predict/predictMatch'
 
 type Match = {
   id: string
@@ -155,6 +159,10 @@ export default function MatchesPage() {
   }, [])
 
   useRealtimeMatches(handleRealtimeUpdate)
+
+  // Elo en vivo: snapshot + resultados ya jugados. Se recalcula al cambiar los marcadores,
+  // por lo que las predicciones de los partidos siguientes reaccionan a lo que va pasando.
+  const liveElo = useMemo(() => currentElo(matches), [matches])
 
   async function handlePredict(matchId: string) {
     const input = inputs[matchId]
@@ -334,6 +342,10 @@ export default function MatchesPage() {
                 const started = now > new Date(match.match_date)
                 const isNext = nextMatch?.id === match.id
                 const deadline = getDeadlineWarning(match.match_date)
+                const prediction = played ? null : predictMatch(match.home_team, match.away_team, {
+                  neutralVenue: !HOST_NATIONS.has(match.home_team),
+                  elo: liveElo,
+                })
 
                 return (
                   <div key={match.id}
@@ -398,7 +410,7 @@ export default function MatchesPage() {
                         </div>
                       </div>
 
-                      {pred && (
+                      {pred && (played || started) && (
                         <div className="flex items-center justify-center gap-2 mb-2">
                           <span className="text-gray-500 text-[10px] font-condensed font-bold uppercase tracking-wider">Tu pred:</span>
                           <span className="text-gold font-display text-sm">{pred.predicted_home} — {pred.predicted_away}</span>
@@ -428,6 +440,13 @@ export default function MatchesPage() {
                             {pred ? 'Actualizar' : 'Predecir'}
                           </button>
                         </div>
+                      )}
+
+                      {prediction && (
+                        <MatchPrediction
+                          prediction={prediction}
+                          userPred={pred ? { home: pred.predicted_home, away: pred.predicted_away } : null}
+                        />
                       )}
                     </div>
                   </div>
