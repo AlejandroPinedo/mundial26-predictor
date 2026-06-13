@@ -72,7 +72,7 @@ const sections = [
     dot: 'bg-gold',
     items: [
       'En cada partido por jugar, el Pez Oráculo muestra su pronóstico: probabilidad de victoria local, empate o visita.',
-      'Toca "Análisis" para desplegar el marcador más probable, los 3 marcadores más probables y los goles esperados (xG).',
+      'Toca "Análisis" para desplegar las probabilidades 1X2, los 3 marcadores más probables, los goles esperados (xG) y la forma reciente (últimos resultados) de cada equipo.',
       'Es un modelo estadístico (Poisson + Dixon-Coles) entrenado con ~45 000 partidos internacionales: calcula probabilidades, no adivina.',
       'Su pronóstico se ajusta solo con los resultados que van ocurriendo en el Mundial.',
       'Ojo: el marcador más probable (p. ej. 1-1) puede no coincidir con el favorito a ganar, porque una victoria reúne muchos marcadores distintos y suma más que cualquier marcador puntual.',
