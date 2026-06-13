@@ -22,14 +22,19 @@ const FAV_LABEL: Record<Outcome, string> = { home: 'Local', draw: 'Empate', away
 const FAV_COLOR: Record<Outcome, string> = { home: 'text-mx', draw: 'text-gray-400', away: 'text-us' }
 
 function comparison(prediction: Prediction, userPred: { home: number; away: number }) {
-  const { mostLikely } = prediction
+  const { mostLikely, probHome, probDraw, probAway } = prediction
   if (userPred.home === mostLikely.home && userPred.away === mostLikely.away) {
     return { text: 'Coincides con el Pez Oráculo', cls: 'text-gold' }
   }
-  if (outcomeOf(userPred.home, userPred.away) === favorite(prediction).outcome) {
+  const probs: Record<Outcome, number> = { home: probHome, draw: probDraw, away: probAway }
+  const userOutcome = outcomeOf(userPred.home, userPred.away)
+  if (userOutcome === favorite(prediction).outcome) {
     return { text: 'Vas con el Pez Oráculo', cls: 'text-mx' }
   }
-  return { text: 'Vas contra el Pez Oráculo', cls: 'text-ca' }
+  if (probs[userOutcome] === Math.min(probHome, probDraw, probAway)) {
+    return { text: 'Vas contra el Pez Oráculo', cls: 'text-ca' }
+  }
+  return { text: 'El Pez lo ve posible', cls: 'text-gray-400' }
 }
 
 export default function MatchPrediction({ prediction, userPred, className }: Props) {
