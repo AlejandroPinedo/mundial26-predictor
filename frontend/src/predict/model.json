@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "source": "martj42/international_results",
+  "trainedThrough": "2021-12-31",
+  "testPeriod": "2022-01-01..2026-06-11",
+  "coef": {
+    "intercept": 0.17973036187665953,
+    "eloDiff": 0.6544379626335952,
+    "homeAdv": 0.3074401643782563
+  },
+  "eloScale": 400.0,
+  "dixonColesRho": -0.052302279731103,
+  "maxGoals": 10,
+  "eloCalibration": {
+    "scaleA": 1.1116587711911057,
+    "r2": 0.9708590576700968
+  },
+  "metrics": {
+    "model": {
+      "logloss": 0.875816062758089,
+      "brier": 0.5150516441793255,
+      "rps": 0.1716701472924632,
+      "accuracy": 0.6015317286652079,
+      "goals_mae": 0.9655441774772422
+    },
+    "baselineEloPoisson": {
+      "logloss": 0.916076792312929,
+      "brier": 0.5372529531512795,
+      "rps": 0.18150285314413184,
+      "accuracy": 0.5923413566739606,
+      "goals_mae": 0.9507078583165572
+    },
+    "baselineNaive": {
+      "logloss": 1.0504454028414953,
+      "brier": 0.6335001996215484,
+      "rps": 0.22844088254778463,
+      "accuracy": 0.47811816192560175
+    }
+  }
+}
