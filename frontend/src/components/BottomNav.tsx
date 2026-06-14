@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Link } from 'react-router-dom'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import Icon, { type IconName } from './Icon'
@@ -27,8 +27,9 @@ const moreItems: { to: string; icon: IconName; label: string }[] = [
 ]
 
 export default function BottomNav({ unpredicted = 0 }: Props) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { theme, toggle } = useTheme()
+  const navigate = useNavigate()
   const [showMore, setShowMore] = useState(false)
   if (!user) return null
 
@@ -61,6 +62,11 @@ export default function BottomNav({ unpredicted = 0 }: Props) {
                 </span>
               </button>
             </div>
+            <button onClick={() => { setShowMore(false); logout(); navigate('/') }}
+              className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-ca/10 border border-ca/25 text-ca font-condensed font-extrabold uppercase tracking-wider text-xs hover:bg-ca/20 transition cursor-pointer">
+              <Icon name="logout" size={17} />
+              Salir
+            </button>
           </div>
         </div>
       )}

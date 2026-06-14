@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
@@ -120,6 +120,16 @@ export default function CalendarPage() {
   // Día del partido en hora de Perú (YYYY-MM-DD) — 'en-CA' produce formato ISO
   const limaDay = (iso: string) =>
     new Intl.DateTimeFormat('en-CA', { timeZone: LIMA_TZ }).format(new Date(iso))
+
+  // Día de HOY (hora de Perú) + auto-scroll a su sección al cargar
+  const todayKey = limaDay(now.toISOString())
+  const todayRef = useRef<HTMLDivElement | null>(null)
+  const didScroll = useRef(false)
+  useEffect(() => {
+    if (loading || didScroll.current || !todayRef.current) return
+    didScroll.current = true
+    todayRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [loading])
 
   // dateStr es una clave de día (YYYY-MM-DD): se formatea en UTC para no desplazar el día
   const formatDateLabel = (dateStr: string) => {
@@ -337,13 +347,19 @@ export default function CalendarPage() {
           {sortedFilteredDates.map((dateStr) => {
             const dateMatches = matchesByDate[dateStr]
             return (
-              <div key={dateStr} className="flex flex-col gap-3">
+              <div key={dateStr} ref={dateStr === todayKey ? todayRef : null}
+                className="flex flex-col gap-3 scroll-mt-4">
                 {/* Sticky Date Title */}
                 <div className="sticky top-0 z-10 py-2 bg-ink-950/85 backdrop-blur-md flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <h2 className="font-condensed font-black text-sm text-white uppercase tracking-[0.16em] truncate">
-                      {getFullDateLabel(dateStr)}
-                    </h2>
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-condensed font-black text-sm text-white uppercase tracking-[0.16em] truncate">
+                        {getFullDateLabel(dateStr)}
+                      </h2>
+                      {dateStr === todayKey && (
+                        <span className="chip border-gold/40 bg-gold/15 text-gold flex-shrink-0">HOY</span>
+                      )}
+                    </div>
                     <div className="tri-stripe w-12 rounded-full mt-1.5" aria-hidden="true" />
                   </div>
                   <span className="chip text-gray-400 flex-shrink-0">

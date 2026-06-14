@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppShell from './components/AppShell'
 import Spinner from './components/Spinner'
+import RouteTransition from './components/RouteTransition'
 
 // Eager — needed immediately on first load
 import LandingPage from './pages/LandingPage'
@@ -58,6 +59,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
+          <RouteTransition />
           <Toaster
             position="top-right"
             toastOptions={{
