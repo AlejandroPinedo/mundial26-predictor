@@ -82,7 +82,7 @@ export default function HomePage() {
             </span>
           </div>
 
-          <h1 className="font-display text-5xl md:text-7xl text-white leading-none uppercase tracking-tight">
+          <h1 className="font-display text-3xl sm:text-5xl md:text-7xl text-white leading-none uppercase tracking-tight truncate">
             {user?.username}
           </h1>
           <p className="text-gray-500 text-sm mt-2 mb-7 font-sans">Tu zona de predicciones del Mundial 2026</p>
