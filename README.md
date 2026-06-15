@@ -40,8 +40,8 @@ The full design brief that guided the redesign lives in [`docs/REDESIGN_PROMPT.m
 | **Standings** | Dynamic group tables with P, W, D, L, GF, GA, GD, Pts |
 | **Playoff bracket** | Interactive predictions from the Round of 32 to the Champion |
 | **Scoring** | Automatic: 3 pts exact score, 1 pt correct outcome |
-| **Pez Oráculo (ML prediction)** | Per-match forecast on each card: a collapsible summary (favoured outcome + likely score) expanding to 1X2 bar, top-3 scorelines, xG, recent form and a comparison vs your pick — live-Elo updates (offline-trained Poisson + Dixon-Coles) |
-| **Leaderboard** | Global ranking with 30s auto-refresh and top-3 podium |
+| **Pez Oráculo (ML prediction)** | Per-match forecast on each card: a collapsible summary (favoured outcome + likely score) expanding to 1X2 bar, top-3 scorelines, xG, recent form and a comparison vs your pick — live-Elo updates (offline-trained Poisson + Dixon-Coles). Also **competes in the global ranking** as a virtual "IA" contestant |
+| **Leaderboard** | Global ranking with 30s auto-refresh and top-3 podium — the Pez Oráculo competes here as a non-player "IA" benchmark |
 | **Private groups** | Invite-code leagues with their own leaderboard and group chat |
 | **Head-to-head** | Side-by-side prediction comparison between two players |
 | **Stats** | Community insights dashboard (popular picks, hot matches) |
@@ -115,6 +115,28 @@ the results already played, so forecasts react as the tournament unfolds.
 
 On a temporal holdout it beats the simulator's Elo+Poisson baseline (log-loss 0.876 vs 0.916,
 60.2% vs 59.2% accuracy). Training pipeline and how to regenerate the model: [`ml/`](ml/README.md).
+
+### The Oracle as a ranking contestant
+
+The Pez Oráculo also **competes in the global ranking** as a virtual "IA" entry (it is not a real
+user — its name can't be registered). Fairness is the whole point:
+
+- **Group picks** are frozen at each match's kickoff and scored with the same rules as players. The
+  first matchday is locked with pre-tournament Elo; later matches use only results from *earlier*
+  games, so a pick never sees its own result. Once written, picks are immutable.
+- **Bracket** is a one-off **pre-tournament forecast** built by the Monte Carlo simulator with a
+  fixed seed (reproducible), scored with the same playoff weights as players.
+- The ranking row is computed virtually (no fake user); points are tallied live with the shared
+  `calculatePoints`.
+
+Seed / refresh the Oracle's predictions (from `backend/`):
+
+```bash
+npm run seed:oracle           # freeze group picks that are due (idempotent)
+npm run seed:oracle-bracket   # build & freeze the pre-tournament bracket (lock-once)
+```
+
+Group picks also lock automatically whenever the admin enters an official result.
 
 ---
 
@@ -193,6 +215,7 @@ Conventional Commits: `feat:`, `fix:`, `ci:`, `chore:`, `docs:`
 
 | Version | Highlights |
 |---|---|
+| **v2.2.0** | "Pez Oráculo" joins the **global ranking** as a virtual "IA" contestant: group picks frozen fairly at kickoff (never sees its own result) and a reproducible pre-tournament bracket forecast, scored with the same rules as players |
 | **v2.1.0** | "Pez Oráculo" — ML per-match prediction on each match card: 1X2 probabilities, likely scorelines and xG, with live-Elo updates (offline-trained Poisson + Dixon-Coles model, evaluated client-side) |
 | v2.0.0 | "WE ARE 26" complete frontend redesign: tri-nation design system, SVG icon set, sports-poster typography, web-font loading fix |
 | v1.6.x | Full guide, mobile "More" drawer, Compare button from profile |

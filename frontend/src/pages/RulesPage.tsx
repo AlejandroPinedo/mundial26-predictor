@@ -75,6 +75,7 @@ const sections = [
       'Toca "Análisis" para desplegar las probabilidades 1X2, los 3 marcadores más probables, los goles esperados (xG) y la forma reciente (últimos resultados) de cada equipo.',
       'Es un modelo estadístico (Poisson + Dixon-Coles) entrenado con ~45 000 partidos internacionales: calcula probabilidades, no adivina.',
       'Su pronóstico se ajusta solo con los resultados que van ocurriendo en el Mundial.',
+      'Además compite en el Ranking Global como un jugador más (con el badge "IA"): su predicción de cada partido se congela en el saque inicial —nunca ve el resultado— y suma puntos con las mismas reglas que tú. ¿Puedes ganarle?',
       'Ojo: el marcador más probable (p. ej. 1-1) puede no coincidir con el favorito a ganar, porque una victoria reúne muchos marcadores distintos y suma más que cualquier marcador puntual.',
     ],
   },

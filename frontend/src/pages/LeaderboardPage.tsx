@@ -10,6 +10,7 @@ type Entry = {
   username: string
   total_predictions: string
   total_points: string
+  is_oracle?: boolean
 }
 
 export default function LeaderboardPage() {
@@ -54,6 +55,20 @@ export default function LeaderboardPage() {
           />
         </div>
       } />
+
+      {/* Explicación del Pez Oráculo como competidor de IA */}
+      {leaderboard.some(e => e.is_oracle) && (
+        <div className="flex items-start gap-3 rounded-xl border border-gold/20 bg-gold/[0.06] px-4 py-3 mb-6 font-sans fade-up-1">
+          <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-gold/15 border border-gold/40 flex items-center justify-center text-gold" aria-hidden="true">
+            <Icon name="fish" size={17} strokeWidth={2.2} />
+          </span>
+          <p className="text-[13px] leading-snug text-gray-300">
+            <span className="text-gold font-condensed font-extrabold uppercase tracking-wide">Pez Oráculo · IA</span>{' '}
+            compite en la tabla con predicciones del modelo, congeladas antes de cada saque (nunca ve el resultado). No es un jugador.{' '}
+            <span className="text-white font-semibold">¿Puedes ganarle?</span>
+          </p>
+        </div>
+      )}
 
       {/* My stats overview */}
       {myEntry && (
@@ -104,24 +119,36 @@ export default function LeaderboardPage() {
                     {isFirst && <Icon name="crown" size={24} className="text-gold mb-1.5" strokeWidth={2.2} />}
 
                     <div className={`w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center font-display text-base select-none mb-2 ${
-                      isFirst
+                      entry.is_oracle
+                        ? 'bg-gold/15 border border-gold/40 text-gold'
+                        : isFirst
                         ? 'bg-gold text-ink-950 shadow-[0_4px_16px_-4px_rgba(255,195,0,0.5)]'
                         : 'bg-panel-2 border border-white/10 text-gray-300'
                     }`}>
-                      {entry.username[0].toUpperCase()}
+                      {entry.is_oracle ? <Icon name="fish" size={20} strokeWidth={2.2} /> : entry.username[0].toUpperCase()}
                     </div>
 
-                    <Link
-                      to={`/compare/${encodeURIComponent(entry.username)}`}
-                      className={`font-condensed font-extrabold uppercase tracking-wide text-xs md:text-sm truncate max-w-full hover:underline ${
+                    {entry.is_oracle ? (
+                      <span className={`font-condensed font-extrabold uppercase tracking-wide text-xs md:text-sm truncate max-w-full ${
                         isFirst ? 'text-gold' : 'text-white'
-                      }`}
-                    >
-                      {entry.username}
-                    </Link>
-                    {isMe && (
-                      <span className="chip text-gold border-gold/30 bg-gold/10 mt-1">Tú</span>
+                      }`}>
+                        {entry.username}
+                      </span>
+                    ) : (
+                      <Link
+                        to={`/compare/${encodeURIComponent(entry.username)}`}
+                        className={`font-condensed font-extrabold uppercase tracking-wide text-xs md:text-sm truncate max-w-full hover:underline ${
+                          isFirst ? 'text-gold' : 'text-white'
+                        }`}
+                      >
+                        {entry.username}
+                      </Link>
                     )}
+                    {entry.is_oracle ? (
+                      <span className="chip text-gold border-gold/30 bg-gold/10 mt-1">IA</span>
+                    ) : isMe ? (
+                      <span className="chip text-gold border-gold/30 bg-gold/10 mt-1">Tú</span>
+                    ) : null}
 
                     <div className="text-center mt-1.5 mb-3">
                       <span className={`font-display text-2xl md:text-3xl ${isFirst ? 'trophy-text' : entry.text}`}>
@@ -172,10 +199,10 @@ export default function LeaderboardPage() {
                   <div
                     key={entry.username}
                     className={`relative flex items-center justify-between px-4 md:px-6 py-3.5 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors duration-150 ${
-                      isMe ? 'bg-gold/[0.04]' : ''
+                      isMe ? 'bg-gold/[0.04]' : entry.is_oracle ? 'bg-gold/[0.025]' : ''
                     }`}
                   >
-                    {isMe && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-gold" aria-hidden="true" />}
+                    {(isMe || entry.is_oracle) && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-gold" aria-hidden="true" />}
 
                     <div className="flex items-center gap-3 md:gap-4 min-w-0">
                       {/* Position Indicator */}
@@ -185,9 +212,11 @@ export default function LeaderboardPage() {
 
                       {/* Avatar */}
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-display text-xs select-none flex-shrink-0 ${
-                        isTop3 ? 'bg-gold text-ink-950' : 'bg-panel-2 border border-white/8 text-gray-300'
+                        entry.is_oracle
+                          ? 'bg-gold/15 border border-gold/40 text-gold'
+                          : isTop3 ? 'bg-gold text-ink-950' : 'bg-panel-2 border border-white/8 text-gray-300'
                       }`}>
-                        {entry.username[0].toUpperCase()}
+                        {entry.is_oracle ? <Icon name="fish" size={17} strokeWidth={2.2} /> : entry.username[0].toUpperCase()}
                       </div>
 
                       {/* Competitor Username & Links */}
@@ -195,7 +224,15 @@ export default function LeaderboardPage() {
                         <span className="font-semibold text-white text-sm truncate max-w-[110px] sm:max-w-[180px]">
                           {entry.username}
                         </span>
-                        {isMe ? (
+                        {entry.is_oracle ? (
+                          <span
+                            className="chip text-gold border-gold/30 bg-gold/10"
+                            title="Predicciones del modelo, congeladas en el saque inicial — no es un jugador"
+                            aria-label="Pez Oráculo: predicciones de inteligencia artificial, no es un jugador"
+                          >
+                            IA
+                          </span>
+                        ) : isMe ? (
                           <span className="chip text-gold border-gold/25 bg-gold/10">tú</span>
                         ) : (
                           <Link
