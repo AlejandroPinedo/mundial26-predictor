@@ -128,22 +128,14 @@ export default function LeaderboardPage() {
                       {entry.is_oracle ? <Icon name="fish" size={20} strokeWidth={2.2} /> : entry.username[0].toUpperCase()}
                     </div>
 
-                    {entry.is_oracle ? (
-                      <span className={`font-condensed font-extrabold uppercase tracking-wide text-xs md:text-sm truncate max-w-full ${
+                    <Link
+                      to={`/compare/${encodeURIComponent(entry.username)}`}
+                      className={`font-condensed font-extrabold uppercase tracking-wide text-xs md:text-sm truncate max-w-full hover:underline ${
                         isFirst ? 'text-gold' : 'text-white'
-                      }`}>
-                        {entry.username}
-                      </span>
-                    ) : (
-                      <Link
-                        to={`/compare/${encodeURIComponent(entry.username)}`}
-                        className={`font-condensed font-extrabold uppercase tracking-wide text-xs md:text-sm truncate max-w-full hover:underline ${
-                          isFirst ? 'text-gold' : 'text-white'
-                        }`}
-                      >
-                        {entry.username}
-                      </Link>
-                    )}
+                      }`}
+                    >
+                      {entry.username}
+                    </Link>
                     {entry.is_oracle ? (
                       <span className="chip text-gold border-gold/30 bg-gold/10 mt-1">IA</span>
                     ) : isMe ? (
@@ -225,13 +217,22 @@ export default function LeaderboardPage() {
                           {entry.username}
                         </span>
                         {entry.is_oracle ? (
-                          <span
-                            className="chip text-gold border-gold/30 bg-gold/10"
-                            title="Predicciones del modelo, congeladas en el saque inicial — no es un jugador"
-                            aria-label="Pez Oráculo: predicciones de inteligencia artificial, no es un jugador"
-                          >
-                            IA
-                          </span>
+                          <>
+                            <span
+                              className="chip text-gold border-gold/30 bg-gold/10"
+                              title="Predicciones del modelo, congeladas en el saque inicial — no es un jugador"
+                              aria-label="Pez Oráculo: predicciones de inteligencia artificial, no es un jugador"
+                            >
+                              IA
+                            </span>
+                            <Link
+                              to={`/compare/${encodeURIComponent(entry.username)}`}
+                              className="chip text-gray-400 hover:text-gold hover:border-gold/30 transition-colors"
+                            >
+                              Comparar
+                              <Icon name="chevronRight" size={10} />
+                            </Link>
+                          </>
                         ) : isMe ? (
                           <span className="chip text-gold border-gold/25 bg-gold/10">tú</span>
                         ) : (

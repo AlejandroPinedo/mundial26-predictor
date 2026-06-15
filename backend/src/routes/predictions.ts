@@ -3,7 +3,7 @@ import { db } from '../db.js'
 import { authMiddleware } from '../middleware/auth.js'
 import type { AppVariables } from '../types.js'
 import { calculatePoints } from '../utils/scoring.js'
-import { computeOracleEntry, lockOraclePredictions } from '../oracle/lock.js'
+import { computeOracleEntry, lockOraclePredictions, ORACLE_NAME } from '../oracle/lock.js'
 
 export const predictionsRouter = new Hono<{ Variables: AppVariables }>()
 
@@ -244,6 +244,40 @@ predictionsRouter.get('/stats', authMiddleware, async (c) => {
 
 predictionsRouter.get('/user/:username', authMiddleware, async (c) => {
   const username = c.req.param('username')
+
+  // El Pez Oráculo no es un usuario: servimos sus picks congelados en el mismo
+  // formato que los de un jugador, calculando los puntos al vuelo (calculatePoints).
+  if (username === ORACLE_NAME) {
+    const oracleRes = await db.query(
+      `SELECT op.match_id, op.predicted_home, op.predicted_away,
+              m.home_team, m.away_team, m.match_date, m.stage,
+              m.home_score, m.away_score, m.stadium_name
+       FROM oracle_predictions op
+       JOIN matches m ON op.match_id = m.id
+       ORDER BY m.match_date ASC`
+    )
+    const predictions = oracleRes.rows.map((r) => ({
+      id: `oracle-${r.match_id}`,
+      match_id: r.match_id,
+      predicted_home: r.predicted_home,
+      predicted_away: r.predicted_away,
+      home_team: r.home_team,
+      away_team: r.away_team,
+      match_date: r.match_date,
+      stage: r.stage,
+      home_score: r.home_score,
+      away_score: r.away_score,
+      stadium_name: r.stadium_name,
+      points:
+        r.home_score === null || r.away_score === null
+          ? null
+          : calculatePoints(
+              { home: r.predicted_home, away: r.predicted_away },
+              { home: r.home_score, away: r.away_score }
+            ),
+    }))
+    return c.json({ username: ORACLE_NAME, predictions })
+  }
 
   const userRes = await db.query('SELECT id, username FROM users WHERE username = $1', [username])
   if (!userRes.rows[0]) {
