@@ -1,0 +1,44 @@
+name: Oracle pick lock
+
+# Congela las predicciones de grupo del Pez Oráculo cuyo saque ya pasó, para que
+# se registren puntualmente sin depender de cuándo el admin carga resultados.
+# El script (npm run seed:oracle) es idempotente y solo escribe picks vencidos.
+#
+# IMPORTANTE: los triggers `schedule` solo corren desde la rama por defecto (main).
+# Solo es relevante durante la fase de grupos; puede desactivarse al terminar.
+
+on:
+  schedule:
+    - cron: '0 * * * *' # cada hora (UTC)
+  workflow_dispatch: {} # permite ejecución manual desde la pestaña Actions
+
+# Evita solapamientos si una corrida tarda más que el intervalo.
+concurrency:
+  group: oracle-lock
+  cancel-in-progress: false
+
+jobs:
+  lock:
+    name: Lock due Oracle predictions
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lock due Oracle predictions
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run seed:oracle
