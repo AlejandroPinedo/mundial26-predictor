@@ -3,6 +3,7 @@ import { db } from '../db.js'
 import { authMiddleware } from '../middleware/auth.js'
 import type { AppVariables } from '../types.js'
 import { calculatePoints } from '../utils/scoring.js'
+import { computeOracleEntry, lockOraclePredictions } from '../oracle/lock.js'
 
 export const predictionsRouter = new Hono<{ Variables: AppVariables }>()
 
@@ -119,7 +120,22 @@ predictionsRouter.get('/leaderboard', async (c) => {
        GROUP BY u.id, u.username, bp.points
        ORDER BY total_points DESC`
     )
-    return c.json({ leaderboard: result.rows })
+
+    // El Pez Oráculo compite como fila virtual (no es un usuario). Se inserta
+    // y reordenamos por puntos para que ocupe su posición real en la tabla.
+    // Un fallo aquí nunca debe tumbar el ranking de los usuarios.
+    const rows = result.rows
+    try {
+      const oracle = await computeOracleEntry(db)
+      if (oracle) {
+        rows.push(oracle)
+        rows.sort((a, b) => Number(b.total_points) - Number(a.total_points))
+      }
+    } catch (err) {
+      console.error('Error al calcular la fila del Oráculo:', err)
+    }
+
+    return c.json({ leaderboard: rows })
   })
 
   predictionsRouter.post('/admin/result', authMiddleware, async (c) => {
@@ -145,6 +161,15 @@ predictionsRouter.get('/leaderboard', async (c) => {
         { home: homeScore, away: awayScore }
       )
       await db.query('UPDATE predictions SET points = $1 WHERE id = $2', [points, pred.id])
+    }
+
+    // Congela los picks del Oráculo que ya estén vencidos (los del partido recién
+    // cerrado y cualquier otro cuyo saque pasó). Nunca usa su propio resultado.
+    // Si falla, no debe romper la carga del resultado del admin.
+    try {
+      await lockOraclePredictions(db)
+    } catch (err) {
+      console.error('Error al congelar predicciones del Oráculo:', err)
     }
 
     return c.json({ updated: preds.rows.length })
