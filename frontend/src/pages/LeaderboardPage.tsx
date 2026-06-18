@@ -26,13 +26,21 @@ export default function LeaderboardPage() {
     return () => clearInterval(interval)
   }, [])
 
-  const myRank = leaderboard.findIndex(e => e.username === user?.username) + 1
-  const filtered = search
-    ? leaderboard.filter(e => e.username.toLowerCase().includes(search.toLowerCase()))
-    : leaderboard
-  const myEntry = leaderboard.find(e => e.username === user?.username)
+  // El ranking es solo de jugadores humanos; el Pez Oráculo (IA) se muestra
+  // aparte como benchmark, sin ocupar un puesto del podio ni de la tabla.
+  const players = leaderboard.filter(e => !e.is_oracle)
+  const oracle = leaderboard.find(e => e.is_oracle)
+  const oracleRank = oracle
+    ? players.filter(p => Number(p.total_points) > Number(oracle.total_points)).length + 1
+    : 0
 
-  const topThree = leaderboard.slice(0, 3)
+  const myRank = players.findIndex(e => e.username === user?.username) + 1
+  const filtered = search
+    ? players.filter(e => e.username.toLowerCase().includes(search.toLowerCase()))
+    : players
+  const myEntry = players.find(e => e.username === user?.username)
+
+  const topThree = players.slice(0, 3)
 
   // Order for 3D podium: [2nd, 1st, 3rd]
   const podiumOrder = [
@@ -56,40 +64,68 @@ export default function LeaderboardPage() {
         </div>
       } />
 
-      {/* Explicación del Pez Oráculo como competidor de IA */}
-      {leaderboard.some(e => e.is_oracle) && (
-        <div className="flex items-start gap-3 rounded-xl border border-gold/20 bg-gold/[0.06] px-4 py-3 mb-6 font-sans fade-up-1">
-          <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-gold/15 border border-gold/40 flex items-center justify-center text-gold" aria-hidden="true">
-            <Icon name="fish" size={17} strokeWidth={2.2} />
-          </span>
-          <p className="text-[13px] leading-snug text-gray-300">
-            <span className="text-gold font-condensed font-extrabold uppercase tracking-wide">Pez Oráculo · IA</span>{' '}
-            compite en la tabla con predicciones del modelo, congeladas antes de cada saque (nunca ve el resultado). No es un jugador.{' '}
-            <span className="text-white font-semibold">¿Puedes ganarle?</span>
-          </p>
+      {/* Benchmark del Pez Oráculo (IA) — fuera del ranking de jugadores */}
+      {oracle && (
+        <div className="ticket-card p-5 mb-6 font-sans fade-up-1 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          {/* Izquierda: identidad + contexto */}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5">
+              <span className="flex-shrink-0 w-10 h-10 rounded-2xl bg-gold/15 border border-gold/40 flex items-center justify-center text-gold" aria-hidden="true">
+                <Icon name="fish" size={20} strokeWidth={2.2} />
+              </span>
+              <span className="font-display text-lg md:text-xl text-gold uppercase leading-none truncate">Pez Oráculo</span>
+              <span className="chip text-gold border-gold/30 bg-gold/10 flex-shrink-0">IA</span>
+            </div>
+            <p className="text-gray-500 text-[11px] mt-2.5 font-medium leading-snug">
+              {oracleRank > 0 && (
+                <span className="text-gray-400">Si fuera jugador iría #{oracleRank} de {players.length + 1}</span>
+              )}
+              {oracleRank > 0 && ' · '}
+              Predicciones congeladas al saque — no es un jugador.{' '}
+              <span className="text-gray-400">¿Le ganas?</span>
+            </p>
+          </div>
+          {/* Derecha: puntaje + comparar (fila balanceada en móvil, apilados en desktop) */}
+          <div className="flex items-center justify-between gap-4 flex-shrink-0 sm:flex-col sm:items-end sm:gap-2.5">
+            <div className="text-center sm:text-right">
+              <span className="scoreboard inline-block px-3 py-1.5 rounded-xl text-xl leading-none">{oracle.total_points}</span>
+              <span className="block text-[9px] font-condensed font-extrabold uppercase tracking-[0.18em] text-gray-600 mt-1">pts</span>
+            </div>
+            <Link
+              to={`/compare/${encodeURIComponent(oracle.username)}`}
+              className="chip text-gray-400 hover:text-gold hover:border-gold/30 transition-colors"
+            >
+              Comparar
+              <Icon name="chevronRight" size={10} />
+            </Link>
+          </div>
         </div>
       )}
 
       {/* My stats overview */}
       {myEntry && (
-        <div className="ticket-card p-5 mb-8 flex items-center justify-between gap-4 flex-wrap font-sans fade-up-1">
-          <div className="pl-1.5 min-w-0">
+        <div className="ticket-card p-5 mb-8 font-sans fade-up-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          {/* Izquierda: identidad + rango */}
+          <div className="min-w-0">
             <span className="text-[10px] font-condensed font-extrabold uppercase tracking-[0.2em] text-gray-500 block mb-1.5">Mi Rendimiento</span>
             <div className="flex items-center gap-3 flex-wrap">
               <span className="font-display text-xl md:text-2xl text-white uppercase truncate max-w-[200px]">
                 {user?.username}
               </span>
               <span className="chip text-gold border-gold/25 bg-gold/10">
-                #{myRank} de {leaderboard.length}
+                #{myRank} de {players.length}
               </span>
             </div>
           </div>
-          <div className="text-right">
-            <span className="text-[10px] font-condensed font-extrabold uppercase tracking-[0.2em] text-gray-500 block mb-1.5">Puntos Acumulados</span>
-            <span className="scoreboard inline-block px-3.5 py-1.5 rounded-xl text-2xl leading-none">
-              {myEntry.total_points}
+          {/* Derecha: puntos — fila balanceada en móvil, apilado a la derecha en desktop */}
+          <div className="flex items-center justify-between gap-3 border-t border-white/8 pt-3 sm:block sm:border-0 sm:pt-0 sm:text-right">
+            <span className="text-[10px] font-condensed font-extrabold uppercase tracking-[0.2em] text-gray-500 sm:block sm:mb-1.5">Puntos Acumulados</span>
+            <span className="whitespace-nowrap">
+              <span className="scoreboard inline-block px-3.5 py-1.5 rounded-xl text-2xl leading-none">
+                {myEntry.total_points}
+              </span>
+              <span className="text-[9px] font-condensed font-extrabold uppercase tracking-[0.18em] text-gray-600 ml-1.5">pts</span>
             </span>
-            <span className="text-[9px] font-condensed font-extrabold uppercase tracking-[0.18em] text-gray-600 ml-1.5">pts</span>
           </div>
         </div>
       )}
@@ -98,7 +134,7 @@ export default function LeaderboardPage() {
         <div className="flex justify-center py-20">
           <Spinner />
         </div>
-      ) : leaderboard.length === 0 ? (
+      ) : players.length === 0 ? (
         <div className="text-center py-20 bg-panel border border-white/8 rounded-2xl font-sans fade-up-1">
           <Icon name="trophy" size={44} className="mx-auto text-gold/40 mb-4" />
           <p className="text-white font-condensed font-extrabold uppercase tracking-wide text-lg">Sin jugadores todavía</p>
@@ -119,13 +155,11 @@ export default function LeaderboardPage() {
                     {isFirst && <Icon name="crown" size={24} className="text-gold mb-1.5" strokeWidth={2.2} />}
 
                     <div className={`w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center font-display text-base select-none mb-2 ${
-                      entry.is_oracle
-                        ? 'bg-gold/15 border border-gold/40 text-gold'
-                        : isFirst
+                      isFirst
                         ? 'bg-gold text-ink-950 shadow-[0_4px_16px_-4px_rgba(255,195,0,0.5)]'
                         : 'bg-panel-2 border border-white/10 text-gray-300'
                     }`}>
-                      {entry.is_oracle ? <Icon name="fish" size={20} strokeWidth={2.2} /> : entry.username[0].toUpperCase()}
+                      {entry.username[0].toUpperCase()}
                     </div>
 
                     <Link
@@ -136,11 +170,9 @@ export default function LeaderboardPage() {
                     >
                       {entry.username}
                     </Link>
-                    {entry.is_oracle ? (
-                      <span className="chip text-gold border-gold/30 bg-gold/10 mt-1">IA</span>
-                    ) : isMe ? (
+                    {isMe && (
                       <span className="chip text-gold border-gold/30 bg-gold/10 mt-1">Tú</span>
-                    ) : null}
+                    )}
 
                     <div className="text-center mt-1.5 mb-3">
                       <span className={`font-display text-2xl md:text-3xl ${isFirst ? 'trophy-text' : entry.text}`}>
@@ -191,10 +223,10 @@ export default function LeaderboardPage() {
                   <div
                     key={entry.username}
                     className={`relative flex items-center justify-between px-4 md:px-6 py-3.5 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors duration-150 ${
-                      isMe ? 'bg-gold/[0.04]' : entry.is_oracle ? 'bg-gold/[0.025]' : ''
+                      isMe ? 'bg-gold/[0.04]' : ''
                     }`}
                   >
-                    {(isMe || entry.is_oracle) && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-gold" aria-hidden="true" />}
+                    {isMe && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-gold" aria-hidden="true" />}
 
                     <div className="flex items-center gap-3 md:gap-4 min-w-0">
                       {/* Position Indicator */}
@@ -204,11 +236,9 @@ export default function LeaderboardPage() {
 
                       {/* Avatar */}
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-display text-xs select-none flex-shrink-0 ${
-                        entry.is_oracle
-                          ? 'bg-gold/15 border border-gold/40 text-gold'
-                          : isTop3 ? 'bg-gold text-ink-950' : 'bg-panel-2 border border-white/8 text-gray-300'
+                        isTop3 ? 'bg-gold text-ink-950' : 'bg-panel-2 border border-white/8 text-gray-300'
                       }`}>
-                        {entry.is_oracle ? <Icon name="fish" size={17} strokeWidth={2.2} /> : entry.username[0].toUpperCase()}
+                        {entry.username[0].toUpperCase()}
                       </div>
 
                       {/* Competitor Username & Links */}
@@ -216,24 +246,7 @@ export default function LeaderboardPage() {
                         <span className="font-semibold text-white text-sm truncate max-w-[110px] sm:max-w-[180px]">
                           {entry.username}
                         </span>
-                        {entry.is_oracle ? (
-                          <>
-                            <span
-                              className="chip text-gold border-gold/30 bg-gold/10"
-                              title="Predicciones del modelo, congeladas en el saque inicial — no es un jugador"
-                              aria-label="Pez Oráculo: predicciones de inteligencia artificial, no es un jugador"
-                            >
-                              IA
-                            </span>
-                            <Link
-                              to={`/compare/${encodeURIComponent(entry.username)}`}
-                              className="chip text-gray-400 hover:text-gold hover:border-gold/30 transition-colors"
-                            >
-                              Comparar
-                              <Icon name="chevronRight" size={10} />
-                            </Link>
-                          </>
-                        ) : isMe ? (
+                        {isMe ? (
                           <span className="chip text-gold border-gold/25 bg-gold/10">tú</span>
                         ) : (
                           <Link
