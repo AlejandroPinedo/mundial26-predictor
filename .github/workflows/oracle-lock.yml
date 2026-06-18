@@ -9,7 +9,10 @@ name: Oracle pick lock
 
 on:
   schedule:
-    - cron: '0 * * * *' # cada hora (UTC)
+    # Cada ~15 min en minutos sueltos (NO en la hora en punto): GitHub retrasa o
+    # saltea los cron a la hora en punto por la carga. Así un pick se congela
+    # dentro de ~15 min de su saque sin depender de la carga de resultados.
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch: {} # permite ejecución manual desde la pestaña Actions
 
 # Evita solapamientos si una corrida tarda más que el intervalo.
