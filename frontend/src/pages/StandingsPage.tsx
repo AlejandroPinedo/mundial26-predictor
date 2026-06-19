@@ -9,25 +9,35 @@ const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L']
 
 type Standing = {
   team: string
-  played: string
-  wins: string
-  draws: string
-  losses: string
-  gf: string
-  ga: string
-  gd: string
-  points: string
+  played: string | number
+  wins: string | number
+  draws: string | number
+  losses: string | number
+  gf: string | number
+  ga: string | number
+  gd: string | number
+  points: string | number
 }
 
-function GroupTable({ group }: { group: string }) {
+type Source = 'calc' | 'official'
+
+function GroupTable({ group, source }: { group: string; source: Source }) {
   const [standings, setStandings] = useState<Standing[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    apiFetch(`/predictions/standings/${group}`)
-      .then(d => setStandings(d.standings))
+    setLoading(true)
+    const req =
+      source === 'official'
+        ? apiFetch('/football/standings').then(
+            d => (d.groups ?? []).find((x: { group: string }) => x.group === group)?.table ?? [],
+          )
+        : apiFetch(`/predictions/standings/${group}`).then(d => d.standings ?? [])
+    req
+      .then(setStandings)
+      .catch(() => setStandings([]))
       .finally(() => setLoading(false))
-  }, [group])
+  }, [group, source])
 
   if (loading) return <Skeleton rows={4} />
 
@@ -104,12 +114,30 @@ function GroupTable({ group }: { group: string }) {
 
 export default function StandingsPage() {
   const [activeGroup, setActiveGroup] = useState('A')
+  const [source, setSource] = useState<Source>('calc')
 
   return (
     <div className="min-h-screen bg-ink-950 text-white">
       <div className="max-w-4xl mx-auto px-4 md:px-8 py-6">
 
         <PageHeader title="CLASIFICACIONES" subtitle="Tabla de posiciones por grupo · FIFA WC26" icon="🏅" live badge="Live" />
+
+        {/* Fuente: calculada (resultados cargados) vs oficial (football-data) */}
+        <div className="flex items-center gap-2 mb-4 fade-up-1">
+          {([['calc', 'Calculada'], ['official', 'Oficial FIFA']] as const).map(([val, label]) => (
+            <button key={val} onClick={() => setSource(val)}
+              className={`px-4 py-1.5 rounded-full text-[11px] font-condensed font-extrabold uppercase tracking-wider transition flex-shrink-0 cursor-pointer ${
+                source === val
+                  ? 'bg-gold text-ink-950 shadow-[0_4px_14px_-4px_rgba(255,195,0,0.5)]'
+                  : 'bg-panel border border-white/8 text-gray-500 hover:text-white hover:border-white/20'
+              }`}>
+              {label}
+            </button>
+          ))}
+          <span className="text-[10px] text-gray-600 font-condensed font-bold uppercase tracking-wider ml-1 hidden sm:inline">
+            {source === 'official' ? 'football-data.org' : 'según resultados cargados'}
+          </span>
+        </div>
 
         {/* Selector de grupo */}
         <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide fade-up-1">
@@ -139,7 +167,7 @@ export default function StandingsPage() {
               </div>
               <span className="chip text-gray-400">WC26</span>
             </header>
-            <GroupTable group={activeGroup} />
+            <GroupTable group={activeGroup} source={source} />
           </div>
         </div>
       </div>

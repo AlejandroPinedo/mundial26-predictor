@@ -10,6 +10,7 @@ import { predictionsRouter } from './routes/predictions.js'
 import { groupsRouter } from './routes/groups.js'
 import { bracketRouter } from './routes/bracket.js'
 import { cronRouter } from './routes/cron.js'
+import { footballRouter } from './routes/football.js'
 import { cors } from 'hono/cors'
 
 Sentry.init({
@@ -44,6 +45,7 @@ app.route('/predictions', predictionsRouter)
 app.route('/groups', groupsRouter)
 app.route('/bracket', bracketRouter)
 app.route('/cron', cronRouter)
+app.route('/football', footballRouter)
 
 app.get('/me', authMiddleware, async (c) => {
   const userId = c.get('userId')
