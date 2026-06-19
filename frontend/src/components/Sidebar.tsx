@@ -19,6 +19,7 @@ export default function Sidebar({ unpredicted = 0 }: Props) {
     { to: '/bracket', icon: 'trophy', label: 'Bracket' },
     { to: '/leaderboard', icon: 'chart', label: 'Ranking' },
     { to: '/standings', icon: 'medal', label: 'Clasificaciones' },
+    { to: '/scorers', icon: 'flame', label: 'Goleadores' },
     { to: '/stats', icon: 'trending', label: 'Estadísticas' },
     { to: '/simulator', icon: 'zap', label: 'Simulador' },
     { to: '/my', icon: 'target', label: 'Mis predicciones' },
