@@ -32,6 +32,7 @@ const ComparePage = lazy(() => import('./pages/ComparePage'))
 const StatsPage = lazy(() => import('./pages/StatsPage'))
 const SimulatorPage = lazy(() => import('./pages/SimulatorPage'))
 const StandingsPage = lazy(() => import('./pages/StandingsPage'))
+const ScorersPage = lazy(() => import('./pages/ScorersPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 function PageLoader() {
@@ -97,6 +98,7 @@ export default function App() {
               <Route path="/stats" element={<Protected><StatsPage /></Protected>} />
               <Route path="/simulator" element={<Protected><SimulatorPage /></Protected>} />
               <Route path="/standings" element={<Protected><StandingsPage /></Protected>} />
+              <Route path="/scorers" element={<Protected><ScorersPage /></Protected>} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>

@@ -50,6 +50,9 @@ cronRouter.post('/sync-results', async (c) => {
 
   try {
     const summary = await syncResults(db, token, { apply: true })
+    if (summary.conflicts.length) {
+      console.warn('[cron] resultados en conflicto football-data≠Varzesh3 (no ingestados):', JSON.stringify(summary.conflicts))
+    }
     return c.json({ ok: true, oracleLocked, liveUpdated, ...summary })
   } catch (err) {
     console.error('[cron/sync-results]', err)

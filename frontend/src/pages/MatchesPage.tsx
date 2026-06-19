@@ -15,6 +15,7 @@ import { currentElo } from '../predict/elo'
 import { predictMatch } from '../predict/predictMatch'
 import { computeForm } from '../utils/recentForm'
 import LiveScore, { isLive } from '../components/LiveScore'
+import PointsProjection from '../components/PointsProjection'
 
 type Match = {
   id: string
@@ -431,6 +432,7 @@ export default function MatchesPage() {
                               'border-ca/25 bg-ca/10 text-ca'
                             }`}>{pred.points}pts</span>
                           )}
+                          <PointsProjection predHome={pred.predicted_home} predAway={pred.predicted_away} m={match} />
                         </div>
                       )}
 
