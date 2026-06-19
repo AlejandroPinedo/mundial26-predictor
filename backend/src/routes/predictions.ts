@@ -17,29 +17,24 @@ predictionsRouter.get('/matches', async (c) => {
 predictionsRouter.get('/standings/:group', async (c) => {
   const group = c.req.param('group').toUpperCase()
 
+  // Cada partido se descompone en dos filas perspectiva-equipo (gf/ga ya orientados),
+  // así el agregado no necesita saber si el equipo era local o visitante.
   const result = await db.query(
     `SELECT
       team,
       COUNT(*) as played,
-      SUM(CASE WHEN (home_team = team AND home_score > away_score)
-                 OR (away_team = team AND away_score > home_score) THEN 1 ELSE 0 END) as wins,
-      SUM(CASE WHEN home_score = away_score THEN 1 ELSE 0 END) as draws,
-      SUM(CASE WHEN (home_team = team AND home_score < away_score)
-                 OR (away_team = team AND away_score < home_score) THEN 1 ELSE 0 END) as losses,
-      SUM(CASE WHEN home_team = team THEN home_score ELSE away_score END) as gf,
-      SUM(CASE WHEN home_team = team THEN away_score ELSE home_score END) as ga,
-      SUM(CASE WHEN home_team = team THEN home_score - away_score
-               ELSE away_score - home_score END) as gd,
-      SUM(CASE
-        WHEN (home_team = team AND home_score > away_score)
-          OR (away_team = team AND away_score > home_score) THEN 3
-        WHEN home_score = away_score THEN 1
-        ELSE 0 END) as points
+      SUM(CASE WHEN gf > ga THEN 1 ELSE 0 END) as wins,
+      SUM(CASE WHEN gf = ga THEN 1 ELSE 0 END) as draws,
+      SUM(CASE WHEN gf < ga THEN 1 ELSE 0 END) as losses,
+      SUM(gf) as gf,
+      SUM(ga) as ga,
+      SUM(gf - ga) as gd,
+      SUM(CASE WHEN gf > ga THEN 3 WHEN gf = ga THEN 1 ELSE 0 END) as points
      FROM (
-       SELECT home_team as team, away_team, home_score, away_score, group_name FROM matches
+       SELECT home_team as team, home_score as gf, away_score as ga FROM matches
        WHERE home_score IS NOT NULL AND group_name = $1
        UNION ALL
-       SELECT away_team as team, home_team, home_score, away_score, group_name FROM matches
+       SELECT away_team as team, away_score as gf, home_score as ga FROM matches
        WHERE home_score IS NOT NULL AND group_name = $1
      ) t
      GROUP BY team
@@ -150,6 +145,8 @@ predictionsRouter.get('/leaderboard', async (c) => {
     const { matchId, homeScore, awayScore } = await c.req.json()
 
     const { updatedPredictions } = await ingestResult(db, matchId, homeScore, awayScore)
+    // La carga manual del admin es autoridad: marca el resultado como confirmado.
+    await db.query('UPDATE matches SET result_status = $1 WHERE id = $2', ['confirmed', matchId])
 
     return c.json({ updated: updatedPredictions })
   })
