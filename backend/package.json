@@ -9,6 +9,7 @@
         "start": "node dist/index.js",
         "seed:oracle": "tsx scripts/seed-oracle.ts",
         "seed:oracle-bracket": "tsx scripts/seed-oracle-bracket.ts",
+        "sync:results": "tsx scripts/sync-results.ts",
         "test": "vitest run",
         "test:watch": "vitest"
     },
