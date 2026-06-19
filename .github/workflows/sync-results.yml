@@ -5,13 +5,12 @@ name: Sync match results
 # Idempotente: solo escribe cuando el marcador de la API difiere del de la BD.
 # La carga manual del admin sigue funcionando como override.
 #
-# IMPORTANTE: los triggers `schedule` solo corren desde la rama por defecto (main).
-# Solo relevante durante el torneo; puede desactivarse al terminar.
+# La cadencia la maneja un pinger externo (cron-job.org) llamando al endpoint
+# POST /cron/sync-results cada ~1 min, porque el cron de GitHub Actions es de baja
+# prioridad y se estrangula a ~cada 3-4 h. Aquí dejamos SOLO el disparo manual
+# como respaldo (p. ej. para forzar una corrida puntual).
 
 on:
-  schedule:
-    # Cada ~15 min, desfasado de oracle-lock (7,22,37,52) para no solaparse.
-    - cron: '12,27,42,57 * * * *'
   workflow_dispatch: {} # ejecución manual desde la pestaña Actions
 
 concurrency:
