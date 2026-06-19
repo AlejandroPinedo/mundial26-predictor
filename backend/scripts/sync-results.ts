@@ -24,20 +24,23 @@ try {
   const s = await syncResults(db, TOKEN, { apply: APPLY })
   if (s.unmapped.length) console.log(`⚠️  tla sin mapear (ignorados): ${s.unmapped.join(', ')}`)
   if (s.conflicts.length) {
-    console.log('⛔ Conflictos football-data ≠ Varzesh3 (NO ingestados — revisar a mano):')
-    s.conflicts.forEach((c) => console.log(`     ${c.match}: football-data ${c.footballData} vs Varzesh3 ${c.varzesh3}`))
+    console.log('⚠️  football-data corrigió un provisional de Varzesh3:')
+    s.conflicts.forEach((c) =>
+      console.log(`     ${c.match}: oficial ${c.footballData} (football-data) ≠ provisional ${c.varzesh3} (Varzesh3)`),
+    )
   }
   for (const ing of s.ingested) {
-    const tail = APPLY ? ` (${ing.updatedPredictions} predicción/es recalculada/s)` : ''
-    console.log(`${APPLY ? '✅' : '+'} ${ing.match}  →  ${ing.score}${tail}`)
+    const tail = APPLY ? ` (${ing.updatedPredictions} pred.)` : ''
+    console.log(`${APPLY ? '✅' : '+'} [${ing.status}] ${ing.match}  →  ${ing.score}${tail}`)
   }
+  for (const m of s.confirmed) console.log(`✔︎ confirmado (sin cambio): ${m}`)
   const head = APPLY
-    ? `Aplicado: ${s.ingested.length} resultado(s) cargado(s)`
-    : `Dry-run: ${s.ingested.length} se cargaría(n)`
+    ? `Aplicado: ${s.ingested.length} escrito(s)`
+    : `Dry-run: ${s.ingested.length} se escribiría(n)`
   console.log(
-    `\n${head} · ${s.alreadyOk} ya correctos · ${s.diverge} divergencia(s) · ${s.conflicts.length} conflicto(s) · ${s.pending} sin final`,
+    `\n${head} · ${s.confirmed.length} confirmado(s) · ${s.alreadyOk} ya OK · ${s.conflicts.length} corregido(s) · ${s.pending} sin final`,
   )
-  if (!APPLY && s.ingested.length) console.log('Ejecuta con --apply para escribir (y disparar el scoring).')
+  if (!APPLY && (s.ingested.length || s.confirmed.length)) console.log('Ejecuta con --apply para escribir.')
 } catch (err) {
   console.error(String(err))
   process.exitCode = 1
