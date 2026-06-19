@@ -4,6 +4,8 @@ import Icon from '../components/Icon'
 
 interface Stadium {
   name: string
+  fifaName: string
+  region: 'Este' | 'Centro' | 'Oeste'
   city: string
   country: string
   capacity: number
@@ -11,9 +13,13 @@ interface Stadium {
   countryCode: 'US' | 'MX' | 'CA'
 }
 
+// fifaName y region: nombres de sede oficiales FIFA + zona del torneo,
+// del dataset abierto worldcup2026 (ISC). Ver tools/wc2026-dataset-check/.
 const STADIUMS: Stadium[] = [
   {
     name: 'MetLife Stadium',
+    fifaName: 'New York/New Jersey Stadium',
+    region: 'Este',
     city: 'East Rutherford / New York / New Jersey',
     country: 'EE. UU.',
     capacity: 82500,
@@ -22,6 +28,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'Estadio Azteca',
+    fifaName: 'Mexico City Stadium',
+    region: 'Centro',
     city: 'Ciudad de México',
     country: 'México',
     capacity: 87523,
@@ -30,6 +38,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'SoFi Stadium',
+    fifaName: 'Los Angeles Stadium',
+    region: 'Oeste',
     city: 'Inglewood / Los Angeles',
     country: 'EE. UU.',
     capacity: 70240,
@@ -38,6 +48,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'Mercedes-Benz Stadium',
+    fifaName: 'Atlanta Stadium',
+    region: 'Este',
     city: 'Atlanta',
     country: 'EE. UU.',
     capacity: 71000,
@@ -46,6 +58,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'Lincoln Financial Field',
+    fifaName: 'Philadelphia Stadium',
+    region: 'Este',
     city: 'Filadelfia',
     country: 'EE. UU.',
     capacity: 67594,
@@ -54,6 +68,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'Lumen Field',
+    fifaName: 'Seattle Stadium',
+    region: 'Oeste',
     city: 'Seattle',
     country: 'EE. UU.',
     capacity: 69000,
@@ -62,6 +78,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'Levi\'s Stadium',
+    fifaName: 'San Francisco Bay Area Stadium',
+    region: 'Oeste',
     city: 'Santa Clara / San Francisco',
     country: 'EE. UU.',
     capacity: 68500,
@@ -70,6 +88,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'Gillette Stadium',
+    fifaName: 'Boston Stadium',
+    region: 'Este',
     city: 'Foxborough / Boston',
     country: 'EE. UU.',
     capacity: 65878,
@@ -78,6 +98,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'NRG Stadium',
+    fifaName: 'Houston Stadium',
+    region: 'Centro',
     city: 'Houston',
     country: 'EE. UU.',
     capacity: 72220,
@@ -86,6 +108,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'AT&T Stadium',
+    fifaName: 'Dallas Stadium',
+    region: 'Centro',
     city: 'Arlington / Dallas',
     country: 'EE. UU.',
     capacity: 80000,
@@ -94,6 +118,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'Hard Rock Stadium',
+    fifaName: 'Miami Stadium',
+    region: 'Este',
     city: 'Miami Gardens / Miami',
     country: 'EE. UU.',
     capacity: 64767,
@@ -102,6 +128,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'Arrowhead Stadium',
+    fifaName: 'Kansas City Stadium',
+    region: 'Centro',
     city: 'Kansas City',
     country: 'EE. UU.',
     capacity: 76416,
@@ -110,6 +138,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'BC Place',
+    fifaName: 'BC Place Vancouver',
+    region: 'Oeste',
     city: 'Vancouver',
     country: 'Canadá',
     capacity: 54500,
@@ -118,6 +148,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'BMO Field',
+    fifaName: 'Toronto Stadium',
+    region: 'Este',
     city: 'Toronto',
     country: 'Canadá',
     capacity: 45000,
@@ -126,6 +158,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'Estadio BBVA',
+    fifaName: 'Estadio Monterrey',
+    region: 'Centro',
     city: 'Monterrey',
     country: 'México',
     capacity: 53500,
@@ -134,6 +168,8 @@ const STADIUMS: Stadium[] = [
   },
   {
     name: 'Estadio Akron',
+    fifaName: 'Estadio Guadalajara',
+    region: 'Centro',
     city: 'Guadalajara',
     country: 'México',
     capacity: 48071,
@@ -168,8 +204,10 @@ export default function StadiumsPage() {
   const filteredStadiums = STADIUMS.filter(stadium => {
     const matchesSearch =
       stadium.name.toLowerCase().includes(search.toLowerCase()) ||
+      stadium.fifaName.toLowerCase().includes(search.toLowerCase()) ||
       stadium.city.toLowerCase().includes(search.toLowerCase()) ||
-      stadium.country.toLowerCase().includes(search.toLowerCase())
+      stadium.country.toLowerCase().includes(search.toLowerCase()) ||
+      stadium.region.toLowerCase().includes(search.toLowerCase())
 
     const matchesCountry = filterCountry === 'ALL' || stadium.countryCode === filterCountry
 
@@ -256,15 +294,23 @@ export default function StadiumsPage() {
                       <div className={`w-11 h-11 rounded-xl border border-white/8 flex items-center justify-center flex-shrink-0 ${style.iconBg}`}>
                         <Icon name="stadium" size={22} className={style.text} />
                       </div>
-                      <span className={`inline-flex items-center gap-1.5 font-condensed font-extrabold text-[10px] uppercase tracking-[0.14em] px-2.5 py-1 rounded-full border ${style.chip}`}>
-                        <span className="no-invert">{FLAG_MAP[stadium.countryCode]}</span>
-                        {COUNTRY_NAME_MAP[stadium.countryCode]}
-                      </span>
+                      <div className="flex flex-col items-end gap-1.5">
+                        <span className={`inline-flex items-center gap-1.5 font-condensed font-extrabold text-[10px] uppercase tracking-[0.14em] px-2.5 py-1 rounded-full border ${style.chip}`}>
+                          <span className="no-invert">{FLAG_MAP[stadium.countryCode]}</span>
+                          {COUNTRY_NAME_MAP[stadium.countryCode]}
+                        </span>
+                        <span className="inline-flex items-center font-condensed font-extrabold text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-gray-400">
+                          Zona {stadium.region}
+                        </span>
+                      </div>
                     </div>
 
                     <h3 className="font-display text-lg text-white uppercase leading-tight tracking-tight">
                       {stadium.name}
                     </h3>
+                    <p className="font-condensed font-semibold text-[10px] uppercase tracking-[0.14em] text-gray-600 mt-1">
+                      Sede FIFA · {stadium.fifaName}
+                    </p>
                     <p className="flex items-center gap-1.5 text-xs text-gray-500 mt-1.5">
                       <Icon name="pin" size={12} className="flex-shrink-0" />
                       <span className="truncate">{stadium.city}</span>

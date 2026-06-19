@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getFlag, getFlagCode, getAllTeams } from './flags'
+import { getFlag, getFlagCode, getFifaCode, getAllTeams } from './flags'
 
 // Archivos reales en public/flags/, resueltos por Vite en build-time
 const flagFiles = import.meta.glob('../../public/flags/*.png')
@@ -29,5 +29,19 @@ describe('FLAG_CODES', () => {
   it('England and Scotland use flagcdn subdivision codes', () => {
     expect(getFlagCode('Inglaterra')).toBe('gb-eng')
     expect(getFlagCode('Escocia')).toBe('gb-sct')
+  })
+})
+
+describe('FIFA_CODES', () => {
+  it('every team has a 3-letter FIFA code', () => {
+    for (const team of getAllTeams()) {
+      const code = getFifaCode(team)
+      expect(code, `sin código FIFA para "${team}"`).not.toBeNull()
+      expect(code, `código FIFA mal formado para "${team}": ${code}`).toMatch(/^[A-Z]{3}$/)
+    }
+  })
+
+  it('getFifaCode returns null for unknown teams', () => {
+    expect(getFifaCode('Equipo Inventado')).toBeNull()
   })
 })

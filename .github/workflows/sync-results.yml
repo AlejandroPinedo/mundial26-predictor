@@ -1,0 +1,46 @@
+name: Sync match results
+
+# Trae los resultados FINALIZADOS del WC2026 desde football-data.org y los carga
+# en la BD (score + recálculo de puntos + lock del Oráculo) vía ingestResult.
+# Idempotente: solo escribe cuando el marcador de la API difiere del de la BD.
+# La carga manual del admin sigue funcionando como override.
+#
+# IMPORTANTE: los triggers `schedule` solo corren desde la rama por defecto (main).
+# Solo relevante durante el torneo; puede desactivarse al terminar.
+
+on:
+  schedule:
+    # Cada ~15 min, desfasado de oracle-lock (7,22,37,52) para no solaparse.
+    - cron: '12,27,42,57 * * * *'
+  workflow_dispatch: {} # ejecución manual desde la pestaña Actions
+
+concurrency:
+  group: sync-results
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync finished results
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync finished results
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+        run: npm run sync:results -- --apply
