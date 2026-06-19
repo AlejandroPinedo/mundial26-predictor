@@ -33,3 +33,15 @@ ensureOracleTable(db).catch(err => {
 ensureOracleBracketTable(db).catch(err => {
   console.error('Error creating oracle_bracket table:', err)
 })
+
+// Columnas para el seguimiento EN VIVO (Varzesh3). Display-only y separadas del
+// scoring (home_score/away_score). Idempotente: no-op si ya existen.
+db.query(`
+  ALTER TABLE matches
+    ADD COLUMN IF NOT EXISTS live_home INTEGER,
+    ADD COLUMN IF NOT EXISTS live_away INTEGER,
+    ADD COLUMN IF NOT EXISTS live_minute TEXT,
+    ADD COLUMN IF NOT EXISTS live_status TEXT
+`).catch(err => {
+  console.error('Error añadiendo columnas live_* a matches:', err)
+})
