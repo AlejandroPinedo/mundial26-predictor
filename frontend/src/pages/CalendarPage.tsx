@@ -11,6 +11,7 @@ import { HOST_NATIONS } from '../utils/ratings'
 import { currentElo } from '../predict/elo'
 import { predictMatch } from '../predict/predictMatch'
 import { computeForm } from '../utils/recentForm'
+import LiveScore, { isLive } from '../components/LiveScore'
 
 type Match = {
   id: string
@@ -22,6 +23,10 @@ type Match = {
   home_score: number | null
   away_score: number | null
   stadium_name?: string
+  live_status?: string | null
+  live_home?: number | null
+  live_away?: number | null
+  live_minute?: string | null
 }
 
 type Prediction = {
@@ -424,6 +429,9 @@ export default function CalendarPage() {
                                   <div className="scoreboard px-2.5 py-1 rounded-lg text-sm">
                                     {m.home_score} - {m.away_score}
                                   </div>
+                                ) : isLive(m) ? (
+                                  /* Marcador en vivo (Varzesh3) */
+                                  <LiveScore m={m} />
                                 ) : (
                                   <span className="chip border-mx/30 bg-mx/10 text-mx">
                                     <span className="w-1.5 h-1.5 rounded-full bg-mx animate-pulse" />
