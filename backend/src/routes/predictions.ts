@@ -3,7 +3,8 @@ import { db } from '../db.js'
 import { authMiddleware } from '../middleware/auth.js'
 import type { AppVariables } from '../types.js'
 import { calculatePoints } from '../utils/scoring.js'
-import { computeOracleEntry, lockOraclePredictions, ORACLE_NAME } from '../oracle/lock.js'
+import { computeOracleEntry, ORACLE_NAME } from '../oracle/lock.js'
+import { ingestResult } from '../results/ingest.js'
 
 export const predictionsRouter = new Hono<{ Variables: AppVariables }>()
 
@@ -148,31 +149,9 @@ predictionsRouter.get('/leaderboard', async (c) => {
 
     const { matchId, homeScore, awayScore } = await c.req.json()
 
-    await db.query(
-      'UPDATE matches SET home_score = $1, away_score = $2 WHERE id = $3',                                             
-      [homeScore, awayScore, matchId]
-    )
+    const { updatedPredictions } = await ingestResult(db, matchId, homeScore, awayScore)
 
-    const preds = await db.query('SELECT * FROM predictions WHERE match_id = $1', [matchId])
-  
-    for (const pred of preds.rows) {
-      const points = calculatePoints(
-        { home: pred.predicted_home, away: pred.predicted_away },
-        { home: homeScore, away: awayScore }
-      )
-      await db.query('UPDATE predictions SET points = $1 WHERE id = $2', [points, pred.id])
-    }
-
-    // Congela los picks del Oráculo que ya estén vencidos (los del partido recién
-    // cerrado y cualquier otro cuyo saque pasó). Nunca usa su propio resultado.
-    // Si falla, no debe romper la carga del resultado del admin.
-    try {
-      await lockOraclePredictions(db)
-    } catch (err) {
-      console.error('Error al congelar predicciones del Oráculo:', err)
-    }
-
-    return c.json({ updated: preds.rows.length })
+    return c.json({ updated: updatedPredictions })
   })
   
 predictionsRouter.get('/stats', authMiddleware, async (c) => {

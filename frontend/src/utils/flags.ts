@@ -113,12 +113,74 @@ const FLAG_CODES: Record<string, string> = {
   'Venezuela': 've'
 }
 
+// Códigos FIFA oficiales de 3 letras (fuente: dataset worldcup2026, ISC).
+// Útiles para badges compactos y ordenamiento. England/Scotland: ENG/SCO.
+const FIFA_CODES: Record<string, string> = {
+  'Alemania': 'GER',
+  'Arabia Saudí': 'KSA',
+  'Argelia': 'ALG',
+  'Argentina': 'ARG',
+  'Australia': 'AUS',
+  'Austria': 'AUT',
+  'Bolivia': 'BOL',
+  'Bosnia y Herzegovina': 'BIH',
+  'Brasil': 'BRA',
+  'Bélgica': 'BEL',
+  'Cabo Verde': 'CPV',
+  'Canadá': 'CAN',
+  'Catar': 'QAT',
+  'Chile': 'CHI',
+  'Colombia': 'COL',
+  'Corea del Sur': 'KOR',
+  'Costa de Marfil': 'CIV',
+  'Croacia': 'CRO',
+  'Curazao': 'CUW',
+  'Ecuador': 'ECU',
+  'Egipto': 'EGY',
+  'Escocia': 'SCO',
+  'España': 'ESP',
+  'Estados Unidos': 'USA',
+  'Francia': 'FRA',
+  'Ghana': 'GHA',
+  'Haití': 'HAI',
+  'Honduras': 'HON',
+  'Inglaterra': 'ENG',
+  'Irak': 'IRQ',
+  'Irán': 'IRN',
+  'Japón': 'JPN',
+  'Jordania': 'JOR',
+  'Marruecos': 'MAR',
+  'México': 'MEX',
+  'Noruega': 'NOR',
+  'Nueva Zelanda': 'NZL',
+  'Panamá': 'PAN',
+  'Paraguay': 'PAR',
+  'Países Bajos': 'NED',
+  'Perú': 'PER',
+  'Portugal': 'POR',
+  'República Checa': 'CZE',
+  'República Democrática del Congo': 'COD',
+  'Senegal': 'SEN',
+  'Sudáfrica': 'RSA',
+  'Suecia': 'SWE',
+  'Suiza': 'SUI',
+  'Turquía': 'TUR',
+  'Túnez': 'TUN',
+  'Uruguay': 'URU',
+  'Uzbekistán': 'UZB',
+  'Venezuela': 'VEN'
+}
+
 export function getFlag(team: string): string {
   return FLAGS[team] || '🏳️'
 }
 
 export function getFlagCode(team: string): string | null {
   return FLAG_CODES[team] || null
+}
+
+export function getFifaCode(team: string): string | null {
+  return FIFA_CODES[team] || null
 }
 
 export function getAllTeams(): string[] {
