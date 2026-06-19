@@ -9,20 +9,54 @@ const pairKey = (h: string, a: string) => [h, a].map(strip).sort().join(' | ')
 
 export type SyncSummary = {
   applied: boolean
-  ingested: { match: string; score: string; updatedPredictions: number }[]
+  /** Finales escritos (marcador nuevo o corregido), con su estado. */
+  ingested: { match: string; score: string; status: 'provisional' | 'confirmed'; updatedPredictions: number }[]
+  /** Provisionales (Varzesh3) que football-data confirmó sin cambiar el marcador. */
+  confirmed: string[]
   alreadyOk: number
-  diverge: number
   pending: number
   unmapped: string[]
-  /** Finales donde football-data y Varzesh3 NO coinciden: NO se ingestan. */
+  /** Finales donde el provisional de Varzesh3 difería de football-data: se corrigieron con el oficial. */
   conflicts: { match: string; footballData: string; varzesh3: string }[]
 }
 
+export type Final = { h: number; a: number }
+export type Decision =
+  | { action: 'pending' }
+  | { action: 'alreadyOk' }
+  | { action: 'confirm'; status: 'confirmed' }
+  | { action: 'write'; target: Final; status: 'provisional' | 'confirmed' }
+
 /**
- * Trae los partidos del WC2026 desde football-data.org y carga en la BD los
- * resultados FINALIZADOS que falten o difieran, vía ingestResult (score +
- * recálculo de puntos + lock del Oráculo). Idempotente: solo actúa cuando el
- * marcador de la API difiere del de la BD.
+ * Decisión pura (testeable) para un partido, dados el final de football-data
+ * (oficial) y/o el de Varzesh3 (provisional) más lo que hay en la BD.
+ * Prioriza football-data (→ confirmed); si falta, usa Varzesh3 (→ provisional).
+ * Nunca degrada un resultado ya confirmado.
+ */
+export function decideResult(
+  fdFinal: Final | null,
+  v3Final: Final | null,
+  db: { home: number | null; away: number | null; status: string | null },
+): Decision {
+  const target = fdFinal ?? v3Final
+  const status: 'provisional' | 'confirmed' | null = fdFinal ? 'confirmed' : v3Final ? 'provisional' : null
+  if (!target || !status) return { action: 'pending' }
+
+  const dbHas = db.home !== null && db.away !== null
+  const scoreSame = dbHas && db.home === target.h && db.away === target.a
+  if (scoreSame && db.status === 'confirmed') return { action: 'alreadyOk' } // no degradar
+  if (scoreSame && db.status === status) return { action: 'alreadyOk' }
+  if (scoreSame) return { action: 'confirm', status: 'confirmed' } // mismo marcador, solo confirma
+  return { action: 'write', target, status }
+}
+
+/**
+ * Reconcilia los resultados del WC2026 con scoring de consistencia eventual:
+ *   - football-data FINISHED → ingesta como 'confirmed' (autoridad oficial).
+ *   - si football-data aún no cerró (delay del free tier) pero Varzesh3 sí →
+ *     ingesta como 'provisional' (puntaje rápido); football-data lo confirma o
+ *     corrige en un tick posterior.
+ * Escribe vía ingestResult (score + puntos + lock del Oráculo). Idempotente.
  *
  * Núcleo compartido por el script CLI (scripts/sync-results.ts) y el endpoint
  * del cron (routes/cron.ts). No hace logging ni cierra la conexión: eso lo
@@ -63,56 +97,67 @@ export async function syncResults(
   }
 
   const { rows } = await db.query(
-    'SELECT id, home_team, away_team, home_score, away_score, live_home, live_away, live_status FROM matches ORDER BY match_date',
+    'SELECT id, home_team, away_team, home_score, away_score, live_home, live_away, live_status, result_status FROM matches ORDER BY match_date',
   )
 
   const summary: SyncSummary = {
     applied: opts.apply,
     ingested: [],
+    confirmed: [],
     alreadyOk: 0,
-    diverge: 0,
     pending: 0,
     unmapped: [...unmapped],
     conflicts: [],
   }
 
   for (const r of rows) {
-    const api = apiByPair.get(pairKey(r.home_team, r.away_team))
-    if (!api || api.status !== 'FINISHED' || api.home === null || api.away === null) {
-      summary.pending++
-      continue
-    }
-    const dbHas = r.home_score !== null && r.away_score !== null
-    if (dbHas && Number(r.home_score) === api.home && Number(r.away_score) === api.away) {
-      summary.alreadyOk++
-      continue
-    }
+    const fd = apiByPair.get(pairKey(r.home_team, r.away_team))
+    const fdFinal: Final | null =
+      fd && fd.status === 'FINISHED' && fd.home !== null && fd.away !== null
+        ? { h: fd.home, a: fd.away }
+        : null
+    const v3Final: Final | null =
+      r.live_status === 'FINISHED' && r.live_home !== null && r.live_away !== null
+        ? { h: Number(r.live_home), a: Number(r.live_away) }
+        : null
+    const label = fd?.label ?? `${r.home_team} vs ${r.away_team}`
 
-    // Doble verificación: si Varzesh3 ya cerró este partido (FINISHED) con un
-    // marcador DISTINTO al de football-data, es un resultado en disputa → NO se
-    // ingesta (no se dan puntos con datos contradictorios). Se reporta para
-    // resolución manual del admin. Si Varzesh3 no lo tiene, football-data manda.
-    if (
-      r.live_status === 'FINISHED' &&
-      r.live_home !== null &&
-      r.live_away !== null &&
-      (Number(r.live_home) !== api.home || Number(r.live_away) !== api.away)
-    ) {
+    // football-data confirma distinto al provisional de Varzesh3 → manda el oficial;
+    // se reporta el conflicto para trazabilidad.
+    if (fdFinal && v3Final && (v3Final.h !== fdFinal.h || v3Final.a !== fdFinal.a)) {
       summary.conflicts.push({
-        match: api.label,
-        footballData: `${api.home}-${api.away}`,
-        varzesh3: `${r.live_home}-${r.live_away}`,
+        match: label,
+        footballData: `${fdFinal.h}-${fdFinal.a}`,
+        varzesh3: `${v3Final.h}-${v3Final.a}`,
       })
-      continue
     }
 
-    if (dbHas) summary.diverge++
+    const decision = decideResult(fdFinal, v3Final, {
+      home: r.home_score !== null ? Number(r.home_score) : null,
+      away: r.away_score !== null ? Number(r.away_score) : null,
+      status: r.result_status ?? null,
+    })
 
-    let updatedPredictions = 0
-    if (opts.apply) {
-      ;({ updatedPredictions } = await ingestResult(db, r.id, api.home, api.away))
+    if (decision.action === 'pending') {
+      summary.pending++
+    } else if (decision.action === 'alreadyOk') {
+      summary.alreadyOk++
+    } else if (decision.action === 'confirm') {
+      if (opts.apply) await db.query('UPDATE matches SET result_status = $1 WHERE id = $2', [decision.status, r.id])
+      summary.confirmed.push(label)
+    } else {
+      let updatedPredictions = 0
+      if (opts.apply) {
+        ;({ updatedPredictions } = await ingestResult(db, r.id, decision.target.h, decision.target.a))
+        await db.query('UPDATE matches SET result_status = $1 WHERE id = $2', [decision.status, r.id])
+      }
+      summary.ingested.push({
+        match: label,
+        score: `${decision.target.h}-${decision.target.a}`,
+        status: decision.status,
+        updatedPredictions,
+      })
     }
-    summary.ingested.push({ match: api.label, score: `${api.home}-${api.away}`, updatedPredictions })
   }
 
   return summary
