@@ -12,6 +12,7 @@ import { currentElo } from '../predict/elo'
 import { predictMatch } from '../predict/predictMatch'
 import { computeForm } from '../utils/recentForm'
 import LiveScore, { isLive } from '../components/LiveScore'
+import PointsProjection from '../components/PointsProjection'
 
 type Match = {
   id: string
@@ -449,6 +450,7 @@ export default function CalendarPage() {
                                 ) : (
                                   <span className="text-[9px] text-gray-600 italic mt-1">Sin pred.</span>
                                 )}
+                                <PointsProjection predHome={pred?.predicted_home} predAway={pred?.predicted_away} m={m} />
                               </div>
                             ) : (
                               /* Future match / Editable fields */
