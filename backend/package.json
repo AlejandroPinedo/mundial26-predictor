@@ -10,6 +10,7 @@
         "seed:oracle": "tsx scripts/seed-oracle.ts",
         "seed:oracle-bracket": "tsx scripts/seed-oracle-bracket.ts",
         "sync:results": "tsx scripts/sync-results.ts",
+        "live:results": "tsx scripts/live-results.ts",
         "test": "vitest run",
         "test:watch": "vitest"
     },
