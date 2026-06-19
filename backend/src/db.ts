@@ -41,7 +41,8 @@ db.query(`
     ADD COLUMN IF NOT EXISTS live_home INTEGER,
     ADD COLUMN IF NOT EXISTS live_away INTEGER,
     ADD COLUMN IF NOT EXISTS live_minute TEXT,
-    ADD COLUMN IF NOT EXISTS live_status TEXT
+    ADD COLUMN IF NOT EXISTS live_status TEXT,
+    ADD COLUMN IF NOT EXISTS result_status TEXT
 `).catch(err => {
-  console.error('Error añadiendo columnas live_* a matches:', err)
+  console.error('Error añadiendo columnas live_*/result_status a matches:', err)
 })

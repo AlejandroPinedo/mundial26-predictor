@@ -150,6 +150,8 @@ predictionsRouter.get('/leaderboard', async (c) => {
     const { matchId, homeScore, awayScore } = await c.req.json()
 
     const { updatedPredictions } = await ingestResult(db, matchId, homeScore, awayScore)
+    // La carga manual del admin es autoridad: marca el resultado como confirmado.
+    await db.query('UPDATE matches SET result_status = $1 WHERE id = $2', ['confirmed', matchId])
 
     return c.json({ updated: updatedPredictions })
   })
