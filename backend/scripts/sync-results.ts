@@ -23,6 +23,10 @@ const APPLY = process.argv.includes('--apply')
 try {
   const s = await syncResults(db, TOKEN, { apply: APPLY })
   if (s.unmapped.length) console.log(`⚠️  tla sin mapear (ignorados): ${s.unmapped.join(', ')}`)
+  if (s.conflicts.length) {
+    console.log('⛔ Conflictos football-data ≠ Varzesh3 (NO ingestados — revisar a mano):')
+    s.conflicts.forEach((c) => console.log(`     ${c.match}: football-data ${c.footballData} vs Varzesh3 ${c.varzesh3}`))
+  }
   for (const ing of s.ingested) {
     const tail = APPLY ? ` (${ing.updatedPredictions} predicción/es recalculada/s)` : ''
     console.log(`${APPLY ? '✅' : '+'} ${ing.match}  →  ${ing.score}${tail}`)
@@ -30,7 +34,9 @@ try {
   const head = APPLY
     ? `Aplicado: ${s.ingested.length} resultado(s) cargado(s)`
     : `Dry-run: ${s.ingested.length} se cargaría(n)`
-  console.log(`\n${head} · ${s.alreadyOk} ya correctos · ${s.diverge} divergencia(s) · ${s.pending} sin final`)
+  console.log(
+    `\n${head} · ${s.alreadyOk} ya correctos · ${s.diverge} divergencia(s) · ${s.conflicts.length} conflicto(s) · ${s.pending} sin final`,
+  )
   if (!APPLY && s.ingested.length) console.log('Ejecuta con --apply para escribir (y disparar el scoring).')
 } catch (err) {
   console.error(String(err))

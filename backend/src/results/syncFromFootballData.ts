@@ -14,6 +14,8 @@ export type SyncSummary = {
   diverge: number
   pending: number
   unmapped: string[]
+  /** Finales donde football-data y Varzesh3 NO coinciden: NO se ingestan. */
+  conflicts: { match: string; footballData: string; varzesh3: string }[]
 }
 
 /**
@@ -61,7 +63,7 @@ export async function syncResults(
   }
 
   const { rows } = await db.query(
-    'SELECT id, home_team, away_team, home_score, away_score FROM matches ORDER BY match_date',
+    'SELECT id, home_team, away_team, home_score, away_score, live_home, live_away, live_status FROM matches ORDER BY match_date',
   )
 
   const summary: SyncSummary = {
@@ -71,6 +73,7 @@ export async function syncResults(
     diverge: 0,
     pending: 0,
     unmapped: [...unmapped],
+    conflicts: [],
   }
 
   for (const r of rows) {
@@ -84,6 +87,25 @@ export async function syncResults(
       summary.alreadyOk++
       continue
     }
+
+    // Doble verificación: si Varzesh3 ya cerró este partido (FINISHED) con un
+    // marcador DISTINTO al de football-data, es un resultado en disputa → NO se
+    // ingesta (no se dan puntos con datos contradictorios). Se reporta para
+    // resolución manual del admin. Si Varzesh3 no lo tiene, football-data manda.
+    if (
+      r.live_status === 'FINISHED' &&
+      r.live_home !== null &&
+      r.live_away !== null &&
+      (Number(r.live_home) !== api.home || Number(r.live_away) !== api.away)
+    ) {
+      summary.conflicts.push({
+        match: api.label,
+        footballData: `${api.home}-${api.away}`,
+        varzesh3: `${r.live_home}-${r.live_away}`,
+      })
+      continue
+    }
+
     if (dbHas) summary.diverge++
 
     let updatedPredictions = 0
