@@ -3,6 +3,7 @@ import { db } from '../db.js'
 import { syncResults } from '../results/syncFromFootballData.js'
 import { lockOraclePredictions } from '../oracle/lock.js'
 import { updateLiveScores } from '../results/varzesh3.js'
+import { syncShotMap } from '../results/fifaShotMap.js'
 
 export const cronRouter = new Hono()
 
@@ -48,14 +49,31 @@ cronRouter.post('/sync-results', async (c) => {
   const token = process.env.FOOTBALL_DATA_TOKEN
   if (!token) return c.json({ ok: false, oracleLocked, liveUpdated, error: 'FOOTBALL_DATA_TOKEN no configurado' }, 503)
 
+  let summary
   try {
-    const summary = await syncResults(db, token, { apply: true })
+    summary = await syncResults(db, token, { apply: true })
     if (summary.conflicts.length) {
       console.warn('[cron] football-data corrigió provisional(es) de Varzesh3:', JSON.stringify(summary.conflicts))
     }
-    return c.json({ ok: true, oracleLocked, liveUpdated, ...summary })
   } catch (err) {
     console.error('[cron/sync-results]', err)
     return c.json({ ok: false, oracleLocked, liveUpdated, error: 'sync falló' }, 502)
   }
+
+  // 4) Refresco del shot map (datos de FIFA) SOLO cuando un partido alcanzó un
+  //    resultado final en este tick (ingesta o confirmación). Aislado y con
+  //    guarda: NO corre en cada tick del pinger, solo al culminar un partido,
+  //    para no martillar la API de FIFA. El job diario shot-map.yml queda como
+  //    red de seguridad (backfill por si FIFA actualiza el timeline más tarde).
+  let shotMapUpdated = false
+  if (summary.ingested.length > 0 || summary.confirmed.length > 0) {
+    try {
+      await syncShotMap(db)
+      shotMapUpdated = true
+    } catch (err) {
+      console.error('[cron] refresco de shot map falló:', err)
+    }
+  }
+
+  return c.json({ ok: true, oracleLocked, liveUpdated, shotMapUpdated, ...summary })
 })

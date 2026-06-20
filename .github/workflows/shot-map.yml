@@ -1,12 +1,13 @@
 name: Sync shot map
 
-# Regenera el shot map del WC2026 (API oficial de FIFA) una vez al día y lo guarda
-# en la tabla shot_map_cache. El endpoint GET /football/shot-map solo lee de ahí.
+# Regenera el shot map del WC2026 (API oficial de FIFA) y lo guarda en la tabla
+# shot_map_cache. El endpoint GET /football/shot-map solo lee de ahí.
 #
-# A diferencia de sync-results (que necesita precisión de minutos y usa un pinger
-# externo), aquí basta una corrida diaria: el throttle del cron de GitHub Actions
-# (~3-4 h) es irrelevante para una cadencia diaria. No necesita token de FIFA
-# (API pública); solo DATABASE_URL para escribir el resultado.
+# RED DE SEGURIDAD (backfill): el refresco PRINCIPAL ocurre al culminar cada
+# partido, dentro de POST /cron/sync-results (ver routes/cron.ts), que el pinger
+# externo dispara cada ~1 min. Esta corrida diaria solo cubre huecos (p. ej. si
+# FIFA finaliza el timeline de un partido más tarde, o si se perdió un tick).
+# No necesita token de FIFA (API pública); solo DATABASE_URL para escribir.
 
 on:
   schedule:
