@@ -34,7 +34,11 @@ const VW = (W + 2 * OX) * S
 const VH = (HL + 2 * OY) * S
 const pxm = (xm: number) => (xm + OX) * S
 const pym = (dm: number) => (dm + OY) * S
-const gx = (ny: number) => pxm((ny / 100) * W)
+// Eje horizontal espejado: en coords plegadas (arco arriba, ataque hacia arriba)
+// la banda del extremo IZQUIERDO cae en ny alto → debe ir a la izquierda de la
+// pantalla. FIFA da coords absolutas y el pliegue 180° las normaliza bien; aquí
+// solo se corrige la lectura izquierda/derecha del render.
+const gx = (ny: number) => pxm(((100 - ny) / 100) * W)
 const gy = (nx: number) => pym(((100 - nx) / 100) * 105)
 const LINE = 'rgba(255,255,255,0.22)'
 

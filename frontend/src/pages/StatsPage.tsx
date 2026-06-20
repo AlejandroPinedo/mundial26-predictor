@@ -5,6 +5,9 @@ import Flag from '../components/Flag'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 import ShotMap from '../components/ShotMap'
+import ShotInsights from '../components/charts/ShotInsights'
+import OracleInsights, { type Match, type CrowdFavorite } from '../components/charts/OracleInsights'
+import PoolInsights, { type PoolData } from '../components/charts/PoolInsights'
 
 type ChampCount = {
   team: string
@@ -26,23 +29,39 @@ type HotMatch = {
   prediction_count: number
 }
 
-type GlobalInsights = {
+type GlobalInsights = PoolData & {
   mostPredictedChampions: ChampCount[]
   averageScores: { avg_home: number; avg_away: number }
   popularScores: Scoreline[]
   hotMatches: HotMatch[]
   totalPredictions: number
   averagePoints: number
+  crowdFavorites: CrowdFavorite[]
+}
+
+// Encabezado de sección: divisor dorado con título condensado.
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 mt-12 mb-5">
+      <h2 className="font-display text-sm sm:text-base uppercase tracking-[0.18em] text-gray-300 whitespace-nowrap">{children}</h2>
+      <div className="flex-1 divider-gold" />
+    </div>
+  )
 }
 
 export default function StatsPage() {
   const [data, setData] = useState<GlobalInsights | null>(null)
+  const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    apiFetch('/predictions/global-insights')
-      .then(res => {
-        setData(res)
+    Promise.all([
+      apiFetch('/predictions/global-insights'),
+      apiFetch('/predictions/matches').then(res => res.matches as Match[]).catch(() => [] as Match[]),
+    ])
+      .then(([insights, ms]) => {
+        setData(insights)
+        setMatches(ms)
       })
       .catch(err => {
         console.error('Error fetching global insights:', err)
@@ -56,9 +75,11 @@ export default function StatsPage() {
 
         <PageHeader title="ESTADÍSTICAS" subtitle="Insights de la comunidad Mundial26" icon="📈" live badge="Live" />
 
-        {/* Mapa de tiros del torneo (datos oficiales FIFA, carga independiente) */}
-        <div className="mb-8">
+        {/* ── El remate bajo la lupa (datos oficiales FIFA, carga independiente) ── */}
+        <SectionTitle>El remate bajo la lupa</SectionTitle>
+        <div className="space-y-5">
           <ShotMap />
+          <ShotInsights />
         </div>
 
         {loading ? (
@@ -68,6 +89,9 @@ export default function StatsPage() {
         ) : (
           data && (
             <>
+              {/* ── La comunidad ── */}
+              <SectionTitle>La comunidad</SectionTitle>
+
               {/* Paneles resumen */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
 
@@ -272,6 +296,15 @@ export default function StatsPage() {
                   </div>
                 )}
               </div>
+
+              {/* Agregaciones del pool */}
+              <div className="mt-5">
+                <PoolInsights data={data} matches={matches} />
+              </div>
+
+              {/* ── El Pez Oráculo (modelo ML vs realidad) ── */}
+              <SectionTitle>El Pez Oráculo</SectionTitle>
+              <OracleInsights matches={matches} crowdFavorites={data.crowdFavorites} />
             </>
           )
         )}

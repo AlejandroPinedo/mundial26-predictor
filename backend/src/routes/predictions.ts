@@ -320,9 +320,75 @@ predictionsRouter.get('/global-insights', async (c) => {
   const totalPredsRes = await db.query('SELECT COUNT(*)::int as count FROM predictions')
 
   const avgPointsRes = await db.query(
-    `SELECT ROUND(AVG(points), 2)::float as avg_points 
-     FROM predictions 
+    `SELECT ROUND(AVG(points), 2)::float as avg_points
+     FROM predictions
      WHERE points IS NOT NULL`
+  )
+
+  // Distribución de puntos del pool (0 = fallo, 1 = resultado, 3 = exacto)
+  const pointsDistRes = await db.query(
+    `SELECT points, COUNT(*)::int as count
+     FROM predictions
+     WHERE points IS NOT NULL
+     GROUP BY points
+     ORDER BY points`
+  )
+
+  // Distribución de goles predichos (local + visita juntos) → histograma
+  const predictedGoalsRes = await db.query(
+    `SELECT goals, COUNT(*)::int as count
+     FROM (
+       SELECT predicted_home AS goals FROM predictions
+       UNION ALL
+       SELECT predicted_away AS goals FROM predictions
+     ) g
+     GROUP BY goals
+     ORDER BY goals`
+  )
+
+  // Embudo del bracket: cuántos equipos distintos siguen vivos en las predicciones por ronda
+  const bracketRoundsRes = await db.query(
+    `SELECT round,
+            COUNT(*)::int            as picks,
+            COUNT(DISTINCT team)::int as distinct_teams
+     FROM bracket_predictions
+     GROUP BY round`
+  )
+
+  // Actividad temporal de las predicciones (hora del día y día de la semana)
+  const activityHourRes = await db.query(
+    `SELECT EXTRACT(HOUR FROM created_at)::int as hour, COUNT(*)::int as count
+     FROM predictions
+     GROUP BY hour
+     ORDER BY hour`
+  )
+  const activityDowRes = await db.query(
+    `SELECT EXTRACT(DOW FROM created_at)::int as dow, COUNT(*)::int as count
+     FROM predictions
+     GROUP BY dow
+     ORDER BY dow`
+  )
+
+  // Marcador más votado por el pool en cada partido ya jugado (para comparar contra resultado real)
+  const crowdFavoritesRes = await db.query(
+    `SELECT * FROM (
+       SELECT DISTINCT ON (p.match_id)
+         p.match_id,
+         m.home_team, m.away_team, m.match_date, m.stage,
+         m.home_score, m.away_score,
+         p.predicted_home AS crowd_home,
+         p.predicted_away AS crowd_away,
+         COUNT(*)::int as votes,
+         SUM(COUNT(*)) OVER (PARTITION BY p.match_id)::int as total_votes
+       FROM predictions p
+       JOIN matches m ON p.match_id = m.id
+       WHERE m.home_score IS NOT NULL AND m.away_score IS NOT NULL
+       GROUP BY p.match_id, m.home_team, m.away_team, m.match_date, m.stage,
+                m.home_score, m.away_score, p.predicted_home, p.predicted_away
+       ORDER BY p.match_id, votes DESC
+     ) t
+     ORDER BY t.match_date ASC
+     LIMIT 40`
   )
 
   return c.json({
@@ -331,6 +397,11 @@ predictionsRouter.get('/global-insights', async (c) => {
     popularScores: popularScoresRes.rows,
     hotMatches: hotMatchesRes.rows,
     totalPredictions: totalPredsRes.rows[0]?.count || 0,
-    averagePoints: avgPointsRes.rows[0]?.avg_points || 0
+    averagePoints: avgPointsRes.rows[0]?.avg_points || 0,
+    pointsDistribution: pointsDistRes.rows,
+    predictedGoalsDistribution: predictedGoalsRes.rows,
+    bracketRounds: bracketRoundsRes.rows,
+    activity: { byHour: activityHourRes.rows, byDow: activityDowRes.rows },
+    crowdFavorites: crowdFavoritesRes.rows
   })
 })
