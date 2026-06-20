@@ -1,0 +1,4 @@
+# Salidas regenerables (ver fetch_shots.py / shot_map.py)
+.cache/
+shots.csv
+shot_map.png
