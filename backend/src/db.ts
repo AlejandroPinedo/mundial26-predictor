@@ -1,6 +1,7 @@
 import pg from 'pg'
 import { ensureOracleTable } from './oracle/lock.js'
 import { ensureOracleBracketTable } from './oracle/bracket.js'
+import { ensureShotMapTable } from './results/fifaShotMap.js'
 
 const { Pool } = pg
 
@@ -32,6 +33,11 @@ ensureOracleTable(db).catch(err => {
 // Bracket congelado del Pez Oráculo (pronóstico pre-torneo). Ver oracle/bracket.ts.
 ensureOracleBracketTable(db).catch(err => {
   console.error('Error creating oracle_bracket table:', err)
+})
+
+// Caché del shot map (una fila, JSONB). La rellena el job diario sync:shotmap.
+ensureShotMapTable(db).catch(err => {
+  console.error('Error creating shot_map_cache table:', err)
 })
 
 // Columnas para el seguimiento EN VIVO (Varzesh3). Display-only y separadas del

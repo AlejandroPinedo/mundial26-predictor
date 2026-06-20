@@ -4,6 +4,7 @@ import Spinner from '../components/Spinner'
 import Flag from '../components/Flag'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
+import ShotMap from '../components/ShotMap'
 
 type ChampCount = {
   team: string
@@ -54,6 +55,11 @@ export default function StatsPage() {
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 font-sans">
 
         <PageHeader title="ESTADÍSTICAS" subtitle="Insights de la comunidad Mundial26" icon="📈" live badge="Live" />
+
+        {/* Mapa de tiros del torneo (datos oficiales FIFA, carga independiente) */}
+        <div className="mb-8">
+          <ShotMap />
+        </div>
 
         {loading ? (
           <div className="flex justify-center py-20">
