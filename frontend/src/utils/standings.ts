@@ -1,3 +1,5 @@
+import { getElo } from './ratings'
+
 export type TeamStats = {
   team: string
   mp: number
@@ -8,6 +10,86 @@ export type TeamStats = {
   ga: number
   gd: number
   pts: number
+}
+
+// Partido ya resuelto (resultado real o pronosticado), para los enfrentamientos directos.
+type Resolved = { home: string; away: string; hs: number; as: number }
+type Mini = { pts: number; gd: number; gf: number }
+
+// ── Desempate oficial FIFA Mundial 2026 (en este orden) ──────────────────────
+//  1. Puntos (todos los partidos del grupo)
+//  2. Puntos en los enfrentamientos directos entre los empatados
+//  3. Diferencia de goles en esos enfrentamientos directos
+//  4. Goles a favor en esos enfrentamientos directos
+//  5. Diferencia de goles general
+//  6. Goles a favor general
+//  7. Conducta (fair play) — NO disponible (no hay datos de tarjetas) → se omite
+//  8. Ranking FIFA — aproximado con el Elo (utils/ratings)
+//  (final) Orden alfabético, como garantía determinista.
+// El head-to-head se aplica de forma recursiva: si un subgrupo sigue empatado,
+// se recalcula entre los que quedan; si no separa a nadie, se pasa a 5)+.
+
+// Mini-tabla de enfrentamientos directos restringida a un conjunto de equipos.
+function h2hTable(names: Set<string>, played: Resolved[]): Record<string, Mini> {
+  const t: Record<string, Mini> = {}
+  for (const n of names) t[n] = { pts: 0, gd: 0, gf: 0 }
+  for (const m of played) {
+    if (!names.has(m.home) || !names.has(m.away)) continue
+    t[m.home].gf += m.hs; t[m.home].gd += m.hs - m.as
+    t[m.away].gf += m.as; t[m.away].gd += m.as - m.hs
+    if (m.hs > m.as) t[m.home].pts += 3
+    else if (m.hs < m.as) t[m.away].pts += 3
+    else { t[m.home].pts += 1; t[m.away].pts += 1 }
+  }
+  return t
+}
+
+// Empate no resuelto por enfrentamientos directos → criterios generales 5)+.
+function breakOverall(block: TeamStats[]): TeamStats[] {
+  return [...block].sort(
+    (a, b) => b.gd - a.gd || b.gf - a.gf || getElo(b.team) - getElo(a.team) || a.team.localeCompare(b.team),
+  )
+}
+
+// Bloque empatado a puntos → aplica enfrentamientos directos (recursivo).
+function breakHeadToHead(block: TeamStats[], played: Resolved[]): TeamStats[] {
+  const names = new Set(block.map((t) => t.team))
+  const h2h = h2hTable(names, played)
+  const sorted = [...block].sort((a, b) => {
+    const x = h2h[a.team], y = h2h[b.team]
+    return y.pts - x.pts || y.gd - x.gd || y.gf - x.gf
+  })
+  const out: TeamStats[] = []
+  const eq = (a: TeamStats, b: TeamStats) => {
+    const x = h2h[a.team], y = h2h[b.team]
+    return x.pts === y.pts && x.gd === y.gd && x.gf === y.gf
+  }
+  let i = 0
+  while (i < sorted.length) {
+    let j = i + 1
+    while (j < sorted.length && eq(sorted[j], sorted[i])) j++
+    const sub = sorted.slice(i, j)
+    if (sub.length === 1) out.push(sub[0])
+    else if (sub.length === block.length) out.push(...breakOverall(sub)) // el H2H no separó a nadie
+    else out.push(...breakHeadToHead(sub, played)) // subgrupo menor → recalcula H2H entre ellos
+    i = j
+  }
+  return out
+}
+
+// Ordena un grupo completo: por puntos y, dentro de cada empate, por el desempate.
+function rankGroup(teams: TeamStats[], played: Resolved[]): TeamStats[] {
+  const sorted = [...teams].sort((a, b) => b.pts - a.pts)
+  const out: TeamStats[] = []
+  let i = 0
+  while (i < sorted.length) {
+    let j = i + 1
+    while (j < sorted.length && sorted[j].pts === sorted[i].pts) j++
+    const block = sorted.slice(i, j)
+    out.push(...(block.length > 1 ? breakHeadToHead(block, played) : block))
+    i = j
+  }
+  return out
 }
 
 type Match = {
@@ -30,6 +112,7 @@ export function calculateGroupStandings(
   predictions: Record<string, Prediction>
 ): Record<string, TeamStats[]> {
   const teamsData: Record<string, Record<string, TeamStats>> = {}
+  const playedByGroup: Record<string, Resolved[]> = {}
 
   // Initialize teams from matches
   for (const match of matches) {
@@ -63,6 +146,8 @@ export function calculateGroupStandings(
       const home = teamsData[g][match.home_team]
       const away = teamsData[g][match.away_team]
 
+      ;(playedByGroup[g] ??= []).push({ home: match.home_team, away: match.away_team, hs: homeScore, as: awayScore })
+
       home.mp += 1
       away.mp += 1
       home.gf += homeScore
@@ -89,16 +174,10 @@ export function calculateGroupStandings(
     }
   }
 
-  // Sort groups
+  // Ordena cada grupo con el desempate oficial FIFA 2026 (incl. enfrentamientos directos).
   const standings: Record<string, TeamStats[]> = {}
   for (const [group, teamsMap] of Object.entries(teamsData)) {
-    standings[group] = Object.values(teamsMap).sort((a, b) => {
-      if (b.pts !== a.pts) return b.pts - a.pts
-      if (b.gd !== a.gd) return b.gd - a.gd
-      if (b.gf !== a.gf) return b.gf - a.gf
-      if (b.w !== a.w) return b.w - a.w
-      return a.team.localeCompare(b.team)
-    })
+    standings[group] = rankGroup(Object.values(teamsMap), playedByGroup[group] ?? [])
   }
 
   return standings
@@ -116,13 +195,16 @@ export function getBestThirdPlacedTeams(
     }
   }
 
-  return thirds.sort((a, b) => {
-    if (b.pts !== a.pts) return b.pts - a.pts
-    if (b.gd !== a.gd) return b.gd - a.gd
-    if (b.gf !== a.gf) return b.gf - a.gf
-    if (b.w !== a.w) return b.w - a.w
-    return a.team.localeCompare(b.team)
-  })
+  // Mejores terceros: comparación ENTRE grupos → no hay enfrentamientos directos.
+  // FIFA usa criterios generales: pts → DG → GF → conducta (n/a) → ranking (Elo) → alfabético.
+  return thirds.sort(
+    (a, b) =>
+      b.pts - a.pts ||
+      b.gd - a.gd ||
+      b.gf - a.gf ||
+      getElo(b.team) - getElo(a.team) ||
+      a.team.localeCompare(b.team),
+  )
 }
 
 // Bipartite matching / backtracking to map group winners to third-placed teams

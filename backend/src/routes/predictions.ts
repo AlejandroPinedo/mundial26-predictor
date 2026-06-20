@@ -5,6 +5,7 @@ import type { AppVariables } from '../types.js'
 import { calculatePoints } from '../utils/scoring.js'
 import { computeOracleEntry, ORACLE_NAME } from '../oracle/lock.js'
 import { ingestResult } from '../results/ingest.js'
+import { computeGroupStandings } from '../utils/groupStandings.js'
 
 export const predictionsRouter = new Hono<{ Variables: AppVariables }>()
 
@@ -17,32 +18,16 @@ predictionsRouter.get('/matches', async (c) => {
 predictionsRouter.get('/standings/:group', async (c) => {
   const group = c.req.param('group').toUpperCase()
 
-  // Cada partido se descompone en dos filas perspectiva-equipo (gf/ga ya orientados),
-  // así el agregado no necesita saber si el equipo era local o visitante.
+  // Tabla y desempate (incl. enfrentamientos directos) se calculan en TS:
+  // la regla oficial FIFA 2026 no se puede expresar bien en un solo ORDER BY.
   const result = await db.query(
-    `SELECT
-      team,
-      COUNT(*) as played,
-      SUM(CASE WHEN gf > ga THEN 1 ELSE 0 END) as wins,
-      SUM(CASE WHEN gf = ga THEN 1 ELSE 0 END) as draws,
-      SUM(CASE WHEN gf < ga THEN 1 ELSE 0 END) as losses,
-      SUM(gf) as gf,
-      SUM(ga) as ga,
-      SUM(gf - ga) as gd,
-      SUM(CASE WHEN gf > ga THEN 3 WHEN gf = ga THEN 1 ELSE 0 END) as points
-     FROM (
-       SELECT home_team as team, home_score as gf, away_score as ga FROM matches
-       WHERE home_score IS NOT NULL AND group_name = $1
-       UNION ALL
-       SELECT away_team as team, away_score as gf, home_score as ga FROM matches
-       WHERE home_score IS NOT NULL AND group_name = $1
-     ) t
-     GROUP BY team
-     ORDER BY points DESC, gd DESC, gf DESC`,
+    `SELECT home_team, away_team, home_score, away_score
+     FROM matches WHERE group_name = $1`,
     [group]
   )
 
-  return c.json({ standings: result.rows, group })
+  const standings = computeGroupStandings(result.rows)
+  return c.json({ standings, group })
 })
 
 predictionsRouter.post('/', authMiddleware, async (c) => {
