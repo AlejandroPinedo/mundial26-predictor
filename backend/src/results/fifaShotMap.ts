@@ -140,6 +140,7 @@ export async function computeShotMap(): Promise<ShotMapPayload> {
     inBox: boolean
     team: string
     player: string
+    idPlayer: string
     minute: string
     stage: string
   }
@@ -172,6 +173,7 @@ export async function computeShotMap(): Promise<ShotMapPayload> {
           inBox: insideBox(x, y),
           team: tmap[String(ev.IdTeam)] || '',
           player: playerFrom(desc),
+          idPlayer: String(ev.IdPlayer ?? ''),
           minute: (ev.MatchMinute as string) || '',
           stage,
         })
@@ -179,6 +181,21 @@ export async function computeShotMap(): Promise<ShotMapPayload> {
     } catch (err) {
       console.warn(`[shot-map] timeline ${m.IdMatch} falló:`, String(err))
     }
+  }
+
+  // Normaliza nombres por IdPlayer: FIFA nombra al mismo jugador de varias formas
+  // (p. ej. "VINI JR." y "VINICIUS JUNIOR"). Se elige el nombre MÁS LARGO (el más
+  // completo) por IdPlayer. Se keyea por id (NO por nombre) para no fusionar a dos
+  // jugadores distintos que comparten apellido (p. ej. dos "VARGAS").
+  const canonName = new Map<string, string>()
+  for (const r of raw) {
+    if (!r.idPlayer || !r.player) continue
+    const cur = canonName.get(r.idPlayer)
+    if (!cur || r.player.length > cur.length) canonName.set(r.idPlayer, r.player)
+  }
+  for (const r of raw) {
+    const c = r.idPlayer ? canonName.get(r.idPlayer) : undefined
+    if (c) r.player = c
   }
 
   const conv = (arr: Raw[]): Conv => {
