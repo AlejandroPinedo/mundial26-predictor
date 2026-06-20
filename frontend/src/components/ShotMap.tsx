@@ -323,7 +323,7 @@ export default function ShotMap() {
                           {isActive && (
                             <div
                               role="tooltip"
-                              className="absolute left-1/2 -translate-x-1/2 w-44 z-40 pointer-events-none glass rounded-xl p-2.5 shadow-xl"
+                              className="absolute left-1/2 -translate-x-1/2 w-44 z-40 pointer-events-none bg-panel-2 border border-white/15 rounded-xl p-2.5 shadow-xl shadow-black/60"
                               style={below ? { top: 'calc(50% + 14px)' } : { bottom: 'calc(50% + 14px)' }}
                             >
                               <div className="flex items-center gap-1.5 mb-0.5">
