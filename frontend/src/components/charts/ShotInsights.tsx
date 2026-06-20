@@ -4,6 +4,7 @@ import Spinner from '../Spinner'
 import Flag from '../Flag'
 import { ChartPanel, Donut, EmptyChart } from './ChartPanel'
 import { C } from './theme'
+import { effectiveMinute } from './minute'
 
 /**
  * Gráficos derivados del mapa de tiros oficial de FIFA (GET /football/shot-map).
@@ -139,8 +140,8 @@ function MinuteChart({ shots }: { shots: Shot[] }) {
     const goals = shots.filter((s) => s.goal)
     return MIN_BINS.map((b) => {
       const n = goals.filter((s) => {
-        const m = parseInt(s.minute, 10)
-        return !Number.isNaN(m) && m >= b.lo && m <= b.hi
+        const m = effectiveMinute(s.minute)
+        return m != null && m >= b.lo && m <= b.hi
       }).length
       return { ...b, goals: n }
     })
