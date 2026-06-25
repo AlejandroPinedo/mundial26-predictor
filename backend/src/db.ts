@@ -52,3 +52,30 @@ db.query(`
 `).catch(err => {
   console.error('Error añadiendo columnas live_*/result_status a matches:', err)
 })
+
+// Bono de penales del bracket (Esquema 2). Aditivas: no tocan el scoring de avance.
+// Pares (team_a, team_b) almacenados en orden canónico (alfabético) para casar.
+// ko_shootouts = llaves eliminatorias reales que fueron a penales (las carga el admin).
+db.query(`
+  CREATE TABLE IF NOT EXISTS ko_shootouts (
+    round TEXT NOT NULL,
+    team_a TEXT NOT NULL,
+    team_b TEXT NOT NULL,
+    PRIMARY KEY (round, team_a, team_b)
+  );
+`).catch(err => {
+  console.error('Error creating ko_shootouts table:', err)
+})
+
+// bracket_shootout_picks = tandas que cada usuario predijo (par de equipos por ronda).
+db.query(`
+  CREATE TABLE IF NOT EXISTS bracket_shootout_picks (
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    round TEXT NOT NULL,
+    team_a TEXT NOT NULL,
+    team_b TEXT NOT NULL,
+    PRIMARY KEY (user_id, round, team_a, team_b)
+  );
+`).catch(err => {
+  console.error('Error creating bracket_shootout_picks table:', err)
+})
