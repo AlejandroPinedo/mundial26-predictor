@@ -25,26 +25,34 @@ type Predictions = {
   champion: (string | null)[]
 }
 
+// Número de partido oficial de cada octavo por su índice de render (0–7).
+// No es 89+idx: el cableado oficial pone M93/M94 en la mitad izq (idx 2,3) y
+// M91/M92 en la der (idx 4,5). Ver R32_TO_R16_SLOT.
+const R16_MATCH_LABELS = ['M89', 'M90', 'M93', 'M94', 'M91', 'M92', 'M95', 'M96']
+
 function getPlaceholder(round: string, idx: number): string {
   if (round === 'round16') {
+    // Por slot de octavos (0–15). Slots 4–7 = M93/M94 (mitad izq) y 8–11 = M91/M92
+    // (mitad der), según el cableado oficial. Ver R32_TO_R16_SLOT.
     const labels = [
-      'Ganador M74', 'Ganador M77', // Match 89
-      'Ganador M73', 'Ganador M75', // Match 90
-      'Ganador M76', 'Ganador M78', // Match 91
-      'Ganador M79', 'Ganador M80', // Match 92
-      'Ganador M81', 'Ganador M82', // Match 93
-      'Ganador M83', 'Ganador M84', // Match 94
-      'Ganador M86', 'Ganador M88', // Match 95
-      'Ganador M85', 'Ganador M87'  // Match 96
+      'Ganador M74', 'Ganador M77', // M89 (slots 0,1)
+      'Ganador M73', 'Ganador M75', // M90 (slots 2,3)
+      'Ganador M81', 'Ganador M82', // M93 (slots 4,5)
+      'Ganador M83', 'Ganador M84', // M94 (slots 6,7)
+      'Ganador M76', 'Ganador M78', // M91 (slots 8,9)
+      'Ganador M79', 'Ganador M80', // M92 (slots 10,11)
+      'Ganador M86', 'Ganador M88', // M95 (slots 12,13)
+      'Ganador M85', 'Ganador M87'  // M96 (slots 14,15)
     ]
     return labels[idx] || '?'
   }
   if (round === 'quarter') {
+    // Por slot de cuartos (0–7). QF M98 lo alimentan M93/M94; QF M99, M91/M92.
     const labels = [
-      'Ganador M89', 'Ganador M90', // Match 97
-      'Ganador M91', 'Ganador M92', // Match 98
-      'Ganador M93', 'Ganador M94', // Match 99
-      'Ganador M95', 'Ganador M96'  // Match 100
+      'Ganador M89', 'Ganador M90', // QF M97
+      'Ganador M93', 'Ganador M94', // QF M98
+      'Ganador M91', 'Ganador M92', // QF M99
+      'Ganador M95', 'Ganador M96'  // QF M100
     ]
     return labels[idx] || '?'
   }
@@ -101,7 +109,12 @@ function Slot({
           <Flag team={team} className="h-3 flex-shrink-0" />
           <span className="truncate flex-1 text-left uppercase font-condensed font-semibold tracking-wide">{team}</span>
           {prob != null && (
-            <span className="text-[9px] text-gray-500 tabular-nums select-none ml-auto" title="Prob. de avanzar (modelo)">{Math.round(prob * 100)}%</span>
+            <span
+              className={`text-[9px] tabular-nums select-none ml-auto ${prob >= 0.5 ? 'text-gold font-bold' : 'text-gray-500'}`}
+              title="Probabilidad de que este equipo avance la llave (modelo Elo)"
+            >
+              {Math.round(prob * 100)}%
+            </span>
           )}
           {highlight && <span className={`text-[10px] text-gold select-none ${prob != null ? 'ml-1' : 'ml-auto'}`}>✓</span>}
         </>
@@ -132,10 +145,11 @@ function Match({
   side?: 'left' | 'right'
   elo?: Record<string, number>
 }) {
-  // Favorito del cruce según el modelo (Elo+Poisson): % de avanzar en la cara favorecida.
+  // Probabilidad de avanzar de CADA equipo según el modelo (Elo+Poisson). Se muestran
+  // ambas (suman 100%) y se resalta al favorito → fácil de leer: el número grande gana.
   const odds = elo && top && bottom ? tieOdds(top, bottom, elo) : null
-  const topProb = odds && odds.favorite === top ? odds.favPct : undefined
-  const bottomProb = odds && odds.favorite === bottom ? odds.favPct : undefined
+  const topProb = odds ? (odds.favorite === top ? odds.favPct : 1 - odds.favPct) : undefined
+  const bottomProb = odds ? (odds.favorite === bottom ? odds.favPct : 1 - odds.favPct) : undefined
   let ext = 0
   if (round === 'round32') ext = 32.5
   else if (round === 'round16') ext = 85.5
@@ -383,7 +397,18 @@ export default function BracketPage() {
   // Simulación Monte Carlo (favoritos al título). Corre bajo demanda en un worker.
   const { run: runSim, running: simRunning, progress: simProgress, results: simResults } = useSimulationWorker()
 
-  const SIM_CONFIG: SimConfig = { iterations: 20000, surprise: 0, squadWeight: 0, hostBoost: false, momentum: false, seed: 20260611 }
+  // Mismos controles que el Simulador (SimulatorPage): iteraciones, sorpresa, peso de
+  // plantilla, ventaja de anfitrión y momentum.
+  const [simIterations, setSimIterations] = useState(5000)
+  const [simSurprise, setSimSurprise] = useState(25)
+  const [simSquadWeight, setSimSquadWeight] = useState(30)
+  const [simHostBoost, setSimHostBoost] = useState(true)
+  const [simMomentum, setSimMomentum] = useState(true)
+  const simConfig: SimConfig = {
+    iterations: simIterations, surprise: simSurprise, squadWeight: simSquadWeight,
+    hostBoost: simHostBoost, momentum: simMomentum, seed: 20260611,
+  }
+  const ITER_OPTS = [2000, 5000, 20000]
   const [saving, setSaving] = useState(false)
   const [scores, setScores] = useState<BracketScores>({})
   const [activeMatchKey, setActiveMatchKey] = useState<string | null>(null)
@@ -668,7 +693,7 @@ export default function BracketPage() {
 
   function autoFill() {
     if (!r32Matchups.length) {
-      toast.error('Aún no hay cruces de 32avos para autocompletar')
+      toast.error('Aún no hay cruces de 16avos para autocompletar')
       return
     }
     setPredictions(autoFillFavorites(r32Matchups, elo))
@@ -688,11 +713,14 @@ export default function BracketPage() {
   }
 
   // Column Matchup indices
-  const r32L_Indices = [1, 4, 0, 2, 3, 5, 6, 7]
+  // Columna izquierda = mitad de la semi M101 (slots 0–7); derecha = M102 (slots 8–15).
+  // El grupo de M76 (idx 3,5,6,7) va a la DERECHA y el de M81 (idx 8,9,10,11) a la
+  // IZQUIERDA, según el cableado oficial (cuartos no adyacentes). Ver R32_TO_R16_SLOT.
+  const r32L_Indices = [1, 4, 0, 2, 8, 9, 10, 11]
   const r16L_Indices = [0, 1, 2, 3]
   const qfL_Indices = [0, 1]
 
-  const r32R_Indices = [8, 9, 10, 11, 13, 15, 12, 14]
+  const r32R_Indices = [3, 5, 6, 7, 13, 15, 12, 14]
   const r16R_Indices = [4, 5, 6, 7]
   const qfR_Indices = [2, 3]
 
@@ -762,47 +790,17 @@ export default function BracketPage() {
               <span className="chip border-mx/40 bg-mx/10 text-mx">🥅 Tu bono de penales: +{shootoutBonus}</span>
             )}
           </div>
-          <div className="text-gold/80 font-condensed font-extrabold text-[10px] uppercase tracking-wider flex items-center gap-1.5">
-            <Icon name="zap" size={13} className="text-gold flex-shrink-0" />
-            Haz click en un equipo para avanzarlo de ronda
+          <div className="flex flex-col gap-1.5 sm:items-end">
+            <div className="text-gold/80 font-condensed font-extrabold text-[10px] uppercase tracking-wider flex items-center gap-1.5">
+              <Icon name="zap" size={13} className="text-gold flex-shrink-0" />
+              Haz click en un equipo para avanzarlo de ronda
+            </div>
+            <div className="text-gray-500 text-[10px] flex items-center gap-1.5">
+              <span className="text-gold font-bold tabular-nums">65%</span>
+              <span>= probabilidad de avanzar de cada equipo (modelo Elo); el favorito en oro</span>
+            </div>
           </div>
         </div>
-
-        {/* Comparación con el Pez Oráculo (si el bracket del Oráculo está disponible) */}
-        {oracleBracket && (
-          <div className="mb-4">
-            <button onClick={() => setShowOracle(v => !v)} className="btn-ghost text-xs">
-              <Icon name="fish" size={15} />
-              {showOracle ? 'Ocultar comparación con el Oráculo' : 'Comparar con el Pez Oráculo'}
-            </button>
-          </div>
-        )}
-        {showOracle && oracleBracket && <OracleCompare predictions={predictions} oracle={oracleBracket} />}
-
-        {/* Favoritos al título (Monte Carlo, bajo demanda) */}
-        {!simResults && (
-          <div className="mb-4">
-            <button
-              onClick={() => matches.length && runSim(matches, SIM_CONFIG)}
-              disabled={simRunning || !matches.length}
-              className="btn-ghost text-xs"
-            >
-              <Icon name="chart" size={15} />
-              {simRunning ? `Simulando… ${Math.round(simProgress * 100)}%` : 'Calcular favoritos al título (Monte Carlo)'}
-            </button>
-          </div>
-        )}
-        {simResults && (
-          <>
-            <TitleOdds teams={simResults.teams} />
-            <div className="mb-4 -mt-4">
-              <button onClick={() => matches.length && runSim(matches, SIM_CONFIG)} disabled={simRunning} className="btn-ghost text-xs">
-                <Icon name="chart" size={15} />
-                {simRunning ? `Simulando… ${Math.round(simProgress * 100)}%` : 'Recalcular'}
-              </button>
-            </div>
-          </>
-        )}
 
         {loading ? (
           <div className="h-96 flex items-center justify-center">
@@ -814,8 +812,8 @@ export default function BracketPage() {
 
               {/* Column Headers Row */}
               <div className="flex items-center gap-0 border-b border-white/8 pb-4 mb-8 text-center select-none font-condensed font-black text-xs uppercase tracking-[0.18em] text-gray-500">
-                <div className="w-[160px]"><p>32avos</p></div>
-                <div className="w-[176px]"><p>16avos</p></div>
+                <div className="w-[160px]"><p>16avos</p></div>
+                <div className="w-[176px]"><p>Octavos</p></div>
                 <div className="w-[176px]"><p>Cuartos</p></div>
                 <div className="w-[176px]"><p>Semis</p></div>
                 <div className="w-[160px]"><p>Final</p></div>
@@ -823,8 +821,8 @@ export default function BracketPage() {
                 <div className="w-[160px]"><p>Final</p></div>
                 <div className="w-[176px]"><p>Semis</p></div>
                 <div className="w-[176px]"><p>Cuartos</p></div>
-                <div className="w-[176px]"><p>16avos</p></div>
-                <div className="w-[160px]"><p>32avos</p></div>
+                <div className="w-[176px]"><p>Octavos</p></div>
+                <div className="w-[160px]"><p>16avos</p></div>
               </div>
 
               {/* Bracket Grid */}
@@ -891,7 +889,7 @@ export default function BracketPage() {
                           linePos={index % 2 === 0 ? 'bottom' : 'top'}
                           connectLeft={false} connectRight={false}
                           round="round16"
-                          label={`M${89 + idx}`}
+                          label={R16_MATCH_LABELS[idx] ?? `M${89 + idx}`}
                           side="left"
                           elo={elo}
                         />
@@ -1156,7 +1154,7 @@ export default function BracketPage() {
                           linePos={index % 2 === 0 ? 'bottom' : 'top'}
                           connectLeft={false} connectRight={false}
                           round="round16"
-                          label={`M${89 + idx}`}
+                          label={R16_MATCH_LABELS[idx] ?? `M${89 + idx}`}
                           side="right"
                           elo={elo}
                         />
@@ -1211,6 +1209,80 @@ export default function BracketPage() {
               </div>
 
             </div>
+          </div>
+        )}
+
+        {/* ── Análisis (debajo del bracket): Oráculo + Monte Carlo ── */}
+        {!loading && (
+          <div className="mt-10 space-y-6">
+            {oracleBracket && (
+              <div>
+                <button onClick={() => setShowOracle(v => !v)} className="btn-ghost text-xs mb-3">
+                  <Icon name="fish" size={15} />
+                  {showOracle ? 'Ocultar comparación con el Oráculo' : 'Comparar con el Pez Oráculo'}
+                </button>
+                {showOracle && <OracleCompare predictions={predictions} oracle={oracleBracket} />}
+              </div>
+            )}
+
+            {/* Favoritos al título (Monte Carlo) con los mismos controles que el Simulador */}
+            <div className="glass rounded-2xl p-5">
+              <h3 className="font-display text-sm uppercase tracking-wide text-white flex items-center gap-2 mb-4">
+                <Icon name="chart" size={18} className="text-gold" /> Simulación Monte Carlo
+              </h3>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5">
+                <div>
+                  <p className="text-[10px] font-condensed font-extrabold uppercase tracking-[0.18em] text-gray-400 mb-2">Simulaciones</p>
+                  <div className="flex gap-2">
+                    {ITER_OPTS.map(n => (
+                      <button key={n} onClick={() => setSimIterations(n)} disabled={simRunning}
+                        className={`chip cursor-pointer transition ${simIterations === n ? 'border-gold/40 bg-gold/10 text-gold' : 'text-gray-400 hover:border-white/25'}`}>
+                        {n.toLocaleString('es')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] font-condensed font-extrabold uppercase tracking-[0.18em] text-gray-400 mb-2">Factor sorpresa <span className="text-gold">{simSurprise}</span></p>
+                  <input type="range" min={0} max={100} value={simSurprise} disabled={simRunning} onChange={e => setSimSurprise(Number(e.target.value))} className="w-full accent-[#FFC300]" />
+                  <div className="flex justify-between text-[9px] text-gray-600 font-condensed font-bold uppercase tracking-wide"><span>Ranking</span><span>Todo puede pasar</span></div>
+                </div>
+                <div>
+                  <p className="text-[10px] font-condensed font-extrabold uppercase tracking-[0.18em] text-gray-400 mb-2">Peso plantilla <span className="text-gold">{simSquadWeight}%</span></p>
+                  <input type="range" min={0} max={100} value={simSquadWeight} disabled={simRunning} onChange={e => setSimSquadWeight(Number(e.target.value))} className="w-full accent-[#FFC300]" />
+                  <div className="flex justify-between text-[9px] text-gray-600 font-condensed font-bold uppercase tracking-wide"><span>Historial</span><span>Plantel</span></div>
+                </div>
+                <div>
+                  <p className="text-[10px] font-condensed font-extrabold uppercase tracking-[0.18em] text-gray-400 mb-2">Ventaja anfitrión</p>
+                  <button onClick={() => setSimHostBoost(v => !v)} disabled={simRunning} className={`chip cursor-pointer transition ${simHostBoost ? 'border-mx/40 bg-mx/10 text-mx' : 'text-gray-500'}`}>
+                    <span className="no-invert">🇲🇽🇺🇸🇨🇦</span> {simHostBoost ? '+100 Elo' : 'Off'}
+                  </button>
+                </div>
+                <div>
+                  <p className="text-[10px] font-condensed font-extrabold uppercase tracking-[0.18em] text-gray-400 mb-2">Momentum</p>
+                  <button onClick={() => setSimMomentum(v => !v)} disabled={simRunning} className={`chip cursor-pointer transition ${simMomentum ? 'border-ca/40 bg-ca/10 text-ca' : 'text-gray-500'}`}>
+                    <Icon name="flame" size={11} /> {simMomentum ? 'Rachas' : 'Off'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="divider-gold my-4" />
+
+              {simRunning ? (
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 bg-ink-950 h-3 rounded-full overflow-hidden border border-white/5">
+                    <div className="h-full rounded-full bg-gradient-to-r from-ca via-gold to-mx transition-all duration-200" style={{ width: `${Math.round(simProgress * 100)}%` }} />
+                  </div>
+                  <span className="font-display text-gold text-lg tabular-nums">{Math.round(simProgress * 100)}%</span>
+                </div>
+              ) : (
+                <button onClick={() => matches.length && runSim(matches, simConfig)} disabled={!matches.length} className="btn-gold text-sm">
+                  <Icon name="zap" size={15} /> Simular {simIterations.toLocaleString('es')} mundiales
+                </button>
+              )}
+            </div>
+
+            {simResults && !simRunning && <TitleOdds teams={simResults.teams} />}
           </div>
         )}
 
