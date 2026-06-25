@@ -410,6 +410,7 @@ export default function BracketPage() {
   }
   const ITER_OPTS = [2000, 5000, 20000]
   const [saving, setSaving] = useState(false)
+  const [bracketLocked, setBracketLocked] = useState(false)
   const [scores, setScores] = useState<BracketScores>({})
   const [activeMatchKey, setActiveMatchKey] = useState<string | null>(null)
   const [shootoutBonus, setShootoutBonus] = useState(0)
@@ -489,10 +490,12 @@ export default function BracketPage() {
       apiFetch('/bracket/results'),
       apiFetch('/predictions/matches'),
       apiFetch('/predictions/my'),
-      apiFetch('/bracket/oracle').catch(() => ({ oracle: null }))
+      apiFetch('/bracket/oracle').catch(() => ({ oracle: null })),
+      apiFetch('/bracket/deadline').catch(() => ({ locked: false, deadline: null }))
     ])
-      .then(([m, r, matchesData, groupPredsData, oracleData]) => {
+      .then(([m, r, matchesData, groupPredsData, oracleData, deadlineData]) => {
         if (oracleData?.oracle) setOracleBracket(oracleData.oracle)
+        setBracketLocked(!!deadlineData?.locked)
         if (typeof m?.shootoutBonus === 'number') setShootoutBonus(m.shootoutBonus)
         // Load predictions
         const parsedPreds = {
@@ -643,6 +646,7 @@ export default function BracketPage() {
   }
 
   async function saveAll() {
+    if (bracketLocked) return
     setSaving(true)
     try {
       // Validate penalties
@@ -766,13 +770,20 @@ export default function BracketPage() {
               <Icon name="download" size={15} />
               Descargar Bracket
             </button>
-            <button
-              onClick={saveAll}
-              disabled={saving}
-              className="btn-gold text-sm"
-            >
-              {saving ? 'Guardando...' : 'Guardar todo'}
-            </button>
+            {bracketLocked ? (
+              <span className="chip border-red-500/30 bg-red-500/10 text-red-400 text-xs font-condensed font-extrabold uppercase tracking-wide">
+                <Icon name="lock" size={12} />
+                Cerrado — inició la eliminatoria
+              </span>
+            ) : (
+              <button
+                onClick={saveAll}
+                disabled={saving}
+                className="btn-gold text-sm"
+              >
+                {saving ? 'Guardando...' : 'Guardar todo'}
+              </button>
+            )}
           </div>
         } />
 

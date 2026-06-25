@@ -6,6 +6,21 @@ import { SHOOTOUT_BONUS } from '../utils/shootoutBonus.js'
 
 export const bracketRouter = new Hono<{ Variables: AppVariables }>()
 
+// GROUP_STAGE_VALUES — valores exactos del campo `stage` para la fase de grupos.
+// Se usa para excluirlos al buscar el primer partido de eliminatorias.
+const GROUP_STAGE_VALUES = ['Group Stage', 'Fase de grupos', 'grupo', 'group']
+
+async function getBracketDeadline(): Promise<Date | null> {
+  const { rows } = await db.query(
+    `SELECT MIN(match_date) AS deadline
+     FROM matches
+     WHERE NOT (${GROUP_STAGE_VALUES.map((_, i) => `LOWER(stage) LIKE $${i + 1}`).join(' OR ')})`,
+    GROUP_STAGE_VALUES.map(v => `%${v.toLowerCase()}%`)
+  )
+  const val = rows[0]?.deadline
+  return val ? new Date(val) : null
+}
+
 const ROUND_POINTS: Record<string, number> = {
   round16: 1,
   quarter: 2,
@@ -22,6 +37,12 @@ const ROUND_SLOTS: Record<string, number> = {
   champion: 1,
 }
 
+bracketRouter.get('/deadline', async (c) => {
+  const deadline = await getBracketDeadline()
+  const locked = deadline ? new Date() >= deadline : false
+  return c.json({ deadline: deadline?.toISOString() ?? null, locked })
+})
+
 bracketRouter.post('/predict', authMiddleware, async (c) => {
   const userId = c.get('userId')
   const { round, teams, scores } = await c.req.json()
@@ -29,6 +50,11 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
   if (!ROUND_SLOTS[round]) return c.json({ error: 'Ronda inválida' }, 400)
   if (!Array.isArray(teams) || teams.length > ROUND_SLOTS[round]) {
     return c.json({ error: `Máximo ${ROUND_SLOTS[round]} equipos para esta ronda` }, 400)
+  }
+
+  const deadline = await getBracketDeadline()
+  if (deadline && new Date() >= deadline) {
+    return c.json({ error: 'Las predicciones de bracket están cerradas' }, 403)
   }
 
   await db.query('DELETE FROM bracket_predictions WHERE user_id = $1 AND round = $2', [userId, round])
