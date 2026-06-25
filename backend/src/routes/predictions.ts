@@ -77,10 +77,10 @@ predictionsRouter.get('/my', authMiddleware, async (c) => {
 
 predictionsRouter.get('/leaderboard', async (c) => {
     const result = await db.query(
-      `SELECT 
+      `SELECT
          u.username,
          COUNT(p.id) as total_predictions,
-         COALESCE(SUM(p.points), 0) + COALESCE(bp.points, 0) as total_points
+         COALESCE(SUM(p.points), 0) + COALESCE(bp.points, 0) + COALESCE(sb.bonus, 0) as total_points
        FROM users u
        LEFT JOIN predictions p ON u.id = p.user_id
        LEFT JOIN (
@@ -98,7 +98,14 @@ predictionsRouter.get('/leaderboard', async (c) => {
          JOIN bracket_results br ON bp.round = br.round AND (bp.team = br.team OR split_part(bp.team, ':', 2) = br.team)
          GROUP BY bp.user_id
        ) bp ON u.id = bp.user_id
-       GROUP BY u.id, u.username, bp.points
+       LEFT JOIN (
+         -- Bono de penales (Esquema 2): +1 por tanda predicha que casó con una real.
+         SELECT sp.user_id, COUNT(*) AS bonus
+         FROM bracket_shootout_picks sp
+         JOIN ko_shootouts k ON sp.round = k.round AND sp.team_a = k.team_a AND sp.team_b = k.team_b
+         GROUP BY sp.user_id
+       ) sb ON u.id = sb.user_id
+       GROUP BY u.id, u.username, bp.points, sb.bonus
        ORDER BY total_points DESC`
     )
 

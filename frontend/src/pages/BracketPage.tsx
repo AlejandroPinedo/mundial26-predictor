@@ -387,6 +387,7 @@ export default function BracketPage() {
   const [saving, setSaving] = useState(false)
   const [scores, setScores] = useState<BracketScores>({})
   const [activeMatchKey, setActiveMatchKey] = useState<string | null>(null)
+  const [shootoutBonus, setShootoutBonus] = useState(0)
 
   function getScore(round: string, matchIndex: number): MatchScore {
     return scores[`${round}_${matchIndex}`] ?? { home: null, away: null, homePen: null, awayPen: null }
@@ -467,6 +468,7 @@ export default function BracketPage() {
     ])
       .then(([m, r, matchesData, groupPredsData, oracleData]) => {
         if (oracleData?.oracle) setOracleBracket(oracleData.oracle)
+        if (typeof m?.shootoutBonus === 'number') setShootoutBonus(m.shootoutBonus)
         // Load predictions
         const parsedPreds = {
           round16: Array(16).fill(null),
@@ -755,6 +757,10 @@ export default function BracketPage() {
             <span className="chip"><span className="text-ca">4 pts</span><span className="text-gray-500">· Semis</span></span>
             <span className="chip"><span className="text-gold">6 pts</span><span className="text-gray-500">· Finalista</span></span>
             <span className="chip border-gold/30 bg-gold/10"><span className="text-gold">10 pts</span><span className="text-gold/70">· Campeón</span></span>
+            <span className="chip border-mx/30 bg-mx/5"><span className="text-mx">+1 pt</span><span className="text-gray-500">· Tanda de penales acertada</span></span>
+            {shootoutBonus > 0 && (
+              <span className="chip border-mx/40 bg-mx/10 text-mx">🥅 Tu bono de penales: +{shootoutBonus}</span>
+            )}
           </div>
           <div className="text-gold/80 font-condensed font-extrabold text-[10px] uppercase tracking-wider flex items-center gap-1.5">
             <Icon name="zap" size={13} className="text-gold flex-shrink-0" />
