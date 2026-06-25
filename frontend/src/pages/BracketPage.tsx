@@ -5,6 +5,8 @@ import Spinner from '../components/Spinner'
 import Flag from '../components/Flag'
 import { calculateRoundOf32 } from '../utils/standings'
 import { R32_TO_R16_SLOT, parseTeamName } from '../utils/bracketStructure'
+import { currentElo } from '../predict/elo'
+import { autoFillFavorites, tieOdds } from '../utils/bracketAuto'
 import { toPng } from 'html-to-image'
 import { useAuth } from '../context/AuthContext'
 import PageHeader from '../components/PageHeader'
@@ -58,7 +60,7 @@ function getPlaceholder(round: string, idx: number): string {
 
 // ── Slot component ─────────────────────────────────────────────────────────────
 function Slot({
-  team, placeholder = '?', onClick, highlight = false, correct = false, wrong = false, size = 'sm'
+  team, placeholder = '?', onClick, highlight = false, correct = false, wrong = false, size = 'sm', prob
 }: {
   team: string | null
   placeholder?: string
@@ -67,6 +69,8 @@ function Slot({
   correct?: boolean
   wrong?: boolean
   size?: 'sm' | 'lg'
+  /** Probabilidad (0–1) de que ESTE equipo avance la llave, según el modelo. */
+  prob?: number
 }) {
   const h = size === 'lg' ? 'h-10' : 'h-8'
   const w = size === 'lg' ? 'w-36' : 'w-full'
@@ -93,7 +97,10 @@ function Slot({
         <>
           <Flag team={team} className="h-3 flex-shrink-0" />
           <span className="truncate flex-1 text-left uppercase font-condensed font-semibold tracking-wide">{team}</span>
-          {highlight && <span className="text-[10px] text-gold ml-auto select-none">✓</span>}
+          {prob != null && (
+            <span className="text-[9px] text-gray-500 tabular-nums select-none ml-auto" title="Prob. de avanzar (modelo)">{Math.round(prob * 100)}%</span>
+          )}
+          {highlight && <span className={`text-[10px] text-gold select-none ${prob != null ? 'ml-1' : 'ml-auto'}`}>✓</span>}
         </>
       ) : (
         <span className="text-gray-600 mx-auto text-[8px] uppercase font-condensed font-extrabold tracking-widest">{placeholder}</span>
@@ -108,7 +115,7 @@ function Match({
   isTopCorrect = false, isBottomCorrect = false,
   isTopWrong = false, isBottomWrong = false,
   onTopClick, onBottomClick, linePos, connectRight = true, connectLeft = false,
-  round, label, side = 'left'
+  round, label, side = 'left', elo
 }: {
   top: string | null; bottom: string | null
   topPlaceholder?: string; bottomPlaceholder?: string
@@ -120,7 +127,12 @@ function Match({
   round: 'round32' | 'round16' | 'quarter' | 'semi'
   label: string
   side?: 'left' | 'right'
+  elo?: Record<string, number>
 }) {
+  // Favorito del cruce según el modelo (Elo+Poisson): % de avanzar en la cara favorecida.
+  const odds = elo && top && bottom ? tieOdds(top, bottom, elo) : null
+  const topProb = odds && odds.favorite === top ? odds.favPct : undefined
+  const bottomProb = odds && odds.favorite === bottom ? odds.favPct : undefined
   let ext = 0
   if (round === 'round32') ext = 32.5
   else if (round === 'round16') ext = 85.5
@@ -199,9 +211,9 @@ function Match({
             <div className="absolute -top-2.5 left-2.5 px-1.5 py-0.5 bg-ink-950 border border-white/10 text-[8px] text-gray-500 font-condensed font-extrabold rounded uppercase tracking-wider leading-none select-none">
               {label}
             </div>
-            <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
+            <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} prob={topProb} />
             <div className="h-px bg-white/5 mx-1.5" />
-            <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
+            <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} prob={bottomProb} />
           </div>
           
           {connectRight && renderStep('right')}
@@ -214,9 +226,9 @@ function Match({
             <div className="absolute -top-2.5 left-2.5 px-1.5 py-0.5 bg-ink-950 border border-white/10 text-[8px] text-gray-500 font-condensed font-extrabold rounded uppercase tracking-wider leading-none select-none">
               {label}
             </div>
-            <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} />
+            <Slot team={top} placeholder={topPlaceholder} highlight={isTopHighlighted} correct={isTopCorrect} wrong={isTopWrong} onClick={onTopClick} prob={topProb} />
             <div className="h-px bg-white/5 mx-1.5" />
-            <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} />
+            <Slot team={bottom} placeholder={bottomPlaceholder} highlight={isBottomHighlighted} correct={isBottomCorrect} wrong={isBottomWrong} onClick={onBottomClick} prob={bottomProb} />
           </div>
           
           {connectRight && renderStub('right')}
@@ -261,6 +273,50 @@ function WinnerSlot({
   )
 }
 
+// ── Comparación con el bracket del Pez Oráculo ─────────────────────────────────
+const ORACLE_ROUNDS: [keyof Predictions, string, number][] = [
+  ['round16', 'Octavos', 16],
+  ['quarter', 'Cuartos', 8],
+  ['semi', 'Semis', 4],
+  ['finalist', 'Final', 2],
+]
+function OracleCompare({ predictions, oracle }: { predictions: Predictions; oracle: Record<string, string[]> }) {
+  const overlap = (round: keyof Predictions) => {
+    const oset = new Set((oracle[round] ?? []).map(t => parseTeamName(t)))
+    return predictions[round].filter(Boolean).map(t => parseTeamName(t)).filter(t => oset.has(t)).length
+  }
+  const myChamp = parseTeamName(predictions.champion[0])
+  const orChamp = parseTeamName(oracle.champion?.[0] ?? null)
+  const champMatch = !!myChamp && myChamp === orChamp
+  return (
+    <div className="glass rounded-2xl p-4 md:p-5 mb-8 fade-up-1">
+      <div className="flex items-center gap-2 mb-3">
+        <Icon name="fish" size={18} className="text-mx" />
+        <h3 className="font-display text-sm uppercase tracking-wide text-white">Tú vs el Pez Oráculo</h3>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {ORACLE_ROUNDS.map(([key, label, slots]) => (
+          <span key={key} className="chip text-gray-300">
+            {label} <b className="text-mx ml-1">{overlap(key)}</b><span className="text-gray-500">/{slots}</span>
+          </span>
+        ))}
+        <span className="chip text-gray-300 border-gold/30 bg-gold/5">
+          Campeón:
+          {orChamp ? (
+            <span className={`ml-1 inline-flex items-center gap-1 ${champMatch ? 'text-mx' : 'text-gray-300'}`}>
+              <Flag team={orChamp} className="h-3" />{orChamp}{champMatch && ' ✓'}
+            </span>
+          ) : <span className="text-gray-500 ml-1">—</span>}
+          {!champMatch && myChamp && <span className="text-gray-500 ml-1">· tú: {myChamp}</span>}
+        </span>
+      </div>
+      <p className="text-[10px] text-gray-500 mt-3">
+        Equipos en común por ronda entre tu bracket y el pronóstico congelado del Oráculo (modelo Elo).
+      </p>
+    </div>
+  )
+}
+
 // ── Main BracketPage ─────────────────────────────────────────────────────────────
 export default function BracketPage() {
   const { user } = useAuth()
@@ -281,6 +337,9 @@ export default function BracketPage() {
   })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape proviene de calculateRoundOf32 (pre-existente)
   const [r32Matchups, setR32Matchups] = useState<any[]>([])
+  const [elo, setElo] = useState<Record<string, number>>({})
+  const [oracleBracket, setOracleBracket] = useState<Record<string, string[]> | null>(null)
+  const [showOracle, setShowOracle] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [scores, setScores] = useState<BracketScores>({})
@@ -360,9 +419,11 @@ export default function BracketPage() {
       apiFetch('/bracket/my'),
       apiFetch('/bracket/results'),
       apiFetch('/predictions/matches'),
-      apiFetch('/predictions/my')
+      apiFetch('/predictions/my'),
+      apiFetch('/bracket/oracle').catch(() => ({ oracle: null }))
     ])
-      .then(([m, r, matchesData, groupPredsData]) => {
+      .then(([m, r, matchesData, groupPredsData, oracleData]) => {
+        if (oracleData?.oracle) setOracleBracket(oracleData.oracle)
         // Load predictions
         const parsedPreds = {
           round16: Array(16).fill(null),
@@ -437,6 +498,8 @@ export default function BracketPage() {
           const computedR32 = calculateRoundOf32(matchesData.matches, groupStagePredsMap)
           setR32Matchups(computedR32)
         }
+        // Elo vigente (snapshot + resultados ya jugados) para favoritos/autocompletado.
+        if (matchesData?.matches) setElo(currentElo(matchesData.matches))
       })
       .catch((err) => {
         toast.error('Error al cargar datos: ' + err.message)
@@ -555,6 +618,15 @@ export default function BracketPage() {
     }
   }
 
+  function autoFill() {
+    if (!r32Matchups.length) {
+      toast.error('Aún no hay cruces de 32avos para autocompletar')
+      return
+    }
+    setPredictions(autoFillFavorites(r32Matchups, elo))
+    toast.success('Bracket autocompletado con el favorito de cada cruce (modelo Elo)')
+  }
+
   const isCorrect = (round: string, idx: number, team: string | null) => {
     if (!team) return false
     const res = results[round as keyof Predictions]?.[idx]
@@ -601,6 +673,15 @@ export default function BracketPage() {
         <PageHeader title="BRACKET PLAYOFFS" subtitle="Ronda de 32 → Campeón · Copa Mundial 2026" icon="🏆" badge="FIFA WC26" action={
           <div className="flex items-center gap-3 flex-wrap">
             <button
+              onClick={autoFill}
+              disabled={loading || !r32Matchups.length}
+              className="btn-ghost text-xs"
+              title="Rellena el bracket con el favorito de cada cruce según el modelo (Elo)"
+            >
+              <Icon name="zap" size={15} />
+              Autocompletar
+            </button>
+            <button
               onClick={exportBracket}
               disabled={exporting || loading}
               className="btn-ghost text-xs"
@@ -634,6 +715,17 @@ export default function BracketPage() {
             Haz click en un equipo para avanzarlo de ronda
           </div>
         </div>
+
+        {/* Comparación con el Pez Oráculo (si el bracket del Oráculo está disponible) */}
+        {oracleBracket && (
+          <div className="mb-4">
+            <button onClick={() => setShowOracle(v => !v)} className="btn-ghost text-xs">
+              <Icon name="fish" size={15} />
+              {showOracle ? 'Ocultar comparación con el Oráculo' : 'Comparar con el Pez Oráculo'}
+            </button>
+          </div>
+        )}
+        {showOracle && oracleBracket && <OracleCompare predictions={predictions} oracle={oracleBracket} />}
 
         {loading ? (
           <div className="h-96 flex items-center justify-center">
@@ -681,6 +773,7 @@ export default function BracketPage() {
                           round="round32"
                           label={match.label || `M${73 + idx}`}
                           side="left"
+                          elo={elo}
                         />
                         {activeMatchKey === `round32_${idx}` && match.home && match.away && (
                           <MatchScoreInput
@@ -723,6 +816,7 @@ export default function BracketPage() {
                           round="round16"
                           label={`M${89 + idx}`}
                           side="left"
+                          elo={elo}
                         />
                         {activeMatchKey === `round16_${idx}` && top && bottom && (
                           <MatchScoreInput
@@ -765,6 +859,7 @@ export default function BracketPage() {
                           round="quarter"
                           label={`M${97 + idx}`}
                           side="left"
+                          elo={elo}
                         />
                         {activeMatchKey === `quarter_${idx}` && top && bottom && (
                           <MatchScoreInput
@@ -800,6 +895,7 @@ export default function BracketPage() {
                       round="semi"
                       label="M101"
                       side="left"
+                      elo={elo}
                     />
                     {activeMatchKey === 'semi_0' && sfL_top && sfL_bottom && (
                       <MatchScoreInput
@@ -898,6 +994,7 @@ export default function BracketPage() {
                       round="semi"
                       label="M102"
                       side="right"
+                      elo={elo}
                     />
                     {activeMatchKey === 'semi_1' && sfR_top && sfR_bottom && (
                       <MatchScoreInput
@@ -918,7 +1015,9 @@ export default function BracketPage() {
                     const targetSlot = idx
                     const isTopSelected = !!top && predictions.semi[targetSlot] === top
                     const isBottomSelected = !!bottom && predictions.semi[targetSlot] === bottom
-                    const matchIndex = idx - 2
+                    // El marcador se indexa por el cuarto real (idx 2,3 → quarter_2, quarter_3).
+                    // Antes usaba idx-2 y colisionaba con los cuartos izquierdos (quarter_0/_1).
+                    const matchIndex = idx
                     return (
                       <div key={`qfr-${idx}`} className="flex flex-col">
                         <Match
@@ -939,6 +1038,7 @@ export default function BracketPage() {
                           round="quarter"
                           label={`M${97 + idx}`}
                           side="right"
+                          elo={elo}
                         />
                         {activeMatchKey === `quarter_${matchIndex}` && top && bottom && (
                           <MatchScoreInput
@@ -981,6 +1081,7 @@ export default function BracketPage() {
                           round="round16"
                           label={`M${89 + idx}`}
                           side="right"
+                          elo={elo}
                         />
                         {activeMatchKey === `round16_${idx}` && top && bottom && (
                           <MatchScoreInput
@@ -1015,6 +1116,7 @@ export default function BracketPage() {
                           round="round32"
                           label={match.label || `M${73 + idx}`}
                           side="right"
+                          elo={elo}
                         />
                         {activeMatchKey === `round32_${idx}` && match.home && match.away && (
                           <MatchScoreInput

@@ -105,6 +105,18 @@ bracketRouter.get('/results', async (c) => {
   return c.json({ results })
 })
 
+// Bracket congelado del Pez Oráculo (para comparar contra el del usuario).
+bracketRouter.get('/oracle', async (c) => {
+  const result = await db.query('SELECT round, team FROM oracle_bracket ORDER BY round, team')
+  const oracle: Record<string, string[]> = {
+    round16: [], quarter: [], semi: [], finalist: [], champion: []
+  }
+  for (const row of result.rows) {
+    if (oracle[row.round]) oracle[row.round].push(row.team)
+  }
+  return c.json({ oracle })
+})
+
 bracketRouter.post('/admin/result', authMiddleware, async (c) => {
   const userId = c.get('userId')
   const userResult = await db.query('SELECT is_admin FROM users WHERE id = $1', [userId])
