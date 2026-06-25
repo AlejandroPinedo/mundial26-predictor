@@ -7,6 +7,9 @@ import { calculateRoundOf32 } from '../utils/standings'
 import { R32_TO_R16_SLOT, parseTeamName } from '../utils/bracketStructure'
 import { currentElo } from '../predict/elo'
 import { autoFillFavorites, tieOdds } from '../utils/bracketAuto'
+import { useSimulationWorker } from '../hooks/useSimulationWorker'
+import type { ApiMatch, SimConfig } from '../sim/tournament'
+import type { TeamProbabilities } from '../sim/aggregate'
 import { toPng } from 'html-to-image'
 import { useAuth } from '../context/AuthContext'
 import PageHeader from '../components/PageHeader'
@@ -317,6 +320,41 @@ function OracleCompare({ predictions, oracle }: { predictions: Predictions; orac
   )
 }
 
+// ── Favoritos al título (probabilidades Monte Carlo) ───────────────────────────
+function TitleOdds({ teams }: { teams: TeamProbabilities[] }) {
+  const top = teams.slice(0, 10)
+  const pct = (p: number) => `${(p * 100).toFixed(1)}%`
+  const maxChamp = Math.max(...top.map(t => t.champion), 0.01)
+  return (
+    <div className="relative bg-panel border border-white/8 rounded-2xl overflow-hidden mb-8 fade-up-1">
+      <div className="tri-stripe" />
+      <div className="p-5">
+        <h3 className="font-display text-sm uppercase tracking-wide text-white flex items-center gap-2 mb-4">
+          <Icon name="trophy" size={18} className="text-gold" /> Favoritos al título
+          <span className="chip text-gray-400 ml-auto">Monte Carlo · 20k sims</span>
+        </h3>
+        <div className="space-y-2.5">
+          {top.map((t, i) => (
+            <div key={t.team} className="flex items-center gap-3 text-sm">
+              <span className={`font-display text-xs w-5 text-center flex-shrink-0 ${i === 0 ? 'text-gold' : 'text-gray-600'}`}>{i + 1}</span>
+              <Flag team={t.team} className="h-4 flex-shrink-0" />
+              <span className="font-condensed font-bold uppercase tracking-wide text-white truncate w-24 sm:w-28 flex-shrink-0">{t.team}</span>
+              <div className="flex-1 bg-ink-950 h-2.5 rounded-full overflow-hidden border border-white/5 min-w-0">
+                <div className="h-full rounded-full bg-gradient-to-r from-mx to-gold transition-all duration-500" style={{ width: `${(t.champion / maxChamp) * 100}%` }} />
+              </div>
+              <span className="font-display text-sm text-gold w-14 text-right flex-shrink-0">{pct(t.champion)}</span>
+              <span className="font-sans text-[10px] text-gray-500 w-20 text-right hidden sm:block">final {pct(t.final)}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-gray-500 border-t border-white/8 pt-3 mt-4">
+          Probabilidad de ser campeón según simulación Monte Carlo (Elo base, sede neutral). La barra es relativa al favorito.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 // ── Main BracketPage ─────────────────────────────────────────────────────────────
 export default function BracketPage() {
   const { user } = useAuth()
@@ -340,7 +378,12 @@ export default function BracketPage() {
   const [elo, setElo] = useState<Record<string, number>>({})
   const [oracleBracket, setOracleBracket] = useState<Record<string, string[]> | null>(null)
   const [showOracle, setShowOracle] = useState(false)
+  const [matches, setMatches] = useState<ApiMatch[]>([])
   const [loading, setLoading] = useState(true)
+  // Simulación Monte Carlo (favoritos al título). Corre bajo demanda en un worker.
+  const { run: runSim, running: simRunning, progress: simProgress, results: simResults } = useSimulationWorker()
+
+  const SIM_CONFIG: SimConfig = { iterations: 20000, surprise: 0, squadWeight: 0, hostBoost: false, momentum: false, seed: 20260611 }
   const [saving, setSaving] = useState(false)
   const [scores, setScores] = useState<BracketScores>({})
   const [activeMatchKey, setActiveMatchKey] = useState<string | null>(null)
@@ -499,7 +542,10 @@ export default function BracketPage() {
           setR32Matchups(computedR32)
         }
         // Elo vigente (snapshot + resultados ya jugados) para favoritos/autocompletado.
-        if (matchesData?.matches) setElo(currentElo(matchesData.matches))
+        if (matchesData?.matches) {
+          setElo(currentElo(matchesData.matches))
+          setMatches(matchesData.matches as ApiMatch[])
+        }
       })
       .catch((err) => {
         toast.error('Error al cargar datos: ' + err.message)
@@ -726,6 +772,31 @@ export default function BracketPage() {
           </div>
         )}
         {showOracle && oracleBracket && <OracleCompare predictions={predictions} oracle={oracleBracket} />}
+
+        {/* Favoritos al título (Monte Carlo, bajo demanda) */}
+        {!simResults && (
+          <div className="mb-4">
+            <button
+              onClick={() => matches.length && runSim(matches, SIM_CONFIG)}
+              disabled={simRunning || !matches.length}
+              className="btn-ghost text-xs"
+            >
+              <Icon name="chart" size={15} />
+              {simRunning ? `Simulando… ${Math.round(simProgress * 100)}%` : 'Calcular favoritos al título (Monte Carlo)'}
+            </button>
+          </div>
+        )}
+        {simResults && (
+          <>
+            <TitleOdds teams={simResults.teams} />
+            <div className="mb-4 -mt-4">
+              <button onClick={() => matches.length && runSim(matches, SIM_CONFIG)} disabled={simRunning} className="btn-ghost text-xs">
+                <Icon name="chart" size={15} />
+                {simRunning ? `Simulando… ${Math.round(simProgress * 100)}%` : 'Recalcular'}
+              </button>
+            </div>
+          </>
+        )}
 
         {loading ? (
           <div className="h-96 flex items-center justify-center">
