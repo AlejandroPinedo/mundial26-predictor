@@ -411,7 +411,6 @@ export default function BracketPage() {
   const ITER_OPTS = [2000, 5000, 20000]
   const [saving, setSaving] = useState(false)
   const [bracketLocked, setBracketLocked] = useState(false)
-  const [bracketDeadline, setBracketDeadline] = useState<Date | null>(null)
   const [scores, setScores] = useState<BracketScores>({})
   const [activeMatchKey, setActiveMatchKey] = useState<string | null>(null)
   const [shootoutBonus, setShootoutBonus] = useState(0)
@@ -497,7 +496,6 @@ export default function BracketPage() {
       .then(([m, r, matchesData, groupPredsData, oracleData, deadlineData]) => {
         if (oracleData?.oracle) setOracleBracket(oracleData.oracle)
         setBracketLocked(!!deadlineData?.locked)
-        if (deadlineData?.deadline) setBracketDeadline(new Date(deadlineData.deadline))
         if (typeof m?.shootoutBonus === 'number') setShootoutBonus(m.shootoutBonus)
         // Load predictions
         const parsedPreds = {
