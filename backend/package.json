@@ -9,6 +9,7 @@
         "start": "node dist/index.js",
         "seed:oracle": "tsx scripts/seed-oracle.ts",
         "seed:oracle-bracket": "tsx scripts/seed-oracle-bracket.ts",
+        "seed:knockout": "tsx scripts/seed-knockout-matches.ts",
         "sync:results": "tsx scripts/sync-results.ts",
         "sync:shotmap": "tsx scripts/sync-shotmap.ts",
         "live:results": "tsx scripts/live-results.ts",
