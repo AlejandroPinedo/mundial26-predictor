@@ -21,6 +21,8 @@ type Shot = {
   player: string
   minute: string
   stage: string
+  home?: string
+  away?: string
 }
 type ShotMapData = { updatedAt: string; matches: number; shots: Shot[] }
 
@@ -341,6 +343,14 @@ export default function ShotMap() {
                                 <br />
                                 <span className="text-gold font-bold">{g.dist} m</span> ·{' '}
                                 {g.inBox ? 'dentro del área' : 'fuera del área'}
+                                {g.home && g.away && (
+                                  <>
+                                    <br />
+                                    <span className="text-gray-500">Partido:</span>{' '}
+                                    <span className="text-gray-300">{g.home} vs {g.away}</span>
+                                    {g.stage && <span className="text-gray-500"> · {g.stage}</span>}
+                                  </>
+                                )}
                               </div>
                             </div>
                           )}
