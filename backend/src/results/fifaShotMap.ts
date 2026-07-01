@@ -52,6 +52,8 @@ export type Shot = {
   player: string
   minute: string
   stage: string // fase en español (Fase de grupos, Octavos, ...)
+  home: string // local del partido (ES) — para saber en qué partido fue el tiro
+  away: string // visitante del partido (ES)
 }
 export type Conv = { shots: number; goals: number; pct: number }
 export type ShotMapStats = {
@@ -143,6 +145,8 @@ export async function computeShotMap(): Promise<ShotMapPayload> {
     idPlayer: string
     minute: string
     stage: string
+    home: string
+    away: string
   }
   const raw: Raw[] = []
 
@@ -152,6 +156,8 @@ export async function computeShotMap(): Promise<ShotMapPayload> {
       const tl = await fifaGet(`/timelines/${COMP}/${SEASON}/${m.IdStage}/${m.IdMatch}?language=en`)
       const tmap = teamMap(m)
       const stage = stageEs(m)
+      const home = tmap[String(m.Home?.IdTeam)] || ''
+      const away = tmap[String(m.Away?.IdTeam)] || ''
       for (const ev of tl.Event ?? []) {
         if (!SHOT_TYPES.has(ev.Type)) continue
         let px = ev.PositionX
@@ -176,6 +182,8 @@ export async function computeShotMap(): Promise<ShotMapPayload> {
           idPlayer: String(ev.IdPlayer ?? ''),
           minute: (ev.MatchMinute as string) || '',
           stage,
+          home,
+          away,
         })
       }
     } catch (err) {
@@ -228,6 +236,8 @@ export async function computeShotMap(): Promise<ShotMapPayload> {
       player: s.player,
       minute: s.minute,
       stage: s.stage,
+      home: s.home,
+      away: s.away,
     })),
   }
 }

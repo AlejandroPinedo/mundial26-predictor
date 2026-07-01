@@ -66,14 +66,23 @@ describe('buildRoundOf32', () => {
     expect(r32.every((m) => m.resolved)).toBe(true)
   })
 
-  it('respeta los cruces oficiales fijos (no dependen de terceros)', () => {
+  it('respeta los cruces oficiales FIFA 2026 por número de partido', () => {
     const s = computeAllStandings(allMatches)
     const r32 = buildRoundOf32(s)
     const byCode = Object.fromEntries(r32.map((m) => [m.code, m]))
+    // Cruces sin terceros (deterministas): ganador=G1, segundo=G2.
     expect(byCode['M73']).toMatchObject({ home: 'A2', away: 'B2' }) // 2A vs 2B
     expect(byCode['M75']).toMatchObject({ home: 'F1', away: 'C2' }) // 1F vs 2C
-    expect(byCode['M83']).toMatchObject({ home: 'H1', away: 'J2' }) // 1H vs 2J
-    expect(byCode['M84']).toMatchObject({ home: 'K2', away: 'L2' }) // 2K vs 2L
+    expect(byCode['M76']).toMatchObject({ home: 'C1', away: 'F2' }) // 1C vs 2F
+    expect(byCode['M78']).toMatchObject({ home: 'E2', away: 'I2' }) // 2E vs 2I
+    expect(byCode['M83']).toMatchObject({ home: 'K2', away: 'L2' }) // 2K vs 2L (antes mal en M84)
+    expect(byCode['M84']).toMatchObject({ home: 'H1', away: 'J2' }) // 1H vs 2J (antes mal en M83)
+    expect(byCode['M86']).toMatchObject({ home: 'J1', away: 'H2' }) // 1J vs 2H
+    expect(byCode['M88']).toMatchObject({ home: 'D2', away: 'G2' }) // 2D vs 2G
+    // Cruces ganador vs 3º: el LOCAL (ganador de grupo) es determinista.
+    expect(byCode['M81'].home).toBe('D1') // 1D vs 3º
+    expect(byCode['M82'].home).toBe('G1') // 1G vs 3º
+    expect(byCode['M87'].home).toBe('K1') // 1K vs 3º
   })
 
   it('marca resolved=false y usa placeholders si faltan resultados', () => {

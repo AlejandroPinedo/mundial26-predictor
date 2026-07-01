@@ -407,6 +407,7 @@ export default function BracketPage() {
   const [showOracle, setShowOracle] = useState(false)
   const [matches, setMatches] = useState<ApiMatch[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   // Simulación Monte Carlo (favoritos al título). Corre bajo demanda en un worker.
   const { run: runSim, running: simRunning, progress: simProgress, results: simResults } = useSimulationWorker()
 
@@ -497,7 +498,11 @@ export default function BracketPage() {
     }
   }
 
+  const [reloadKey, setReloadKey] = useState(0)
+
   useEffect(() => {
+    setLoading(true)
+    setLoadError(null)
     Promise.all([
       apiFetch('/bracket/my'),
       apiFetch('/bracket/results'),
@@ -591,10 +596,12 @@ export default function BracketPage() {
         }
       })
       .catch((err) => {
-        toast.error('Error al cargar datos: ' + err.message)
+        const msg = err instanceof Error ? err.message : String(err)
+        setLoadError(msg)
+        toast.error('Error al cargar datos: ' + msg)
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [reloadKey])
 
   function advanceTeam(fromRound: string, slotIdx: number, team: string | null) {
     if (!team) return
@@ -733,11 +740,14 @@ export default function BracketPage() {
   // Columna izquierda = mitad de la semi M101 (slots 0–7); derecha = M102 (slots 8–15).
   // El grupo de M76 (idx 3,5,6,7) va a la DERECHA y el de M81 (idx 8,9,10,11) a la
   // IZQUIERDA, según el cableado oficial (cuartos no adyacentes). Ver R32_TO_R16_SLOT.
-  const r32L_Indices = [1, 4, 0, 2, 8, 9, 10, 11]
+  // Mitad izquierda (semi M101) = slots 0–7; derecha (M102) = slots 8–15. El orden
+  // de cada columna sigue el ruteo oficial R32_TO_R16_SLOT: pares consecutivos de
+  // 32avos alimentan cada octavo (m0=slots0,1 …). Ver bracketStructure.ts.
+  const r32L_Indices = [0, 1, 2, 3, 8, 9, 10, 11]
   const r16L_Indices = [0, 1, 2, 3]
   const qfL_Indices = [0, 1]
 
-  const r32R_Indices = [3, 5, 6, 7, 13, 15, 12, 14]
+  const r32R_Indices = [4, 5, 6, 7, 12, 13, 14, 15]
   const r16R_Indices = [4, 5, 6, 7]
   const qfR_Indices = [2, 3]
 
@@ -906,6 +916,20 @@ export default function BracketPage() {
         {loading ? (
           <div className="h-96 flex items-center justify-center">
             <Spinner />
+          </div>
+        ) : loadError ? (
+          <div className="h-96 flex flex-col items-center justify-center gap-4 text-center px-6 fade-up-2">
+            <div className="h-14 w-14 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center">
+              <Icon name="wrench" size={26} className="text-red-400" />
+            </div>
+            <div>
+              <p className="font-display text-sm uppercase tracking-wide text-white mb-1">No se pudo cargar el bracket</p>
+              <p className="text-xs text-gray-400 max-w-sm">{loadError}</p>
+            </div>
+            <button onClick={() => setReloadKey(k => k + 1)} className="btn-gold text-sm">
+              <Icon name="zap" size={15} />
+              Reintentar
+            </button>
           </div>
         ) : (
           <>
