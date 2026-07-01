@@ -281,13 +281,13 @@ export function buildRoundOf32(standings: Record<string, TeamStats[]>): R32Match
     { home: getRunnerUp('E'), away: getRunnerUp('I'), label: 'M78: 2E vs 2I' },
     { home: getWinner('A'), away: getThirdForWinner('A'), label: 'M79: 1A vs 3C/E/F/H/I' },
     { home: getWinner('L'), away: getThirdForWinner('L'), label: 'M80: 1L vs 3E/H/I/J/K' },
-    { home: getWinner('G'), away: getThirdForWinner('G'), label: 'M81: 1G vs 3A/E/H/I/J' },
-    { home: getWinner('D'), away: getThirdForWinner('D'), label: 'M82: 1D vs 3B/E/F/I/J' },
-    { home: getWinner('H'), away: getRunnerUp('J'), label: 'M83: 1H vs 2J' },
-    { home: getRunnerUp('K'), away: getRunnerUp('L'), label: 'M84: 2K vs 2L' },
+    { home: getWinner('D'), away: getThirdForWinner('D'), label: 'M81: 1D vs 3B/E/F/I/J' },
+    { home: getWinner('G'), away: getThirdForWinner('G'), label: 'M82: 1G vs 3A/E/H/I/J' },
+    { home: getRunnerUp('K'), away: getRunnerUp('L'), label: 'M83: 2K vs 2L' },
+    { home: getWinner('H'), away: getRunnerUp('J'), label: 'M84: 1H vs 2J' },
     { home: getWinner('B'), away: getThirdForWinner('B'), label: 'M85: 1B vs 3E/F/G/I/J' },
-    { home: getRunnerUp('D'), away: getRunnerUp('G'), label: 'M86: 2D vs 2G' },
-    { home: getWinner('J'), away: getRunnerUp('H'), label: 'M87: 1J vs 2H' },
-    { home: getWinner('K'), away: getThirdForWinner('K'), label: 'M88: 1K vs 3D/E/I/J/L' }
+    { home: getWinner('J'), away: getRunnerUp('H'), label: 'M86: 1J vs 2H' },
+    { home: getWinner('K'), away: getThirdForWinner('K'), label: 'M87: 1K vs 3D/E/I/J/L' },
+    { home: getRunnerUp('D'), away: getRunnerUp('G'), label: 'M88: 2D vs 2G' }
   ]
 }
