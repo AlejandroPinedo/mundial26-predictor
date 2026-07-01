@@ -53,6 +53,12 @@ describe('allocateThirds', () => {
   it('devuelve null si no hay asignación válida', () => {
     expect(allocateThirds(['A'])).toBeNull()
   })
+
+  it('usa la tabla OFICIAL FIFA para la combinación real (terceros B,D,E,F,I,J,K,L)', () => {
+    // El orden de entrada no debe importar (se ordena para la clave).
+    const alloc = allocateThirds(['E', 'B', 'K', 'F', 'D', 'L', 'I', 'J'])
+    expect(alloc).toEqual({ A: 'E', B: 'J', D: 'B', E: 'D', G: 'I', I: 'F', K: 'L', L: 'K' })
+  })
 })
 
 describe('buildRoundOf32', () => {

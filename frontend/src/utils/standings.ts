@@ -207,8 +207,24 @@ export function getBestThirdPlacedTeams(
   )
 }
 
-// Bipartite matching / backtracking to map group winners to third-placed teams
+// Tabla OFICIAL FIFA 2026 de asignación de los 8 mejores terceros → ganador de grupo,
+// según QUÉ grupos aportan tercero clasificado (clave = los 8 grupos ordenados alfabéticamente).
+// La FIFA usa una tabla fija de 495 combinaciones; NO se puede reproducir con un
+// backtracking "primero elegible" (encuentra una asignación válida, pero no la oficial).
+// Aquí tabulamos las combinaciones conocidas; el backtracking queda solo de respaldo
+// para combinaciones hipotéticas (p. ej. el simulador Monte Carlo).
+// Fuente: Wikipedia, "2026 FIFA World Cup knockout stage".
+const OFFICIAL_THIRD_ALLOCATION: Record<string, Record<string, string>> = {
+  // Combinación real del torneo: terceros de B, D, E, F, I, J, K, L.
+  'B,D,E,F,I,J,K,L': { A: 'E', B: 'J', D: 'B', E: 'D', G: 'I', I: 'F', K: 'L', L: 'K' },
+}
+
+// Mapea ganador de grupo → grupo cuyo 3º enfrenta. Usa la tabla oficial cuando la
+// combinación está tabulada; si no, cae al backtracking (asignación válida aproximada).
 export function allocateThirds(qualifiedGroups: string[]): Record<string, string> | null {
+  const official = OFFICIAL_THIRD_ALLOCATION[[...qualifiedGroups].sort().join(',')]
+  if (official) return official
+
   const pools: Record<string, string[]> = {
     E: ['A', 'B', 'C', 'D', 'F'],
     I: ['C', 'D', 'F', 'G', 'H'],
