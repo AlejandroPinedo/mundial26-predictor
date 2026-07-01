@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
@@ -366,6 +366,19 @@ function TitleOdds({ teams }: { teams: TeamProbabilities[] }) {
         </p>
       </div>
     </div>
+  )
+}
+
+// ── Sección de una ronda en el layout MÓVIL (apilado vertical, sin scroll horizontal) ──
+function MobileRound({ title, points, children }: { title: string; points?: string; children: ReactNode }) {
+  return (
+    <section className="border border-white/8 rounded-2xl bg-ink-900/60 p-4">
+      <h3 className="font-condensed font-black text-xs uppercase tracking-[0.18em] text-gray-400 mb-4 flex items-center gap-2">
+        {title}
+        {points && <span className="chip ml-auto text-[10px] font-sans normal-case tracking-normal">{points}</span>}
+      </h3>
+      <div className="flex flex-col gap-5 items-center">{children}</div>
+    </section>
   )
 }
 
@@ -746,6 +759,83 @@ export default function BracketPage() {
   const isSfR_topSelected = !!sfR_top && predictions.finalist[1] === sfR_top
   const isSfR_bottomSelected = !!sfR_bottom && predictions.finalist[1] === sfR_bottom
 
+  // ── Helpers del layout MÓVIL ────────────────────────────────────────────────
+  // Reusan EXACTAMENTE el mismo estado/handlers/claves que el árbol de escritorio
+  // (activeMatchKey, handleScoreChange, getScore, isCorrect…). Solo cambia la
+  // disposición: vertical, sin conectores ni anchos fijos. No hay lógica de datos
+  // nueva. Todos los partidos van con side="left" y connect* en false.
+
+  // Un cruce de 16avos (round32): equipos derivados de los grupos (r32Matchups).
+  const mobileR32Node = (idx: number) => {
+    const match = r32Matchups[idx] || { home: null, away: null, label: `M${73 + idx}` }
+    const key = `round32_${idx}`
+    const targetSlot = R32_TO_R16_SLOT[idx]
+    const isTopSelected = !!match.home && predictions.round16[targetSlot] === match.home
+    const isBottomSelected = !!match.away && predictions.round16[targetSlot] === match.away
+    return (
+      <div key={key} className="flex flex-col w-full items-center">
+        <Match
+          top={match.home} bottom={match.away}
+          topPlaceholder="?" bottomPlaceholder="?"
+          isTopHighlighted={isTopSelected} isBottomHighlighted={isBottomSelected}
+          onTopClick={() => setActiveMatchKey(prev => prev === key ? null : key)}
+          onBottomClick={() => setActiveMatchKey(prev => prev === key ? null : key)}
+          linePos="center" connectLeft={false} connectRight={false}
+          round="round32" label={match.label || `M${73 + idx}`} side="left" elo={elo}
+        />
+        {activeMatchKey === key && match.home && match.away && (
+          <MatchScoreInput
+            score={getScore('round32', idx)}
+            homeTeam={match.home ?? null} awayTeam={match.away ?? null}
+            onChange={update => handleScoreChange('round32', idx, idx, match.home, match.away, update)}
+          />
+        )}
+      </div>
+    )
+  }
+
+  // Un partido de octavos/cuartos/semis/final: participantes = arr[2i], arr[2i+1];
+  // el ganador que el usuario eligió está en nextArr[nextSlot] (para el resaltado).
+  const mobileMatchNode = (
+    roundKey: 'round16' | 'quarter' | 'semi' | 'finalist',
+    matchRound: 'round16' | 'quarter' | 'semi',
+    matchIndex: number,
+    top: string | null,
+    bottom: string | null,
+    nextArr: (string | null)[],
+    nextSlot: number,
+    label: string,
+  ) => {
+    const key = `${roundKey}_${matchIndex}`
+    const topSlot = 2 * matchIndex
+    const bottomSlot = 2 * matchIndex + 1
+    const isTopSelected = !!top && nextArr[nextSlot] === top
+    const isBottomSelected = !!bottom && nextArr[nextSlot] === bottom
+    return (
+      <div key={key} className="flex flex-col w-full items-center">
+        <Match
+          top={top} bottom={bottom}
+          topPlaceholder={getPlaceholder(roundKey, topSlot)}
+          bottomPlaceholder={getPlaceholder(roundKey, bottomSlot)}
+          isTopHighlighted={isTopSelected} isBottomHighlighted={isBottomSelected}
+          isTopCorrect={isCorrect(roundKey, topSlot, top)} isBottomCorrect={isCorrect(roundKey, bottomSlot, bottom)}
+          isTopWrong={isWrong(roundKey, topSlot, top)} isBottomWrong={isWrong(roundKey, bottomSlot, bottom)}
+          onTopClick={() => setActiveMatchKey(prev => prev === key ? null : key)}
+          onBottomClick={() => setActiveMatchKey(prev => prev === key ? null : key)}
+          linePos="center" connectLeft={false} connectRight={false}
+          round={matchRound} label={label} side="left" elo={elo}
+        />
+        {activeMatchKey === key && top && bottom && (
+          <MatchScoreInput
+            score={getScore(roundKey, matchIndex)}
+            homeTeam={top} awayTeam={bottom}
+            onChange={update => handleScoreChange(roundKey, matchIndex, topSlot, top, bottom, update)}
+          />
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen text-white">
       <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 md:px-8 py-6 pb-20">
@@ -818,7 +908,9 @@ export default function BracketPage() {
             <Spinner />
           </div>
         ) : (
-          <div className="overflow-x-auto pb-6 border border-white/8 rounded-3xl bg-ink-900/60 shadow-2xl fade-up-2">
+          <>
+          {/* DESKTOP: bracket horizontal completo (sin cambios). Oculto en móvil. */}
+          <div className="hidden md:block overflow-x-auto pb-6 border border-white/8 rounded-3xl bg-ink-900/60 shadow-2xl fade-up-2">
             <div id="bracket-grid" className="inline-flex flex-col py-8 min-w-max px-6 bg-ink-950">
 
               {/* Column Headers Row */}
@@ -1221,6 +1313,43 @@ export default function BracketPage() {
 
             </div>
           </div>
+
+          {/* MÓVIL: rondas apiladas verticalmente, sin scroll horizontal. Reusa los
+              mismos componentes/estado que el escritorio. Oculto en ≥ md. */}
+          <div className="md:hidden flex flex-col gap-6 fade-up-2">
+            <MobileRound title="16avos de final" points="1 pt · avanza a Octavos">
+              {Array.from({ length: 16 }, (_, i) => mobileR32Node(i))}
+            </MobileRound>
+            <MobileRound title="Octavos de final" points="1 pt">
+              {Array.from({ length: 8 }, (_, i) =>
+                mobileMatchNode('round16', 'round16', i, predictions.round16[2 * i], predictions.round16[2 * i + 1], predictions.quarter, i, R16_MATCH_LABELS[i] ?? `M${89 + i}`))}
+            </MobileRound>
+            <MobileRound title="Cuartos de final" points="2 pts">
+              {Array.from({ length: 4 }, (_, i) =>
+                mobileMatchNode('quarter', 'quarter', i, predictions.quarter[2 * i], predictions.quarter[2 * i + 1], predictions.semi, i, `M${97 + i}`))}
+            </MobileRound>
+            <MobileRound title="Semifinales" points="4 pts">
+              {Array.from({ length: 2 }, (_, i) =>
+                mobileMatchNode('semi', 'semi', i, predictions.semi[2 * i], predictions.semi[2 * i + 1], predictions.finalist, i, i === 0 ? 'M101' : 'M102'))}
+            </MobileRound>
+            <MobileRound title="Final" points="6 pts · finalista">
+              {mobileMatchNode('finalist', 'semi', 0, predictions.finalist[0], predictions.finalist[1], predictions.champion, 0, 'FINAL')}
+            </MobileRound>
+            <MobileRound title="Campeón" points="10 pts">
+              <div className="w-full max-w-[220px] bg-gradient-to-b from-gold/10 via-panel to-panel border border-gold/30 rounded-2xl p-4 flex flex-col items-center gap-3">
+                <p className="trophy-text font-display text-[10px] uppercase tracking-[0.2em] select-none">Campeón del Mundo</p>
+                <Slot
+                  team={champion}
+                  placeholder="CAMPEÓN"
+                  size="lg"
+                  correct={isCorrect('champion', 0, champion)}
+                  wrong={isWrong('champion', 0, champion)}
+                />
+                <span className={`text-3xl no-invert ${champion ? '' : 'opacity-25 grayscale'}`}>🏆</span>
+              </div>
+            </MobileRound>
+          </div>
+          </>
         )}
 
         {/* ── Análisis (debajo del bracket): Oráculo + Monte Carlo ── */}

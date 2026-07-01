@@ -40,6 +40,11 @@ try {
   console.log(
     `\n${head} · ${s.confirmed.length} confirmado(s) · ${s.alreadyOk} ya OK · ${s.conflicts.length} corregido(s) · ${s.pending} sin final`,
   )
+  if (s.bracket) {
+    console.log(
+      `🏆 Bracket: ${s.bracket.bracketRoundsWritten} ronda(s) de avance · ${s.bracket.shootoutRoundsWritten} ronda(s) de tandas reescritas`,
+    )
+  }
   if (!APPLY && (s.ingested.length || s.confirmed.length)) console.log('Ejecuta con --apply para escribir.')
 } catch (err) {
   console.error(String(err))

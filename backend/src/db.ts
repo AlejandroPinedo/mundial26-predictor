@@ -42,15 +42,20 @@ ensureShotMapTable(db).catch(err => {
 
 // Columnas para el seguimiento EN VIVO (Varzesh3). Display-only y separadas del
 // scoring (home_score/away_score). Idempotente: no-op si ya existen.
+// home_pen/away_pen: marcador de la TANDA DE PENALES en eliminatorias (null en
+// grupos y en KO decididos en el tiempo). Los llena syncResults (football-data)
+// y los consume deriveBracketResults para resolver ganadores y tandas reales.
 db.query(`
   ALTER TABLE matches
     ADD COLUMN IF NOT EXISTS live_home INTEGER,
     ADD COLUMN IF NOT EXISTS live_away INTEGER,
     ADD COLUMN IF NOT EXISTS live_minute TEXT,
     ADD COLUMN IF NOT EXISTS live_status TEXT,
-    ADD COLUMN IF NOT EXISTS result_status TEXT
+    ADD COLUMN IF NOT EXISTS result_status TEXT,
+    ADD COLUMN IF NOT EXISTS home_pen INTEGER,
+    ADD COLUMN IF NOT EXISTS away_pen INTEGER
 `).catch(err => {
-  console.error('Error añadiendo columnas live_*/result_status a matches:', err)
+  console.error('Error añadiendo columnas live_*/result_status/pen a matches:', err)
 })
 
 // Bono de penales del bracket (Esquema 2). Aditivas: no tocan el scoring de avance.

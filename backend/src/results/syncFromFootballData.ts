@@ -1,5 +1,6 @@
 import { ingestResult } from './ingest.js'
 import { FIFA_TLA_TO_ES } from './teamCodes.js'
+import { applyBracketResults, type ApplySummary } from '../utils/deriveBracketResults.js'
 import type { Queryable } from '../oracle/lock.js'
 
 const WC_MATCHES_URL = 'https://api.football-data.org/v4/competitions/WC/matches'
@@ -18,6 +19,8 @@ export type SyncSummary = {
   unmapped: string[]
   /** Finales donde el provisional de Varzesh3 difería de football-data: se corrigieron con el oficial. */
   conflicts: { match: string; footballData: string; varzesh3: string }[]
+  /** Rondas de bracket_results/ko_shootouts reescritas a partir de los KO en `matches` (solo en apply). */
+  bracket?: ApplySummary
 }
 
 export type Final = { h: number; a: number }
@@ -77,7 +80,7 @@ export async function syncResults(
 
   const apiByPair = new Map<
     string,
-    { status: string; home: number | null; away: number | null; label: string }
+    { status: string; home: number | null; away: number | null; homePen: number | null; awayPen: number | null; label: string }
   >()
   const unmapped = new Set<string>()
   for (const m of matches) {
@@ -92,12 +95,15 @@ export async function syncResults(
       status: m.status,
       home: m.score?.fullTime?.home ?? null,
       away: m.score?.fullTime?.away ?? null,
+      // Penales: football-data los expone aparte del marcador, solo en KO por tanda.
+      homePen: m.score?.penalties?.home ?? null,
+      awayPen: m.score?.penalties?.away ?? null,
       label: `${h} vs ${a}`,
     })
   }
 
   const { rows } = await db.query(
-    'SELECT id, home_team, away_team, home_score, away_score, live_home, live_away, live_status, result_status FROM matches ORDER BY match_date',
+    'SELECT id, home_team, away_team, home_score, away_score, home_pen, away_pen, live_home, live_away, live_status, result_status FROM matches ORDER BY match_date',
   )
 
   const summary: SyncSummary = {
@@ -157,6 +163,29 @@ export async function syncResults(
         status: decision.status,
         updatedPredictions,
       })
+    }
+
+    // Penales (KO): football-data los reporta aparte del marcador y solo cuando el
+    // partido cerró por tanda. Se reconcilian de forma AISLADA del scoring de
+    // predicciones (no afectan calculatePoints): solo alimentan la derivación del
+    // bracket. Idempotente: escribe únicamente si cambian.
+    if (opts.apply && fd && fd.status === 'FINISHED' && fd.homePen !== null && fd.awayPen !== null) {
+      const dbHp = r.home_pen !== null ? Number(r.home_pen) : null
+      const dbAp = r.away_pen !== null ? Number(r.away_pen) : null
+      if (dbHp !== fd.homePen || dbAp !== fd.awayPen) {
+        await db.query('UPDATE matches SET home_pen = $1, away_pen = $2 WHERE id = $3', [fd.homePen, fd.awayPen, r.id])
+      }
+    }
+  }
+
+  // Automatización del bracket: tras ingerir marcadores/penales, reconstruye
+  // bracket_results (avance) y ko_shootouts (tandas) desde los KO en `matches`.
+  // AISLADA: un fallo aquí no debe tumbar el sync de resultados.
+  if (opts.apply) {
+    try {
+      summary.bracket = await applyBracketResults(db)
+    } catch (err) {
+      console.error('[sync] applyBracketResults falló (aislado):', err)
     }
   }
 
