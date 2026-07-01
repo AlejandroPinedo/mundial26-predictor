@@ -40,11 +40,26 @@ export function rankThirds(standings: Record<string, StandingRow[]>): ThirdRow[]
   )
 }
 
+// Tabla OFICIAL FIFA 2026 de asignación de los 8 mejores terceros → ganador de grupo,
+// según QUÉ grupos aportan tercero clasificado (clave = los 8 grupos ordenados).
+// FIFA usa una tabla fija de 495 combinaciones; el backtracking "primero elegible"
+// halla UNA asignación válida pero NO la oficial. Tabulamos las combinaciones
+// conocidas; el backtracking queda de respaldo (combinaciones hipotéticas/simulador).
+// Fuente: Wikipedia, "2026 FIFA World Cup knockout stage". Debe coincidir con
+// frontend/src/utils/standings.ts.
+const OFFICIAL_THIRD_ALLOCATION: Record<string, Record<string, string>> = {
+  'B,D,E,F,I,J,K,L': { A: 'E', B: 'J', D: 'B', E: 'D', G: 'I', I: 'F', K: 'L', L: 'K' },
+}
+
 /**
- * Asigna los 8 mejores terceros a los ganadores de grupo según las pools
- * oficiales (backtracking). Devuelve { ganadorGrupo: grupoDelTercero } o null.
+ * Asigna los 8 mejores terceros a los ganadores de grupo. Usa la tabla OFICIAL
+ * cuando la combinación está tabulada; si no, cae al backtracking sobre las pools
+ * oficiales. Devuelve { ganadorGrupo: grupoDelTercero } o null.
  */
 export function allocateThirds(qualifiedGroups: string[]): Record<string, string> | null {
+  const official = OFFICIAL_THIRD_ALLOCATION[[...qualifiedGroups].sort().join(',')]
+  if (official) return official
+
   const pools: Record<string, string[]> = {
     E: ['A', 'B', 'C', 'D', 'F'],
     I: ['C', 'D', 'F', 'G', 'H'],
