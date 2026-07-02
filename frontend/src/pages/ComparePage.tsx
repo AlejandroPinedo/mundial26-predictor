@@ -7,6 +7,18 @@ import { getPointsBadge } from '../utils/points'
 import { LIMA_TZ } from '../utils/dates'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
+import { parseTeamName } from '../utils/bracketStructure'
+
+// Rondas del bracket (equipos que cada usuario predijo que ALCANZAN esa instancia).
+const BRACKET_ROUNDS = [
+  { key: 'round16', label: 'Octavos', pts: 1 },
+  { key: 'quarter', label: 'Cuartos', pts: 2 },
+  { key: 'semi', label: 'Semifinal', pts: 4 },
+  { key: 'finalist', label: 'Final', pts: 6 },
+  { key: 'champion', label: 'Campeón', pts: 10 },
+] as const
+
+type BracketPreds = Record<string, string[]>
 
 type Prediction = {
   id: string
@@ -41,14 +53,20 @@ export default function ComparePage() {
   const [loading, setLoading] = useState(true)
   const [comparedMatches, setComparedMatches] = useState<ComparedMatch[]>([])
   const [filter, setFilter] = useState<'all' | 'played' | 'pending'>('all')
+  const [myBracket, setMyBracket] = useState<BracketPreds>({})
+  const [otherBracket, setOtherBracket] = useState<BracketPreds>({})
+  const [bracketResults, setBracketResults] = useState<BracketPreds>({})
 
   useEffect(() => {
     setLoading(true)
     Promise.all([
       apiFetch('/predictions/my'),
       apiFetch(`/predictions/user/${encodeURIComponent(username || '')}`),
+      apiFetch('/bracket/my').catch(() => ({ predictions: {} })),
+      apiFetch(`/bracket/user/${encodeURIComponent(username || '')}`).catch(() => ({ predictions: {} })),
+      apiFetch('/bracket/results').catch(() => ({ results: {} })),
     ])
-      .then(([myData, otherData]) => {
+      .then(([myData, otherData, myBr, otherBr, brRes]) => {
         const myPredictions: Prediction[] = myData.predictions
         const otherPredictions: Prediction[] = otherData.predictions
 
@@ -87,6 +105,18 @@ export default function ComparePage() {
         merged.sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime())
 
         setComparedMatches(merged)
+
+        // Bracket (eliminatoria): normaliza el prefijo de slot y descarta vacíos.
+        const norm = (obj: Record<string, string[]> = {}): BracketPreds => {
+          const out: BracketPreds = {}
+          for (const k of Object.keys(obj)) {
+            out[k] = (obj[k] || []).map((t) => parseTeamName(t)).filter((t): t is string => !!t)
+          }
+          return out
+        }
+        setMyBracket(norm(myBr?.predictions))
+        setOtherBracket(norm(otherBr?.predictions))
+        setBracketResults(norm(brRes?.results))
       })
       .catch(err => {
         console.error('Error fetching comparisons:', err)
@@ -398,6 +428,68 @@ export default function ComparePage() {
                 No hay partidos en esta categoría
               </h3>
               <p className="text-gray-400 text-sm">Prueba seleccionando una pestaña de filtro diferente.</p>
+            </div>
+          )}
+
+          {/* Bracket / Eliminatoria: predicciones de avance cara a cara */}
+          {BRACKET_ROUNDS.some(r => (myBracket[r.key]?.length || otherBracket[r.key]?.length)) && (
+            <div className="mt-10 fade-up-3">
+              <h2 className="font-display text-xl md:text-2xl text-white uppercase mb-1">Bracket · Eliminatoria</h2>
+              <p className="text-[11px] text-gray-500 mb-5 font-medium">
+                Equipos que cada quien predijo que avanzan. En <span className="text-mx">verde</span>, aciertos según los resultados.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {BRACKET_ROUNDS.map(r => {
+                  const mine = myBracket[r.key] || []
+                  const theirs = otherBracket[r.key] || []
+                  if (!mine.length && !theirs.length) return null
+                  const correct = new Set(bracketResults[r.key] || [])
+                  const chips = (teams: string[]) =>
+                    teams.length ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {teams.map(t => {
+                          const ok = correct.has(t)
+                          return (
+                            <span
+                              key={t}
+                              className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium border ${
+                                ok ? 'bg-mx/10 border-mx/30 text-mx' : 'bg-ink-950/60 border-white/8 text-gray-300'
+                              }`}
+                            >
+                              <Flag team={t} className="h-3 flex-shrink-0" />
+                              <span>{t}</span>
+                              {ok && <span className="text-mx">✓</span>}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-600 italic">Sin predicción</span>
+                    )
+                  return (
+                    <div key={r.key} className="bg-panel border border-white/8 rounded-2xl p-4">
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="chip text-us border-us/20 bg-us/[0.08]">{r.label}</span>
+                        <span className="text-[10px] text-gray-500 font-condensed font-extrabold uppercase tracking-wider">
+                          {r.pts} pts c/u
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <span className="text-[9px] text-ca font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1.5">Tú</span>
+                          {chips(mine)}
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-us font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1.5 truncate">
+                            {username}
+                          </span>
+                          {chips(theirs)}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </>

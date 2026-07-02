@@ -3,6 +3,7 @@ import { db } from '../db.js'
 import { authMiddleware } from '../middleware/auth.js'
 import type { AppVariables } from '../types.js'
 import { SHOOTOUT_BONUS } from '../utils/shootoutBonus.js'
+import { ORACLE_NAME } from '../oracle/lock.js'
 
 export const bracketRouter = new Hono<{ Variables: AppVariables }>()
 
@@ -172,6 +173,37 @@ bracketRouter.get('/my', authMiddleware, async (c) => {
   const shootoutBonus = (bonusRes.rows[0]?.n ?? 0) * SHOOTOUT_BONUS
 
   return c.json({ predictions, scores, shootoutBonus })
+})
+
+// Bracket de OTRO usuario (o del Oráculo) para el comparador del ranking. Devuelve
+// los equipos PLANOS por ronda (regexp_replace tolera el prefijo de slot "5:México").
+bracketRouter.get('/user/:username', authMiddleware, async (c) => {
+  const username = c.req.param('username')
+  const emptyPreds = (): Record<string, string[]> => ({
+    round16: [], quarter: [], semi: [], finalist: [], champion: [],
+  })
+
+  // El Pez Oráculo no es un usuario: su bracket congelado vive en oracle_bracket.
+  if (username === ORACLE_NAME) {
+    const r = await db.query(
+      `SELECT round, regexp_replace(team, '^[0-9]+:', '') AS team FROM oracle_bracket ORDER BY round, team`,
+    )
+    const preds = emptyPreds()
+    for (const row of r.rows) if (preds[row.round]) preds[row.round].push(row.team)
+    return c.json({ username, predictions: preds })
+  }
+
+  const userRes = await db.query('SELECT id FROM users WHERE username = $1', [username])
+  if (!userRes.rows[0]) return c.json({ error: 'Usuario no encontrado' }, 404)
+
+  const r = await db.query(
+    `SELECT round, regexp_replace(team, '^[0-9]+:', '') AS team
+     FROM bracket_predictions WHERE user_id = $1 ORDER BY round, team`,
+    [userRes.rows[0].id],
+  )
+  const preds = emptyPreds()
+  for (const row of r.rows) if (preds[row.round]) preds[row.round].push(row.team)
+  return c.json({ username, predictions: preds })
 })
 
 bracketRouter.get('/results', async (c) => {
