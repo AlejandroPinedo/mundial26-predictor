@@ -1,6 +1,7 @@
 import { ingestResult } from './ingest.js'
 import { FIFA_TLA_TO_ES } from './teamCodes.js'
 import { applyBracketResults, type ApplySummary } from '../utils/deriveBracketResults.js'
+import { applyKnockoutProgression, type ProgressionSummary } from '../utils/knockoutProgression.js'
 import type { Queryable } from '../oracle/lock.js'
 
 const WC_MATCHES_URL = 'https://api.football-data.org/v4/competitions/WC/matches'
@@ -21,6 +22,8 @@ export type SyncSummary = {
   conflicts: { match: string; footballData: string; varzesh3: string }[]
   /** Rondas de bracket_results/ko_shootouts reescritas a partir de los KO en `matches` (solo en apply). */
   bracket?: ApplySummary
+  /** Partidos de rondas siguientes cuyos equipos se resolvieron desde los ganadores (solo en apply). */
+  progression?: ProgressionSummary
 }
 
 export type Final = { h: number; a: number }
@@ -178,10 +181,17 @@ export async function syncResults(
     }
   }
 
-  // Automatización del bracket: tras ingerir marcadores/penales, reconstruye
-  // bracket_results (avance) y ko_shootouts (tandas) desde los KO en `matches`.
-  // AISLADA: un fallo aquí no debe tumbar el sync de resultados.
+  // Automatización del cuadro: tras ingerir marcadores/penales,
+  //  1) resuelve los equipos de las rondas siguientes desde los ganadores
+  //     (Octavos→Final), para no subir los cruces a mano en cada llave, y
+  //  2) reconstruye bracket_results (avance) y ko_shootouts (tandas).
+  // AISLADAS entre sí: un fallo de una no debe tumbar el sync ni la otra.
   if (opts.apply) {
+    try {
+      summary.progression = await applyKnockoutProgression(db)
+    } catch (err) {
+      console.error('[sync] applyKnockoutProgression falló (aislado):', err)
+    }
     try {
       summary.bracket = await applyBracketResults(db)
     } catch (err) {
