@@ -388,8 +388,10 @@ export default function CalendarPage() {
                     // Points display
                     const pts = pred?.points ?? 0
 
-                    // Pronóstico del modelo (solo partidos no jugados)
-                    const prediction = m.home_score === null
+                    // Pronóstico del modelo / Pez Oráculo (solo partidos no jugados y con
+                    // equipos reales — no placeholders "Ganador M89" de KO sin resolver).
+                    const isPlaceholder = /^(Ganador|Perdedor)\b/i.test(m.home_team) || /^(Ganador|Perdedor)\b/i.test(m.away_team)
+                    const prediction = m.home_score === null && !isPlaceholder
                       ? predictMatch(m.home_team, m.away_team, { neutralVenue: !HOST_NATIONS.has(m.home_team), elo: liveElo })
                       : null
 
@@ -544,7 +546,7 @@ export default function CalendarPage() {
                           )}
                         </div>
 
-                        {prediction && !isKnockout && (
+                        {prediction && (
                           <div className="relative z-10">
                             <MatchPrediction
                               prediction={prediction}
