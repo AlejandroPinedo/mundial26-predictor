@@ -720,7 +720,12 @@ export default function BracketPage() {
       const rounds = ['round16', 'quarter', 'semi', 'finalist', 'champion'] as const
       await Promise.all(
         rounds.map(round => {
-          const teams = predictions[round as keyof typeof predictions].filter((team): team is string => !!team)
+          // Prefijo de slot ("5:México") para poder restaurar cada pick en su llave al
+          // recargar (el backend lo guarda tal cual; el loader parsea el prefijo). Sin
+          // esto se perdía la posición y las predicciones no reaparecían tras F5.
+          const teams = predictions[round as keyof typeof predictions]
+            .map((team, slot) => (team ? `${slot}:${team}` : null))
+            .filter((t): t is string => !!t)
 
           // Build scores payload
           const matchCount = Math.ceil(teams.length / 2)
