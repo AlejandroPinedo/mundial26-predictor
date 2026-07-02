@@ -6,19 +6,20 @@ import { SHOOTOUT_BONUS } from '../utils/shootoutBonus.js'
 
 export const bracketRouter = new Hono<{ Variables: AppVariables }>()
 
-// GROUP_STAGE_VALUES — valores exactos del campo `stage` para la fase de grupos.
-// Se usa para excluirlos al buscar el primer partido de eliminatorias.
-const GROUP_STAGE_VALUES = ['Group Stage', 'Fase de grupos', 'grupo', 'group']
+// Cierre oficial de Octavos (Canadá vs Marruecos, 4 jul 2026 13:00 ET = 17:00 UTC).
+// Fallback usado mientras Octavos aún no está sembrado en `matches`.
+const OCTAVOS_KICKOFF_FALLBACK = '2026-07-04T17:00:00Z'
 
+// Ventana de predicción del bracket. Se REABRIÓ en jul 2026 (hubo pocas predicciones
+// por incidencias del despliegue): antes cerraba al primer partido de eliminatorias
+// (Dieciseisavos); ahora cierra al inicio de OCTAVOS. Cuando Octavos ya esté sembrado
+// en `matches`, el cierre es su primer partido; mientras tanto usa el fallback oficial.
 async function getBracketDeadline(): Promise<Date | null> {
   const { rows } = await db.query(
-    `SELECT MIN(match_date) AS deadline
-     FROM matches
-     WHERE NOT (${GROUP_STAGE_VALUES.map((_, i) => `LOWER(stage) LIKE $${i + 1}`).join(' OR ')})`,
-    GROUP_STAGE_VALUES.map(v => `%${v.toLowerCase()}%`)
+    `SELECT MIN(match_date) AS deadline FROM matches WHERE LOWER(stage) LIKE '%octavos%'`
   )
-  const val = rows[0]?.deadline
-  return val ? new Date(val) : null
+  const firstOctavos = rows[0]?.deadline
+  return firstOctavos ? new Date(firstOctavos) : new Date(OCTAVOS_KICKOFF_FALLBACK)
 }
 
 const ROUND_POINTS: Record<string, number> = {
@@ -55,6 +56,25 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
   const deadline = await getBracketDeadline()
   if (deadline && new Date() >= deadline) {
     return c.json({ error: 'Las predicciones de bracket están cerradas' }, 403)
+  }
+
+  // Candado de justicia (reapertura jul 2026): al reabrir el bracket, los 16avos
+  // YA JUGADOS no se pueden (re)predecir para ganar puntos "gratis". Bloqueamos en
+  // round16 los equipos que ya avanzaron (bracket_results.round16), SALVO los que el
+  // usuario ya tuviera guardados de antes (no castigar a quien predijo a tiempo).
+  // Se calcula ANTES del DELETE porque necesitamos sus picks previos. Solo afecta
+  // qué se INSERTA en bracket_predictions; el arreglo `teams` completo se conserva
+  // para no descuadrar el cálculo de tandas de penales (pares 2i/2i+1 = octavos).
+  let blockedRound16 = new Set<string>()
+  if (round === 'round16') {
+    const [decidedRes, existingRes] = await Promise.all([
+      db.query(`SELECT team FROM bracket_results WHERE round = 'round16'`),
+      db.query('SELECT team FROM bracket_predictions WHERE user_id = $1 AND round = $2', [userId, round]),
+    ])
+    const existing = new Set(existingRes.rows.map((r: { team: string }) => r.team))
+    blockedRound16 = new Set(
+      decidedRes.rows.map((r: { team: string }) => r.team).filter((t: string) => !existing.has(t)),
+    )
   }
 
   await db.query('DELETE FROM bracket_predictions WHERE user_id = $1 AND round = $2', [userId, round])
@@ -95,6 +115,7 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
     const params: unknown[] = [userId, round]
     const rowPlaceholders: string[] = []
     teams.forEach((team: string, idx: number) => {
+      if (blockedRound16.has(team)) return // 16avo ya jugado: no se guarda como pick
       const matchIndex = Math.floor(idx / 2)
       const score = scoreMap[matchIndex]
       const base = params.length + 1
@@ -102,10 +123,12 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
       rowPlaceholders.push(`($1, $2, $${base}, $${base+1}, $${base+2}, $${base+3}, $${base+4})`)
     })
 
-    await db.query(
-      `INSERT INTO bracket_predictions (user_id, round, team, home_score, away_score, home_pen, away_pen) VALUES ${rowPlaceholders.join(', ')}`,
-      params
-    )
+    if (rowPlaceholders.length > 0) {
+      await db.query(
+        `INSERT INTO bracket_predictions (user_id, round, team, home_score, away_score, home_pen, away_pen) VALUES ${rowPlaceholders.join(', ')}`,
+        params
+      )
+    }
   }
 
   return c.json({ updated: teams.length })
