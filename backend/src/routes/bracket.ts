@@ -6,19 +6,20 @@ import { SHOOTOUT_BONUS } from '../utils/shootoutBonus.js'
 
 export const bracketRouter = new Hono<{ Variables: AppVariables }>()
 
-// GROUP_STAGE_VALUES — valores exactos del campo `stage` para la fase de grupos.
-// Se usa para excluirlos al buscar el primer partido de eliminatorias.
-const GROUP_STAGE_VALUES = ['Group Stage', 'Fase de grupos', 'grupo', 'group']
+// Cierre oficial de Octavos (Canadá vs Marruecos, 4 jul 2026 13:00 ET = 17:00 UTC).
+// Fallback usado mientras Octavos aún no está sembrado en `matches`.
+const OCTAVOS_KICKOFF_FALLBACK = '2026-07-04T17:00:00Z'
 
+// Ventana de predicción del bracket. Se REABRIÓ en jul 2026 (hubo pocas predicciones
+// por incidencias del despliegue): antes cerraba al primer partido de eliminatorias
+// (Dieciseisavos); ahora cierra al inicio de OCTAVOS. Cuando Octavos ya esté sembrado
+// en `matches`, el cierre es su primer partido; mientras tanto usa el fallback oficial.
 async function getBracketDeadline(): Promise<Date | null> {
   const { rows } = await db.query(
-    `SELECT MIN(match_date) AS deadline
-     FROM matches
-     WHERE NOT (${GROUP_STAGE_VALUES.map((_, i) => `LOWER(stage) LIKE $${i + 1}`).join(' OR ')})`,
-    GROUP_STAGE_VALUES.map(v => `%${v.toLowerCase()}%`)
+    `SELECT MIN(match_date) AS deadline FROM matches WHERE LOWER(stage) LIKE '%octavos%'`
   )
-  const val = rows[0]?.deadline
-  return val ? new Date(val) : null
+  const firstOctavos = rows[0]?.deadline
+  return firstOctavos ? new Date(firstOctavos) : new Date(OCTAVOS_KICKOFF_FALLBACK)
 }
 
 const ROUND_POINTS: Record<string, number> = {
