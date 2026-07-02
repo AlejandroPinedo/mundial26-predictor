@@ -38,6 +38,15 @@ const ROUND_SLOTS: Record<string, number> = {
   champion: 1,
 }
 
+// Los picks de bracket se guardan con prefijo de slot ("5:México") para poder
+// restaurar cada equipo en su llave al recargar la página. Este helper devuelve el
+// nombre PLANO (sin prefijo), usado para casar contra bracket_results/ko_shootouts
+// (que guardan nombres planos). Tolera picks viejos ya sin prefijo.
+const plainTeam = (t: string): string => {
+  const i = t.indexOf(':')
+  return i > 0 && /^\d+$/.test(t.slice(0, i)) ? t.slice(i + 1) : t
+}
+
 bracketRouter.get('/deadline', async (c) => {
   const deadline = await getBracketDeadline()
   const locked = deadline ? new Date() >= deadline : false
@@ -71,7 +80,7 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
       db.query(`SELECT team FROM bracket_results WHERE round = 'round16'`),
       db.query('SELECT team FROM bracket_predictions WHERE user_id = $1 AND round = $2', [userId, round]),
     ])
-    const existing = new Set(existingRes.rows.map((r: { team: string }) => r.team))
+    const existing = new Set(existingRes.rows.map((r: { team: string }) => plainTeam(r.team)))
     blockedRound16 = new Set(
       decidedRes.rows.map((r: { team: string }) => r.team).filter((t: string) => !existing.has(t)),
     )
@@ -98,7 +107,8 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
       const a = teams[2 * i], b = teams[2 * i + 1]
       const s = scoreMap[i]
       if (a && b && s && s.home === s.away && s.homePen !== null && s.awayPen !== null) {
-        const [x, y] = [a, b].sort()
+        // Nombres PLANOS para casar con ko_shootouts (que no lleva prefijo de slot).
+        const [x, y] = [plainTeam(a), plainTeam(b)].sort()
         const base = pickParams.length + 1
         pickParams.push(x, y)
         pickRows.push(`($1, $2, $${base}, $${base + 1})`)
@@ -115,7 +125,7 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
     const params: unknown[] = [userId, round]
     const rowPlaceholders: string[] = []
     teams.forEach((team: string, idx: number) => {
-      if (blockedRound16.has(team)) return // 16avo ya jugado: no se guarda como pick
+      if (blockedRound16.has(plainTeam(team))) return // 16avo ya jugado: no se guarda como pick
       const matchIndex = Math.floor(idx / 2)
       const score = scoreMap[matchIndex]
       const base = params.length + 1
@@ -148,7 +158,14 @@ bracketRouter.get('/my', authMiddleware, async (c) => {
   for (const row of result.rows) {
     if (predictions[row.round] !== undefined) {
       predictions[row.round].push(row.team)
-      const matchIndex = Math.floor((predictions[row.round].length - 1) / 2)
+      // Slot real desde el prefijo ("5:México" → 5) para casar el marcador con su
+      // llave al recargar. Picks viejos sin prefijo → posición de inserción (legacy).
+      const colon = row.team.indexOf(':')
+      const slot =
+        colon > 0 && /^\d+$/.test(row.team.slice(0, colon))
+          ? Number(row.team.slice(0, colon))
+          : predictions[row.round].length - 1
+      const matchIndex = Math.floor(slot / 2)
       const key = `${row.round}_${matchIndex}`
       if (row.home_score !== null && !scores[key]) {
         scores[key] = {
@@ -265,7 +282,7 @@ bracketRouter.post('/admin/result', authMiddleware, async (c) => {
   const pointsMap: Record<string, number> = {}
 
   for (const pred of preds.rows) {
-    if (correctTeams.has(pred.team)) {
+    if (correctTeams.has(plainTeam(pred.team))) {
       pointsMap[pred.user_id] = (pointsMap[pred.user_id] || 0) + pts
     }
   }

@@ -5,6 +5,7 @@ import { apiFetch } from '../api/client'
 import Spinner from '../components/Spinner'
 import { getPointsBadge } from '../utils/points'
 import Flag from '../components/Flag'
+import { parseTeamName } from '../utils/bracketStructure'
 import { LIMA_TZ } from '../utils/dates'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
@@ -284,12 +285,15 @@ export default function MyPredictionsPage() {
                     <span className="chip border-gold/25 bg-gold/10 text-gold ml-auto">{meta.pts} pts c/u</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {teams.map(team => (
-                      <span key={team} className="flex items-center gap-1.5 bg-panel-2 border border-white/10 rounded-xl px-3 py-1 text-xs font-medium text-gray-200">
-                        <Flag team={team} className="h-3 flex-shrink-0" />
-                        <span>{team}</span>
-                      </span>
-                    ))}
+                    {teams.map(team => {
+                      const name = parseTeamName(team) ?? team // quita prefijo de slot ("5:México")
+                      return (
+                        <span key={team} className="flex items-center gap-1.5 bg-panel-2 border border-white/10 rounded-xl px-3 py-1 text-xs font-medium text-gray-200">
+                          <Flag team={name} className="h-3 flex-shrink-0" />
+                          <span>{name}</span>
+                        </span>
+                      )
+                    })}
                   </div>
                 </div>
               )
