@@ -380,13 +380,18 @@ export default function CalendarPage() {
                     const input = inputs[m.id] || { home: '', away: '' }
                     const kickoff = new Date(m.match_date)
                     const isLocked = now > kickoff || m.home_score !== null
+                    // La eliminatoria se predice SOLO en el Bracket: en el calendario es
+                    // de solo lectura (resultado/vivo), sin inputs ni botón de guardar.
+                    const isKnockout = !/grupo|group/i.test(m.stage ?? '')
                     const isSaved = pred !== undefined && String(pred.predicted_home) === input.home && String(pred.predicted_away) === input.away
 
                     // Points display
                     const pts = pred?.points ?? 0
 
-                    // Pronóstico del modelo (solo partidos no jugados)
-                    const prediction = m.home_score === null
+                    // Pronóstico del modelo / Pez Oráculo (solo partidos no jugados y con
+                    // equipos reales — no placeholders "Ganador M89" de KO sin resolver).
+                    const isPlaceholder = /^(Ganador|Perdedor)\b/i.test(m.home_team) || /^(Ganador|Perdedor)\b/i.test(m.away_team)
+                    const prediction = m.home_score === null && !isPlaceholder
                       ? predictMatch(m.home_team, m.away_team, { neutralVenue: !HOST_NATIONS.has(m.home_team), elo: liveElo })
                       : null
 
@@ -422,7 +427,20 @@ export default function CalendarPage() {
 
                           {/* Center Score / Inputs */}
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            {isLocked ? (
+                            {isKnockout ? (
+                              /* Eliminatoria: solo lectura (se predice en el Bracket) */
+                              <div className="flex flex-col items-center gap-1 select-none">
+                                {m.home_score !== null ? (
+                                  <div className="scoreboard px-2.5 py-1 rounded-lg text-sm">
+                                    {m.home_score} - {m.away_score}
+                                  </div>
+                                ) : isLive(m) ? (
+                                  <LiveScore m={m} />
+                                ) : (
+                                  <span className="text-gray-600 font-display text-sm">–</span>
+                                )}
+                              </div>
+                            ) : isLocked ? (
                               /* Locked view (official result & predicted score side by side) */
                               <div className="flex flex-col items-center gap-1 select-none">
                                 {m.home_score !== null ? (
@@ -489,7 +507,9 @@ export default function CalendarPage() {
                         <div className="border-t border-white/8 mt-3 pt-3 flex justify-between items-center h-8 relative z-10">
                           {/* Left area: Points earned or locking warning */}
                           <div>
-                            {m.home_score !== null && pred ? (
+                            {isKnockout ? (
+                              <span className="chip border-gold/25 bg-gold/10 text-gold">Se predice en el Bracket</span>
+                            ) : m.home_score !== null && pred ? (
                               <span className={`chip ${
                                 pts === 3 ? 'border-gold/30 bg-gold/10 text-gold' :
                                 pts > 0 ? 'border-mx/30 bg-mx/10 text-mx' :
@@ -510,8 +530,8 @@ export default function CalendarPage() {
                             ) : null}
                           </div>
 
-                          {/* Right area: Save button */}
-                          {!isLocked && (
+                          {/* Right area: Save button (solo grupos; la eliminatoria va por Bracket) */}
+                          {!isLocked && !isKnockout && (
                             <button
                               onClick={() => handlePredict(m.id)}
                               disabled={savingId === m.id || isSaved}

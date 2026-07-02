@@ -42,6 +42,14 @@ predictionsRouter.post('/', authMiddleware, async (c) => {
   if (!match.rows[0]) return c.json({ error: 'Match not found' }, 404)
 
     const matchRow = match.rows[0]
+
+    // La eliminatoria se predice SOLO en el bracket (avance + tandas de penales).
+    // Este endpoint (calendario/matches) es exclusivo de la fase de grupos.
+    const isGroupStage = /grupo|group/i.test(matchRow.stage ?? '')
+    if (!isGroupStage) {
+        return c.json({ error: 'Las predicciones de eliminatoria se hacen en el Bracket' }, 403)
+    }
+
     const kickoff = new Date(matchRow.match_date)
     if (new Date() > kickoff) {
         return c.json({ error: 'Este partido ya comenzó — no puedes modificar tu predicción' }, 400)
@@ -268,11 +276,12 @@ predictionsRouter.get('/user/:username', authMiddleware, async (c) => {
 
 predictionsRouter.get('/global-insights', async (c) => {
   const champRes = await db.query(
-    `SELECT team, COUNT(*)::int as count 
-     FROM bracket_predictions 
-     WHERE round = 'champion' 
-     GROUP BY team 
-     ORDER BY count DESC 
+    // Normaliza el prefijo de slot ("0:Argentina" → "Argentina"); tolera picks viejos sin prefijo.
+    `SELECT regexp_replace(team, '^[0-9]+:', '') AS team, COUNT(*)::int as count
+     FROM bracket_predictions
+     WHERE round = 'champion'
+     GROUP BY regexp_replace(team, '^[0-9]+:', '')
+     ORDER BY count DESC
      LIMIT 5`
   )
 
@@ -342,7 +351,7 @@ predictionsRouter.get('/global-insights', async (c) => {
   const bracketRoundsRes = await db.query(
     `SELECT round,
             COUNT(*)::int            as picks,
-            COUNT(DISTINCT team)::int as distinct_teams
+            COUNT(DISTINCT regexp_replace(team, '^[0-9]+:', ''))::int as distinct_teams
      FROM bracket_predictions
      GROUP BY round`
   )

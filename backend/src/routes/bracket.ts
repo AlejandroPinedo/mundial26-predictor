@@ -3,22 +3,24 @@ import { db } from '../db.js'
 import { authMiddleware } from '../middleware/auth.js'
 import type { AppVariables } from '../types.js'
 import { SHOOTOUT_BONUS } from '../utils/shootoutBonus.js'
+import { ORACLE_NAME } from '../oracle/lock.js'
 
 export const bracketRouter = new Hono<{ Variables: AppVariables }>()
 
-// GROUP_STAGE_VALUES — valores exactos del campo `stage` para la fase de grupos.
-// Se usa para excluirlos al buscar el primer partido de eliminatorias.
-const GROUP_STAGE_VALUES = ['Group Stage', 'Fase de grupos', 'grupo', 'group']
+// Cierre oficial de Octavos (Canadá vs Marruecos, 4 jul 2026 13:00 ET = 17:00 UTC).
+// Fallback usado mientras Octavos aún no está sembrado en `matches`.
+const OCTAVOS_KICKOFF_FALLBACK = '2026-07-04T17:00:00Z'
 
+// Ventana de predicción del bracket. Se REABRIÓ en jul 2026 (hubo pocas predicciones
+// por incidencias del despliegue): antes cerraba al primer partido de eliminatorias
+// (Dieciseisavos); ahora cierra al inicio de OCTAVOS. Cuando Octavos ya esté sembrado
+// en `matches`, el cierre es su primer partido; mientras tanto usa el fallback oficial.
 async function getBracketDeadline(): Promise<Date | null> {
   const { rows } = await db.query(
-    `SELECT MIN(match_date) AS deadline
-     FROM matches
-     WHERE NOT (${GROUP_STAGE_VALUES.map((_, i) => `LOWER(stage) LIKE $${i + 1}`).join(' OR ')})`,
-    GROUP_STAGE_VALUES.map(v => `%${v.toLowerCase()}%`)
+    `SELECT MIN(match_date) AS deadline FROM matches WHERE LOWER(stage) LIKE '%octavos%'`
   )
-  const val = rows[0]?.deadline
-  return val ? new Date(val) : null
+  const firstOctavos = rows[0]?.deadline
+  return firstOctavos ? new Date(firstOctavos) : new Date(OCTAVOS_KICKOFF_FALLBACK)
 }
 
 const ROUND_POINTS: Record<string, number> = {
@@ -35,6 +37,15 @@ const ROUND_SLOTS: Record<string, number> = {
   semi: 4,
   finalist: 2,
   champion: 1,
+}
+
+// Los picks de bracket se guardan con prefijo de slot ("5:México") para poder
+// restaurar cada equipo en su llave al recargar la página. Este helper devuelve el
+// nombre PLANO (sin prefijo), usado para casar contra bracket_results/ko_shootouts
+// (que guardan nombres planos). Tolera picks viejos ya sin prefijo.
+const plainTeam = (t: string): string => {
+  const i = t.indexOf(':')
+  return i > 0 && /^\d+$/.test(t.slice(0, i)) ? t.slice(i + 1) : t
 }
 
 bracketRouter.get('/deadline', async (c) => {
@@ -55,6 +66,25 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
   const deadline = await getBracketDeadline()
   if (deadline && new Date() >= deadline) {
     return c.json({ error: 'Las predicciones de bracket están cerradas' }, 403)
+  }
+
+  // Candado de justicia (reapertura jul 2026): al reabrir el bracket, los 16avos
+  // YA JUGADOS no se pueden (re)predecir para ganar puntos "gratis". Bloqueamos en
+  // round16 los equipos que ya avanzaron (bracket_results.round16), SALVO los que el
+  // usuario ya tuviera guardados de antes (no castigar a quien predijo a tiempo).
+  // Se calcula ANTES del DELETE porque necesitamos sus picks previos. Solo afecta
+  // qué se INSERTA en bracket_predictions; el arreglo `teams` completo se conserva
+  // para no descuadrar el cálculo de tandas de penales (pares 2i/2i+1 = octavos).
+  let blockedRound16 = new Set<string>()
+  if (round === 'round16') {
+    const [decidedRes, existingRes] = await Promise.all([
+      db.query(`SELECT team FROM bracket_results WHERE round = 'round16'`),
+      db.query('SELECT team FROM bracket_predictions WHERE user_id = $1 AND round = $2', [userId, round]),
+    ])
+    const existing = new Set(existingRes.rows.map((r: { team: string }) => plainTeam(r.team)))
+    blockedRound16 = new Set(
+      decidedRes.rows.map((r: { team: string }) => r.team).filter((t: string) => !existing.has(t)),
+    )
   }
 
   await db.query('DELETE FROM bracket_predictions WHERE user_id = $1 AND round = $2', [userId, round])
@@ -78,7 +108,8 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
       const a = teams[2 * i], b = teams[2 * i + 1]
       const s = scoreMap[i]
       if (a && b && s && s.home === s.away && s.homePen !== null && s.awayPen !== null) {
-        const [x, y] = [a, b].sort()
+        // Nombres PLANOS para casar con ko_shootouts (que no lleva prefijo de slot).
+        const [x, y] = [plainTeam(a), plainTeam(b)].sort()
         const base = pickParams.length + 1
         pickParams.push(x, y)
         pickRows.push(`($1, $2, $${base}, $${base + 1})`)
@@ -95,6 +126,7 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
     const params: unknown[] = [userId, round]
     const rowPlaceholders: string[] = []
     teams.forEach((team: string, idx: number) => {
+      if (blockedRound16.has(plainTeam(team))) return // 16avo ya jugado: no se guarda como pick
       const matchIndex = Math.floor(idx / 2)
       const score = scoreMap[matchIndex]
       const base = params.length + 1
@@ -102,10 +134,12 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
       rowPlaceholders.push(`($1, $2, $${base}, $${base+1}, $${base+2}, $${base+3}, $${base+4})`)
     })
 
-    await db.query(
-      `INSERT INTO bracket_predictions (user_id, round, team, home_score, away_score, home_pen, away_pen) VALUES ${rowPlaceholders.join(', ')}`,
-      params
-    )
+    if (rowPlaceholders.length > 0) {
+      await db.query(
+        `INSERT INTO bracket_predictions (user_id, round, team, home_score, away_score, home_pen, away_pen) VALUES ${rowPlaceholders.join(', ')}`,
+        params
+      )
+    }
   }
 
   return c.json({ updated: teams.length })
@@ -125,7 +159,14 @@ bracketRouter.get('/my', authMiddleware, async (c) => {
   for (const row of result.rows) {
     if (predictions[row.round] !== undefined) {
       predictions[row.round].push(row.team)
-      const matchIndex = Math.floor((predictions[row.round].length - 1) / 2)
+      // Slot real desde el prefijo ("5:México" → 5) para casar el marcador con su
+      // llave al recargar. Picks viejos sin prefijo → posición de inserción (legacy).
+      const colon = row.team.indexOf(':')
+      const slot =
+        colon > 0 && /^\d+$/.test(row.team.slice(0, colon))
+          ? Number(row.team.slice(0, colon))
+          : predictions[row.round].length - 1
+      const matchIndex = Math.floor(slot / 2)
       const key = `${row.round}_${matchIndex}`
       if (row.home_score !== null && !scores[key]) {
         scores[key] = {
@@ -149,6 +190,37 @@ bracketRouter.get('/my', authMiddleware, async (c) => {
   const shootoutBonus = (bonusRes.rows[0]?.n ?? 0) * SHOOTOUT_BONUS
 
   return c.json({ predictions, scores, shootoutBonus })
+})
+
+// Bracket de OTRO usuario (o del Oráculo) para el comparador del ranking. Devuelve
+// los equipos PLANOS por ronda (regexp_replace tolera el prefijo de slot "5:México").
+bracketRouter.get('/user/:username', authMiddleware, async (c) => {
+  const username = c.req.param('username')
+  const emptyPreds = (): Record<string, string[]> => ({
+    round16: [], quarter: [], semi: [], finalist: [], champion: [],
+  })
+
+  // El Pez Oráculo no es un usuario: su bracket congelado vive en oracle_bracket.
+  if (username === ORACLE_NAME) {
+    const r = await db.query(
+      `SELECT round, regexp_replace(team, '^[0-9]+:', '') AS team FROM oracle_bracket ORDER BY round, team`,
+    )
+    const preds = emptyPreds()
+    for (const row of r.rows) if (preds[row.round]) preds[row.round].push(row.team)
+    return c.json({ username, predictions: preds })
+  }
+
+  const userRes = await db.query('SELECT id FROM users WHERE username = $1', [username])
+  if (!userRes.rows[0]) return c.json({ error: 'Usuario no encontrado' }, 404)
+
+  const r = await db.query(
+    `SELECT round, regexp_replace(team, '^[0-9]+:', '') AS team
+     FROM bracket_predictions WHERE user_id = $1 ORDER BY round, team`,
+    [userRes.rows[0].id],
+  )
+  const preds = emptyPreds()
+  for (const row of r.rows) if (preds[row.round]) preds[row.round].push(row.team)
+  return c.json({ username, predictions: preds })
 })
 
 bracketRouter.get('/results', async (c) => {
@@ -242,7 +314,7 @@ bracketRouter.post('/admin/result', authMiddleware, async (c) => {
   const pointsMap: Record<string, number> = {}
 
   for (const pred of preds.rows) {
-    if (correctTeams.has(pred.team)) {
+    if (correctTeams.has(plainTeam(pred.team))) {
       pointsMap[pred.user_id] = (pointsMap[pred.user_id] || 0) + pts
     }
   }

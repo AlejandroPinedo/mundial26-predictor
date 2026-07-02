@@ -515,80 +515,74 @@ export default function BracketPage() {
         if (oracleData?.oracle) setOracleBracket(oracleData.oracle)
         setBracketLocked(!!deadlineData?.locked)
         if (typeof m?.shootoutBonus === 'number') setShootoutBonus(m.shootoutBonus)
-        // Load predictions
-        const parsedPreds = {
-          round16: Array(16).fill(null),
-          quarter: Array(8).fill(null),
-          semi: Array(4).fill(null),
-          finalist: Array(2).fill(null),
-          champion: Array(1).fill(null),
-        }
-
-        if (m?.predictions) {
-          for (const round of ['round16', 'quarter', 'semi', 'finalist', 'champion'] as const) {
-            const list = m.predictions[round] || []
-            for (const item of list) {
-              const parts = item.split(':')
-              if (parts.length > 1 && !isNaN(Number(parts[0]))) {
-                const idx = Number(parts[0])
-                const team = parts.slice(1).join(':')
-                if (idx >= 0 && idx < parsedPreds[round].length) {
-                  parsedPreds[round][idx] = team
-                }
-              } else {
-                const idx = parsedPreds[round].indexOf(null)
-                if (idx !== -1) {
-                  parsedPreds[round][idx] = item
-                }
+        // Predicciones y resultados como CONJUNTOS de equipos planos por ronda. El
+        // SLOT de cada equipo se reconstruye desde la ESTRUCTURA del cuadro (abajo),
+        // robusto a datos viejos sin prefijo (que /bracket/my devuelve alfabéticos) y
+        // a los prefijados nuevos por igual.
+        const toSets = (byRound: Record<string, string[]> | undefined) => {
+          const s: Record<string, Set<string>> = {
+            round16: new Set(), quarter: new Set(), semi: new Set(), finalist: new Set(), champion: new Set(),
+          }
+          if (byRound) {
+            for (const round of ['round16', 'quarter', 'semi', 'finalist', 'champion'] as const) {
+              for (const item of byRound[round] || []) {
+                const t = parseTeamName(item)
+                if (t) s[round].add(t)
               }
             }
           }
+          return s
         }
-        setPredictions(parsedPreds)
-
-        // Load results
-        const parsedResults = {
-          round16: Array(16).fill(null),
-          quarter: Array(8).fill(null),
-          semi: Array(4).fill(null),
-          finalist: Array(2).fill(null),
-          champion: Array(1).fill(null),
-        }
-
-        if (r?.results) {
-          for (const round of ['round16', 'quarter', 'semi', 'finalist', 'champion'] as const) {
-            const list = r.results[round] || []
-            for (const item of list) {
-              const parts = item.split(':')
-              if (parts.length > 1 && !isNaN(Number(parts[0]))) {
-                const idx = Number(parts[0])
-                const team = parts.slice(1).join(':')
-                if (idx >= 0 && idx < parsedResults[round].length) {
-                  parsedResults[round][idx] = team
-                }
-              } else {
-                const idx = parsedResults[round].indexOf(null)
-                if (idx !== -1) {
-                  parsedResults[round][idx] = item
-                }
-              }
-            }
-          }
-        }
-        setResults(parsedResults)
+        const pickSets = toSets(m?.predictions)
+        const resultSets = toSets(r?.results)
 
         if (m.scores) setScores(m.scores as BracketScores)
 
         // Compute R32 Matchups dynamically
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape de calculateRoundOf32 (pre-existente)
+        let computedR32: any[] = []
         if (matchesData?.matches && groupPredsData?.predictions) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape de predicción pre-existente
           const groupStagePredsMap: Record<string, any> = {}
           for (const p of groupPredsData.predictions) {
             groupStagePredsMap[p.match_id] = p
           }
-          const computedR32 = calculateRoundOf32(matchesData.matches, groupStagePredsMap)
+          computedR32 = calculateRoundOf32(matchesData.matches, groupStagePredsMap)
           setR32Matchups(computedR32)
         }
+
+        // Reconstrucción por SLOT desde la estructura oficial (cascada 32avos→campeón):
+        // coloca cada equipo elegido en su llave real. Se usa igual para las
+        // predicciones del usuario (se ve SU pick, no se sobrescribe con el resultado)
+        // y para los resultados (para marcar aciertos). Ver R32_TO_R16_SLOT.
+        const reconstruct = (sets: Record<string, Set<string>>) => {
+          const out = {
+            round16: Array(16).fill(null) as (string | null)[],
+            quarter: Array(8).fill(null) as (string | null)[],
+            semi: Array(4).fill(null) as (string | null)[],
+            finalist: Array(2).fill(null) as (string | null)[],
+            champion: Array(1).fill(null) as (string | null)[],
+          }
+          computedR32.forEach((mu: { home: string | null; away: string | null }, idx: number) => {
+            const slot = R32_TO_R16_SLOT[idx]
+            const h = parseTeamName(mu.home)
+            const a = parseTeamName(mu.away)
+            out.round16[slot] = h && sets.round16.has(h) ? h : a && sets.round16.has(a) ? a : null
+          })
+          const pick = (arr: (string | null)[], k: number, set: Set<string>) => {
+            const t = arr[2 * k]
+            const b = arr[2 * k + 1]
+            return t && set.has(t) ? t : b && set.has(b) ? b : null
+          }
+          for (let k = 0; k < 8; k++) out.quarter[k] = pick(out.round16, k, sets.quarter)
+          for (let k = 0; k < 4; k++) out.semi[k] = pick(out.quarter, k, sets.semi)
+          for (let k = 0; k < 2; k++) out.finalist[k] = pick(out.semi, k, sets.finalist)
+          out.champion[0] = out.finalist.find((t) => t && sets.champion.has(t)) ?? null
+          return out
+        }
+
+        setPredictions(reconstruct(pickSets))
+        setResults(reconstruct(resultSets))
         // Elo vigente (snapshot + resultados ya jugados) para favoritos/autocompletado.
         if (matchesData?.matches) {
           setElo(currentElo(matchesData.matches))
@@ -603,8 +597,28 @@ export default function BracketPage() {
       .finally(() => setLoading(false))
   }, [reloadKey])
 
+  // 16avos YA JUGADOS: bloqueados (no editables) y fijados al ganador real. El
+  // ganador viene de results.round16 (autoritativo, incl. penales); se cruza por
+  // pertenencia con los equipos del cruce, sin depender de alinear por slot.
+  const decidedR16Winners = new Set(
+    results.round16.map((t) => parseTeamName(t)).filter((t): t is string => !!t),
+  )
+  const r32RealWinner = (idx: number): string | null => {
+    const mu = r32Matchups[idx]
+    if (!mu) return null
+    if (mu.home && decidedR16Winners.has(parseTeamName(mu.home) as string)) return mu.home
+    if (mu.away && decidedR16Winners.has(parseTeamName(mu.away) as string)) return mu.away
+    return null
+  }
+  const isR32Locked = (idx: number) => r32RealWinner(idx) != null
+  const r32ClickHandler = (idx: number) =>
+    isR32Locked(idx)
+      ? undefined
+      : () => setActiveMatchKey((prev) => (prev === `round32_${idx}` ? null : `round32_${idx}`))
+
   function advanceTeam(fromRound: string, slotIdx: number, team: string | null) {
     if (!team) return
+    if (fromRound === 'round32' && isR32Locked(slotIdx)) return // 16avo jugado: bloqueado
 
     setPredictions(prev => {
       const next = { ...prev }
@@ -683,7 +697,12 @@ export default function BracketPage() {
       const rounds = ['round16', 'quarter', 'semi', 'finalist', 'champion'] as const
       await Promise.all(
         rounds.map(round => {
-          const teams = predictions[round as keyof typeof predictions].filter((team): team is string => !!team)
+          // Prefijo de slot ("5:México") para poder restaurar cada pick en su llave al
+          // recargar (el backend lo guarda tal cual; el loader parsea el prefijo). Sin
+          // esto se perdía la posición y las predicciones no reaparecían tras F5.
+          const teams = predictions[round as keyof typeof predictions]
+            .map((team, slot) => (team ? `${slot}:${team}` : null))
+            .filter((t): t is string => !!t)
 
           // Build scores payload
           const matchCount = Math.ceil(teams.length / 2)
@@ -788,8 +807,8 @@ export default function BracketPage() {
           top={match.home} bottom={match.away}
           topPlaceholder="?" bottomPlaceholder="?"
           isTopHighlighted={isTopSelected} isBottomHighlighted={isBottomSelected}
-          onTopClick={() => setActiveMatchKey(prev => prev === key ? null : key)}
-          onBottomClick={() => setActiveMatchKey(prev => prev === key ? null : key)}
+          onTopClick={r32ClickHandler(idx)}
+          onBottomClick={r32ClickHandler(idx)}
           linePos="center" connectLeft={false} connectRight={false}
           round="round32" label={match.label || `M${73 + idx}`} side="left" elo={elo}
         />
@@ -968,8 +987,8 @@ export default function BracketPage() {
                           top={match.home} bottom={match.away}
                           topPlaceholder="?" bottomPlaceholder="?"
                           isTopHighlighted={isTopSelected} isBottomHighlighted={isBottomSelected}
-                          onTopClick={() => setActiveMatchKey(prev => prev === `round32_${idx}` ? null : `round32_${idx}`)}
-                          onBottomClick={() => setActiveMatchKey(prev => prev === `round32_${idx}` ? null : `round32_${idx}`)}
+                          onTopClick={r32ClickHandler(idx)}
+                          onBottomClick={r32ClickHandler(idx)}
                           linePos={index % 2 === 0 ? 'bottom' : 'top'}
                           connectRight={false} connectLeft={false}
                           round="round32"
@@ -1311,8 +1330,8 @@ export default function BracketPage() {
                           top={match.home} bottom={match.away}
                           topPlaceholder="?" bottomPlaceholder="?"
                           isTopHighlighted={isTopSelected} isBottomHighlighted={isBottomSelected}
-                          onTopClick={() => setActiveMatchKey(prev => prev === `round32_${idx}` ? null : `round32_${idx}`)}
-                          onBottomClick={() => setActiveMatchKey(prev => prev === `round32_${idx}` ? null : `round32_${idx}`)}
+                          onTopClick={r32ClickHandler(idx)}
+                          onBottomClick={r32ClickHandler(idx)}
                           linePos={index % 2 === 0 ? 'bottom' : 'top'}
                           connectRight={false} connectLeft={false}
                           round="round32"
