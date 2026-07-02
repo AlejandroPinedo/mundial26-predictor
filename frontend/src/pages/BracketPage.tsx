@@ -32,19 +32,11 @@ const R16_MATCH_LABELS = ['M89', 'M90', 'M93', 'M94', 'M91', 'M92', 'M95', 'M96'
 
 function getPlaceholder(round: string, idx: number): string {
   if (round === 'round16') {
-    // Por slot de octavos (0–15). Slots 4–7 = M93/M94 (mitad izq) y 8–11 = M91/M92
-    // (mitad der), según el cableado oficial. Ver R32_TO_R16_SLOT.
-    const labels = [
-      'Ganador M74', 'Ganador M77', // M89 (slots 0,1)
-      'Ganador M73', 'Ganador M75', // M90 (slots 2,3)
-      'Ganador M81', 'Ganador M82', // M93 (slots 4,5)
-      'Ganador M83', 'Ganador M84', // M94 (slots 6,7)
-      'Ganador M76', 'Ganador M78', // M91 (slots 8,9)
-      'Ganador M79', 'Ganador M80', // M92 (slots 10,11)
-      'Ganador M86', 'Ganador M88', // M95 (slots 12,13)
-      'Ganador M85', 'Ganador M87'  // M96 (slots 14,15)
-    ]
-    return labels[idx] || '?'
+    // Rótulo DERIVADO del ruteo oficial (fuente única R32_TO_R16_SLOT): el slot `idx`
+    // de octavos recibe al ganador del 32avo cuyo R32_TO_R16_SLOT === idx. Antes esta
+    // lista estaba hardcodeada y desalineada (M89 mostraba "Ganador M77" en vez de M74).
+    const from = R32_TO_R16_SLOT.indexOf(idx)
+    return from >= 0 ? `Ganador M${73 + from}` : '?'
   }
   if (round === 'quarter') {
     // Por slot de cuartos (0–7). QF M98 lo alimentan M93/M94; QF M99, M91/M92.
