@@ -213,13 +213,16 @@ export default function MatchesPage() {
   }
 
   const now = new Date()
-  const groups = [...new Set(matches.map(m => m.group_name))].sort()
-  const totalPending = matches.filter(m => m.home_score === null && now < new Date(m.match_date)).length
-  const predicted = matches.filter(m => m.home_score === null && now < new Date(m.match_date) && predictions[m.id]).length
-  const groupMatches = matches
+  // Solo fase de grupos: la eliminatoria se predice en el Bracket, y sus partidos
+  // tienen group_name = código Mxx (no debe aparecer como "grupo" seleccionable aquí).
+  const groupStageMatches = matches.filter(m => /grupo|group/i.test(m.stage ?? ''))
+  const groups = [...new Set(groupStageMatches.map(m => m.group_name))].sort()
+  const totalPending = groupStageMatches.filter(m => m.home_score === null && now < new Date(m.match_date)).length
+  const predicted = groupStageMatches.filter(m => m.home_score === null && now < new Date(m.match_date) && predictions[m.id]).length
+  const groupMatches = groupStageMatches
     .filter(m => m.group_name === activeGroup)
     .sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime())
-  const nextMatch = matches.find(m => m.home_score === null && now < new Date(m.match_date))
+  const nextMatch = groupStageMatches.find(m => m.home_score === null && now < new Date(m.match_date))
 
   function getDeadlineWarning(match_date: string) {
     const diff = new Date(match_date).getTime() - now.getTime()

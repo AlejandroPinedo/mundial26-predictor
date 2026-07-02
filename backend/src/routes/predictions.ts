@@ -42,6 +42,14 @@ predictionsRouter.post('/', authMiddleware, async (c) => {
   if (!match.rows[0]) return c.json({ error: 'Match not found' }, 404)
 
     const matchRow = match.rows[0]
+
+    // La eliminatoria se predice SOLO en el bracket (avance + tandas de penales).
+    // Este endpoint (calendario/matches) es exclusivo de la fase de grupos.
+    const isGroupStage = /grupo|group/i.test(matchRow.stage ?? '')
+    if (!isGroupStage) {
+        return c.json({ error: 'Las predicciones de eliminatoria se hacen en el Bracket' }, 403)
+    }
+
     const kickoff = new Date(matchRow.match_date)
     if (new Date() > kickoff) {
         return c.json({ error: 'Este partido ya comenzó — no puedes modificar tu predicción' }, 400)
