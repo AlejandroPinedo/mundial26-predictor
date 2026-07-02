@@ -544,8 +544,6 @@ export default function BracketPage() {
             }
           }
         }
-        setPredictions(parsedPreds)
-
         // Load results
         const parsedResults = {
           round16: Array(16).fill(null),
@@ -580,15 +578,34 @@ export default function BracketPage() {
         if (m.scores) setScores(m.scores as BracketScores)
 
         // Compute R32 Matchups dynamically
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape de calculateRoundOf32 (pre-existente)
+        let computedR32: any[] = []
         if (matchesData?.matches && groupPredsData?.predictions) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape de predicción pre-existente
           const groupStagePredsMap: Record<string, any> = {}
           for (const p of groupPredsData.predictions) {
             groupStagePredsMap[p.match_id] = p
           }
-          const computedR32 = calculateRoundOf32(matchesData.matches, groupStagePredsMap)
+          computedR32 = calculateRoundOf32(matchesData.matches, groupStagePredsMap)
           setR32Matchups(computedR32)
         }
+
+        // 16avos YA JUGADOS: fijar el ganador real en round16 (quedan bloqueados en la
+        // UI). Ganador autoritativo desde parsedResults.round16 (incl. penales); se
+        // cruza por pertenencia con los equipos de cada cruce (sin alinear por slot).
+        const decidedWinners = new Set(
+          parsedResults.round16.map((t) => parseTeamName(t)).filter(Boolean),
+        )
+        computedR32.forEach((mu: { home: string | null; away: string | null }, idx: number) => {
+          const w =
+            mu.home && decidedWinners.has(parseTeamName(mu.home))
+              ? mu.home
+              : mu.away && decidedWinners.has(parseTeamName(mu.away))
+                ? mu.away
+                : null
+          if (w) parsedPreds.round16[R32_TO_R16_SLOT[idx]] = w
+        })
+        setPredictions(parsedPreds)
         // Elo vigente (snapshot + resultados ya jugados) para favoritos/autocompletado.
         if (matchesData?.matches) {
           setElo(currentElo(matchesData.matches))
@@ -603,8 +620,28 @@ export default function BracketPage() {
       .finally(() => setLoading(false))
   }, [reloadKey])
 
+  // 16avos YA JUGADOS: bloqueados (no editables) y fijados al ganador real. El
+  // ganador viene de results.round16 (autoritativo, incl. penales); se cruza por
+  // pertenencia con los equipos del cruce, sin depender de alinear por slot.
+  const decidedR16Winners = new Set(
+    results.round16.map((t) => parseTeamName(t)).filter((t): t is string => !!t),
+  )
+  const r32RealWinner = (idx: number): string | null => {
+    const mu = r32Matchups[idx]
+    if (!mu) return null
+    if (mu.home && decidedR16Winners.has(parseTeamName(mu.home) as string)) return mu.home
+    if (mu.away && decidedR16Winners.has(parseTeamName(mu.away) as string)) return mu.away
+    return null
+  }
+  const isR32Locked = (idx: number) => r32RealWinner(idx) != null
+  const r32ClickHandler = (idx: number) =>
+    isR32Locked(idx)
+      ? undefined
+      : () => setActiveMatchKey((prev) => (prev === `round32_${idx}` ? null : `round32_${idx}`))
+
   function advanceTeam(fromRound: string, slotIdx: number, team: string | null) {
     if (!team) return
+    if (fromRound === 'round32' && isR32Locked(slotIdx)) return // 16avo jugado: bloqueado
 
     setPredictions(prev => {
       const next = { ...prev }
@@ -788,8 +825,8 @@ export default function BracketPage() {
           top={match.home} bottom={match.away}
           topPlaceholder="?" bottomPlaceholder="?"
           isTopHighlighted={isTopSelected} isBottomHighlighted={isBottomSelected}
-          onTopClick={() => setActiveMatchKey(prev => prev === key ? null : key)}
-          onBottomClick={() => setActiveMatchKey(prev => prev === key ? null : key)}
+          onTopClick={r32ClickHandler(idx)}
+          onBottomClick={r32ClickHandler(idx)}
           linePos="center" connectLeft={false} connectRight={false}
           round="round32" label={match.label || `M${73 + idx}`} side="left" elo={elo}
         />
@@ -968,8 +1005,8 @@ export default function BracketPage() {
                           top={match.home} bottom={match.away}
                           topPlaceholder="?" bottomPlaceholder="?"
                           isTopHighlighted={isTopSelected} isBottomHighlighted={isBottomSelected}
-                          onTopClick={() => setActiveMatchKey(prev => prev === `round32_${idx}` ? null : `round32_${idx}`)}
-                          onBottomClick={() => setActiveMatchKey(prev => prev === `round32_${idx}` ? null : `round32_${idx}`)}
+                          onTopClick={r32ClickHandler(idx)}
+                          onBottomClick={r32ClickHandler(idx)}
                           linePos={index % 2 === 0 ? 'bottom' : 'top'}
                           connectRight={false} connectLeft={false}
                           round="round32"
@@ -1311,8 +1348,8 @@ export default function BracketPage() {
                           top={match.home} bottom={match.away}
                           topPlaceholder="?" bottomPlaceholder="?"
                           isTopHighlighted={isTopSelected} isBottomHighlighted={isBottomSelected}
-                          onTopClick={() => setActiveMatchKey(prev => prev === `round32_${idx}` ? null : `round32_${idx}`)}
-                          onBottomClick={() => setActiveMatchKey(prev => prev === `round32_${idx}` ? null : `round32_${idx}`)}
+                          onTopClick={r32ClickHandler(idx)}
+                          onBottomClick={r32ClickHandler(idx)}
                           linePos={index % 2 === 0 ? 'bottom' : 'top'}
                           connectRight={false} connectLeft={false}
                           round="round32"

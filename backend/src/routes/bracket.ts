@@ -58,6 +58,25 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
     return c.json({ error: 'Las predicciones de bracket están cerradas' }, 403)
   }
 
+  // Candado de justicia (reapertura jul 2026): al reabrir el bracket, los 16avos
+  // YA JUGADOS no se pueden (re)predecir para ganar puntos "gratis". Bloqueamos en
+  // round16 los equipos que ya avanzaron (bracket_results.round16), SALVO los que el
+  // usuario ya tuviera guardados de antes (no castigar a quien predijo a tiempo).
+  // Se calcula ANTES del DELETE porque necesitamos sus picks previos. Solo afecta
+  // qué se INSERTA en bracket_predictions; el arreglo `teams` completo se conserva
+  // para no descuadrar el cálculo de tandas de penales (pares 2i/2i+1 = octavos).
+  let blockedRound16 = new Set<string>()
+  if (round === 'round16') {
+    const [decidedRes, existingRes] = await Promise.all([
+      db.query(`SELECT team FROM bracket_results WHERE round = 'round16'`),
+      db.query('SELECT team FROM bracket_predictions WHERE user_id = $1 AND round = $2', [userId, round]),
+    ])
+    const existing = new Set(existingRes.rows.map((r: { team: string }) => r.team))
+    blockedRound16 = new Set(
+      decidedRes.rows.map((r: { team: string }) => r.team).filter((t: string) => !existing.has(t)),
+    )
+  }
+
   await db.query('DELETE FROM bracket_predictions WHERE user_id = $1 AND round = $2', [userId, round])
   // Bono de penales: recalculamos las tandas predichas de esta ronda desde cero.
   await db.query('DELETE FROM bracket_shootout_picks WHERE user_id = $1 AND round = $2', [userId, round])
@@ -96,6 +115,7 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
     const params: unknown[] = [userId, round]
     const rowPlaceholders: string[] = []
     teams.forEach((team: string, idx: number) => {
+      if (blockedRound16.has(team)) return // 16avo ya jugado: no se guarda como pick
       const matchIndex = Math.floor(idx / 2)
       const score = scoreMap[matchIndex]
       const base = params.length + 1
@@ -103,10 +123,12 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
       rowPlaceholders.push(`($1, $2, $${base}, $${base+1}, $${base+2}, $${base+3}, $${base+4})`)
     })
 
-    await db.query(
-      `INSERT INTO bracket_predictions (user_id, round, team, home_score, away_score, home_pen, away_pen) VALUES ${rowPlaceholders.join(', ')}`,
-      params
-    )
+    if (rowPlaceholders.length > 0) {
+      await db.query(
+        `INSERT INTO bracket_predictions (user_id, round, team, home_score, away_score, home_pen, away_pen) VALUES ${rowPlaceholders.join(', ')}`,
+        params
+      )
+    }
   }
 
   return c.json({ updated: teams.length })
