@@ -547,7 +547,7 @@ export default function BracketPage() {
         // coloca cada equipo elegido en su llave real. Se usa igual para las
         // predicciones del usuario (se ve SU pick, no se sobrescribe con el resultado)
         // y para los resultados (para marcar aciertos). Ver R32_TO_R16_SLOT.
-        const reconstruct = (sets: Record<string, Set<string>>) => {
+        const reconstruct = (sets: Record<string, Set<string>>, decidedR16?: Set<string>) => {
           const out = {
             round16: Array(16).fill(null) as (string | null)[],
             quarter: Array(8).fill(null) as (string | null)[],
@@ -559,7 +559,19 @@ export default function BracketPage() {
             const slot = R32_TO_R16_SLOT[idx]
             const h = parseTeamName(mu.home)
             const a = parseTeamName(mu.away)
-            out.round16[slot] = h && sets.round16.has(h) ? h : a && sets.round16.has(a) ? a : null
+            out.round16[slot] =
+              h && sets.round16.has(h)
+                ? h
+                : a && sets.round16.has(a)
+                  ? a
+                  // 16avo YA JUGADO que el usuario NO predijo: rellena con el ganador
+                  // REAL para que la rama no quede muerta (snowball). Queda bloqueado
+                  // y el backend no lo puntúa (candado de 16avos jugados).
+                  : decidedR16 && h && decidedR16.has(h)
+                    ? h
+                    : decidedR16 && a && decidedR16.has(a)
+                      ? a
+                      : null
           })
           const pick = (arr: (string | null)[], k: number, set: Set<string>) => {
             const t = arr[2 * k]
@@ -573,7 +585,10 @@ export default function BracketPage() {
           return out
         }
 
-        setPredictions(reconstruct(pickSets))
+        // Predicciones: si un 16avo jugado no fue predicho, se rellena con el ganador
+        // real (resultSets.round16) para no romper la rama. Los resultados no llevan
+        // fallback (ya SON los ganadores reales).
+        setPredictions(reconstruct(pickSets, resultSets.round16))
         setResults(reconstruct(resultSets))
         // Elo vigente (snapshot + resultados ya jugados) para favoritos/autocompletado.
         if (matchesData?.matches) {
