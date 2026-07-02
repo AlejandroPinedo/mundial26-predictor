@@ -515,65 +515,26 @@ export default function BracketPage() {
         if (oracleData?.oracle) setOracleBracket(oracleData.oracle)
         setBracketLocked(!!deadlineData?.locked)
         if (typeof m?.shootoutBonus === 'number') setShootoutBonus(m.shootoutBonus)
-        // Load predictions
-        const parsedPreds = {
-          round16: Array(16).fill(null),
-          quarter: Array(8).fill(null),
-          semi: Array(4).fill(null),
-          finalist: Array(2).fill(null),
-          champion: Array(1).fill(null),
-        }
-
-        if (m?.predictions) {
-          for (const round of ['round16', 'quarter', 'semi', 'finalist', 'champion'] as const) {
-            const list = m.predictions[round] || []
-            for (const item of list) {
-              const parts = item.split(':')
-              if (parts.length > 1 && !isNaN(Number(parts[0]))) {
-                const idx = Number(parts[0])
-                const team = parts.slice(1).join(':')
-                if (idx >= 0 && idx < parsedPreds[round].length) {
-                  parsedPreds[round][idx] = team
-                }
-              } else {
-                const idx = parsedPreds[round].indexOf(null)
-                if (idx !== -1) {
-                  parsedPreds[round][idx] = item
-                }
+        // Predicciones y resultados como CONJUNTOS de equipos planos por ronda. El
+        // SLOT de cada equipo se reconstruye desde la ESTRUCTURA del cuadro (abajo),
+        // robusto a datos viejos sin prefijo (que /bracket/my devuelve alfabéticos) y
+        // a los prefijados nuevos por igual.
+        const toSets = (byRound: Record<string, string[]> | undefined) => {
+          const s: Record<string, Set<string>> = {
+            round16: new Set(), quarter: new Set(), semi: new Set(), finalist: new Set(), champion: new Set(),
+          }
+          if (byRound) {
+            for (const round of ['round16', 'quarter', 'semi', 'finalist', 'champion'] as const) {
+              for (const item of byRound[round] || []) {
+                const t = parseTeamName(item)
+                if (t) s[round].add(t)
               }
             }
           }
+          return s
         }
-        // Load results
-        const parsedResults = {
-          round16: Array(16).fill(null),
-          quarter: Array(8).fill(null),
-          semi: Array(4).fill(null),
-          finalist: Array(2).fill(null),
-          champion: Array(1).fill(null),
-        }
-
-        if (r?.results) {
-          for (const round of ['round16', 'quarter', 'semi', 'finalist', 'champion'] as const) {
-            const list = r.results[round] || []
-            for (const item of list) {
-              const parts = item.split(':')
-              if (parts.length > 1 && !isNaN(Number(parts[0]))) {
-                const idx = Number(parts[0])
-                const team = parts.slice(1).join(':')
-                if (idx >= 0 && idx < parsedResults[round].length) {
-                  parsedResults[round][idx] = team
-                }
-              } else {
-                const idx = parsedResults[round].indexOf(null)
-                if (idx !== -1) {
-                  parsedResults[round][idx] = item
-                }
-              }
-            }
-          }
-        }
-        setResults(parsedResults)
+        const pickSets = toSets(m?.predictions)
+        const resultSets = toSets(r?.results)
 
         if (m.scores) setScores(m.scores as BracketScores)
 
@@ -590,22 +551,38 @@ export default function BracketPage() {
           setR32Matchups(computedR32)
         }
 
-        // 16avos YA JUGADOS: fijar el ganador real en round16 (quedan bloqueados en la
-        // UI). Ganador autoritativo desde parsedResults.round16 (incl. penales); se
-        // cruza por pertenencia con los equipos de cada cruce (sin alinear por slot).
-        const decidedWinners = new Set(
-          parsedResults.round16.map((t) => parseTeamName(t)).filter(Boolean),
-        )
-        computedR32.forEach((mu: { home: string | null; away: string | null }, idx: number) => {
-          const w =
-            mu.home && decidedWinners.has(parseTeamName(mu.home))
-              ? mu.home
-              : mu.away && decidedWinners.has(parseTeamName(mu.away))
-                ? mu.away
-                : null
-          if (w) parsedPreds.round16[R32_TO_R16_SLOT[idx]] = w
-        })
-        setPredictions(parsedPreds)
+        // Reconstrucción por SLOT desde la estructura oficial (cascada 32avos→campeón):
+        // coloca cada equipo elegido en su llave real. Se usa igual para las
+        // predicciones del usuario (se ve SU pick, no se sobrescribe con el resultado)
+        // y para los resultados (para marcar aciertos). Ver R32_TO_R16_SLOT.
+        const reconstruct = (sets: Record<string, Set<string>>) => {
+          const out = {
+            round16: Array(16).fill(null) as (string | null)[],
+            quarter: Array(8).fill(null) as (string | null)[],
+            semi: Array(4).fill(null) as (string | null)[],
+            finalist: Array(2).fill(null) as (string | null)[],
+            champion: Array(1).fill(null) as (string | null)[],
+          }
+          computedR32.forEach((mu: { home: string | null; away: string | null }, idx: number) => {
+            const slot = R32_TO_R16_SLOT[idx]
+            const h = parseTeamName(mu.home)
+            const a = parseTeamName(mu.away)
+            out.round16[slot] = h && sets.round16.has(h) ? h : a && sets.round16.has(a) ? a : null
+          })
+          const pick = (arr: (string | null)[], k: number, set: Set<string>) => {
+            const t = arr[2 * k]
+            const b = arr[2 * k + 1]
+            return t && set.has(t) ? t : b && set.has(b) ? b : null
+          }
+          for (let k = 0; k < 8; k++) out.quarter[k] = pick(out.round16, k, sets.quarter)
+          for (let k = 0; k < 4; k++) out.semi[k] = pick(out.quarter, k, sets.semi)
+          for (let k = 0; k < 2; k++) out.finalist[k] = pick(out.semi, k, sets.finalist)
+          out.champion[0] = out.finalist.find((t) => t && sets.champion.has(t)) ?? null
+          return out
+        }
+
+        setPredictions(reconstruct(pickSets))
+        setResults(reconstruct(resultSets))
         // Elo vigente (snapshot + resultados ya jugados) para favoritos/autocompletado.
         if (matchesData?.matches) {
           setElo(currentElo(matchesData.matches))
