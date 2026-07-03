@@ -20,6 +20,24 @@ const BRACKET_ROUNDS = [
 
 type BracketPreds = Record<string, string[]>
 
+type KoScore = { home: number | null; away: number | null; homePen: number | null; awayPen: number | null }
+type KoRow = { code: number; home: string; away: string; real: KoScore; mine: KoScore | null; theirs: KoScore | null }
+
+// +2 si el marcador predicho es EXACTO (incl. la tanda si el real fue a penales).
+const isExactKo = (pred: KoScore | null, real: KoScore): boolean => {
+  if (!pred || pred.home == null || pred.away == null || real.home == null || real.away == null) return false
+  if (pred.home !== real.home || pred.away !== real.away) return false
+  if (real.home === real.away) {
+    if (real.homePen == null || real.awayPen == null) return false
+    return pred.homePen === real.homePen && pred.awayPen === real.awayPen
+  }
+  return true
+}
+const fmtScore = (s: KoScore | null) =>
+  s && s.home != null && s.away != null
+    ? `${s.home}-${s.away}${s.home === s.away && s.homePen != null ? ` (${s.homePen}-${s.awayPen} pen)` : ''}`
+    : '—'
+
 type Prediction = {
   id: string
   match_id: string
@@ -56,6 +74,7 @@ export default function ComparePage() {
   const [myBracket, setMyBracket] = useState<BracketPreds>({})
   const [otherBracket, setOtherBracket] = useState<BracketPreds>({})
   const [bracketResults, setBracketResults] = useState<BracketPreds>({})
+  const [koRows, setKoRows] = useState<KoRow[]>([])
 
   useEffect(() => {
     setLoading(true)
@@ -65,8 +84,9 @@ export default function ComparePage() {
       apiFetch('/bracket/my').catch(() => ({ predictions: {} })),
       apiFetch(`/bracket/user/${encodeURIComponent(username || '')}`).catch(() => ({ predictions: {} })),
       apiFetch('/bracket/results').catch(() => ({ results: {} })),
+      apiFetch('/predictions/matches').catch(() => ({ matches: [] })),
     ])
-      .then(([myData, otherData, myBr, otherBr, brRes]) => {
+      .then(([myData, otherData, myBr, otherBr, brRes, matchesData]) => {
         const myPredictions: Prediction[] = myData.predictions
         const otherPredictions: Prediction[] = otherData.predictions
 
@@ -117,6 +137,33 @@ export default function ComparePage() {
         setMyBracket(norm(myBr?.predictions))
         setOtherBracket(norm(otherBr?.predictions))
         setBracketResults(norm(brRes?.results))
+
+        // Marcadores exactos de 16avos (bonus +2): real vs predicho de cada quien.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- filas de koScores
+        const koMap = (arr: any[] = []) => {
+          const m = new Map<number, KoScore>()
+          for (const k of arr) m.set(Number(k.code), { home: k.home_score, away: k.away_score, homePen: k.home_pen, awayPen: k.away_pen })
+          return m
+        }
+        const myKo = koMap(myBr?.koScores)
+        const otherKo = koMap(otherBr?.koScores)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape de match
+        const dieci = ((matchesData?.matches ?? []) as any[])
+          .filter((m) => m.stage === 'Dieciseisavos' && m.home_score !== null)
+          .sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime())
+        setKoRows(
+          dieci.map((m) => {
+            const code = Number(String(m.group_name).replace('M', ''))
+            return {
+              code,
+              home: m.home_team,
+              away: m.away_team,
+              real: { home: m.home_score, away: m.away_score, homePen: m.home_pen, awayPen: m.away_pen },
+              mine: myKo.get(code) ?? null,
+              theirs: otherKo.get(code) ?? null,
+            }
+          }).filter((r) => r.mine || r.theirs), // solo si al menos uno predijo marcador
+        )
       })
       .catch(err => {
         console.error('Error fetching comparisons:', err)
@@ -484,6 +531,49 @@ export default function ComparePage() {
                             {username}
                           </span>
                           {chips(theirs)}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Marcadores exactos de 16avos: real vs predicho de cada quien (+2 si acierta) */}
+          {koRows.length > 0 && (
+            <div className="mt-10 fade-up-3">
+              <h2 className="font-display text-xl md:text-2xl text-white uppercase mb-1">Marcadores · 16avos</h2>
+              <p className="text-[11px] text-gray-500 mb-5 font-medium">
+                Marcador exacto por partido. <span className="text-gold">+2</span> si aciertas el marcador (y la tanda, si fue a penales).
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {koRows.map((r) => {
+                  const meOk = isExactKo(r.mine, r.real)
+                  const themOk = isExactKo(r.theirs, r.real)
+                  return (
+                    <div key={r.code} className="bg-panel border border-white/8 rounded-2xl p-4">
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Flag team={r.home} className="h-4 flex-shrink-0" />
+                          <span className="truncate uppercase text-white text-sm font-condensed font-bold">{r.home}</span>
+                        </div>
+                        <span className="scoreboard px-2.5 py-1 rounded-lg text-sm flex-shrink-0">{fmtScore(r.real)}</span>
+                        <div className="flex items-center gap-2 min-w-0 justify-end">
+                          <span className="truncate uppercase text-white text-sm font-condensed font-bold text-right">{r.away}</span>
+                          <Flag team={r.away} className="h-4 flex-shrink-0" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className={`p-3 rounded-xl border ${meOk ? 'bg-gold/[0.06] border-gold/25' : 'bg-ink-950/60 border-white/8'}`}>
+                          <span className="text-[9px] text-ca font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1">Tú</span>
+                          <span className="font-display text-white text-sm">{fmtScore(r.mine)}</span>
+                          {meOk && <span className="chip text-gold border-gold/30 bg-gold/10 ml-1">+2</span>}
+                        </div>
+                        <div className={`p-3 rounded-xl border ${themOk ? 'bg-gold/[0.06] border-gold/25' : 'bg-ink-950/60 border-white/8'}`}>
+                          <span className="text-[9px] text-us font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1 truncate">{username}</span>
+                          <span className="font-display text-white text-sm">{fmtScore(r.theirs)}</span>
+                          {themOk && <span className="chip text-gold border-gold/30 bg-gold/10 ml-1">+2</span>}
                         </div>
                       </div>
                     </div>
