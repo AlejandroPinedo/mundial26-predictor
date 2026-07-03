@@ -7,7 +7,7 @@ import { getPointsBadge } from '../utils/points'
 import { LIMA_TZ } from '../utils/dates'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
-import { parseTeamName } from '../utils/bracketStructure'
+import { parseTeamName, R32_TO_R16_SLOT } from '../utils/bracketStructure'
 
 // Rondas del bracket (equipos que cada usuario predijo que ALCANZAN esa instancia).
 const BRACKET_ROUNDS = [
@@ -33,21 +33,74 @@ const PREV_STAGE_FOR: Record<string, string> = { round16: 'Dieciseisavos', quart
 const ROUND_LABEL: Record<string, string> = { round16: 'Octavos', quarter: 'Cuartos', semi: 'Semifinal', finalist: 'Final', champion: 'Final' }
 const STAGE_LABEL: Record<string, string> = { Dieciseisavos: '16avos', Octavos: 'Octavos', Cuartos: 'Cuartos', Semifinales: 'Semifinal', Final: 'Final' }
 
-const fmtScore = (s: KoScore | null | undefined) =>
-  s && s.home != null && s.away != null
-    ? `${s.home}-${s.away}${s.home === s.away && s.homePen != null ? ` (${s.homePen}-${s.awayPen} pen)` : ''}`
-    : '—'
+// Marcador ORIENTADO al equipo clickeado. Los scores guardados (home/away) siguen el
+// orden de los slots del bracket de CADA usuario (y los legados, un orden que ya no es
+// reconstruible), así que la orientación se deriva de forma robusta por LADO GANADOR:
+// si el equipo avanza en el bracket de ese usuario, sus goles son los del lado ganador.
+// El rival predicho sale del pick "hermano" en la estructura oficial (slot de 16avos).
+type Oriented = { tg: number; og: number; tp: number | null; op: number | null; partner: string | null }
 
-// +2 si el marcador predicho es EXACTO contra el real (incl. la tanda si fue a penales).
-const isExact = (pred: KoScore | null | undefined, real: KoScore | null | undefined): boolean => {
-  if (!pred || !real || pred.home == null || pred.away == null || real.home == null || real.away == null) return false
-  if (pred.home !== real.home || pred.away !== real.away) return false
-  if (real.home === real.away) {
-    if (real.homePen == null || real.awayPen == null) return false
-    return pred.homePen === real.homePen && pred.awayPen === real.awayPen
+const NEXT_ROUND: Record<string, string | null> = { round16: 'quarter', quarter: 'semi', semi: 'finalist', finalist: 'champion', champion: null }
+// Tamaño del grupo de slots de 16avos que alimenta UN participante de la ronda.
+const SLOT_SPAN: Record<string, number> = { round16: 1, quarter: 2, semi: 4, finalist: 8, champion: 8 }
+
+const orientScore = (
+  raw: KoScore | null | undefined,
+  round: string,
+  team: string,
+  bracket: BracketPreds,
+  slotOf: Record<string, number>,
+): Oriented | null => {
+  if (!raw || raw.home == null || raw.away == null) return null
+  const nxt = NEXT_ROUND[round]
+  // ¿El equipo gana este partido según el bracket de este usuario? (campeón: ganó la final)
+  const adv = nxt == null ? true : (bracket[nxt] ?? []).includes(team)
+  const [wG, lG] = raw.home >= raw.away ? [raw.home, raw.away] : [raw.away, raw.home]
+  let tp: number | null = null
+  let op: number | null = null
+  if (raw.home === raw.away && raw.homePen != null && raw.awayPen != null) {
+    const [wP, lP] = raw.homePen >= raw.awayPen ? [raw.homePen, raw.awayPen] : [raw.awayPen, raw.homePen]
+    tp = adv ? wP : lP
+    op = adv ? lP : wP
+  }
+  const span = SLOT_SPAN[round]
+  const s = slotOf[team]
+  let partner: string | null = null
+  if (s != null && span != null) {
+    const sr = round === 'champion' ? 'finalist' : round
+    const idx = Math.floor(s / span)
+    partner = (bracket[sr] ?? []).find(
+      (t) => t !== team && slotOf[t] != null && Math.floor(slotOf[t] / span) === (idx ^ 1),
+    ) ?? null
+  }
+  return { tg: adv ? wG : lG, og: adv ? lG : wG, tp, op, partner }
+}
+
+// +2 si el marcador orientado coincide EXACTO con el real (mismo rival, mismos goles
+// por equipo; si el real fue a penales, también la tanda por equipo).
+const exactVsReal = (
+  o: Oriented | null,
+  real: ({ homeTeam: string; awayTeam: string } & KoScore) | null,
+  team: string,
+): boolean => {
+  if (!o || !real || real.home == null || real.away == null) return false
+  const teamIsHome = real.homeTeam === team
+  const realOpp = teamIsHome ? real.awayTeam : real.homeTeam
+  if (o.partner && o.partner !== realOpp) return false // predijo otro cruce
+  const rtg = teamIsHome ? real.home : real.away
+  const rog = teamIsHome ? real.away : real.home
+  if (o.tg !== rtg || o.og !== rog) return false
+  if (rtg === rog) {
+    const rtp = teamIsHome ? real.homePen : real.awayPen
+    const rop = teamIsHome ? real.awayPen : real.homePen
+    if (rtp == null || rop == null) return false
+    return o.tp === rtp && o.op === rop
   }
   return true
 }
+
+const fmtOriented = (team: string, o: Oriented | null) =>
+  o ? `${team} ${o.tg}-${o.og}${o.tp != null ? ` (${o.tp}-${o.op} pen)` : ''}${o.partner ? ` ${o.partner}` : ''}` : '—'
 
 // Ganador de un partido real (mayor marcador; empate → penales). null si indeciso.
 const winnerOf = (m: { homeTeam: string; awayTeam: string } & KoScore): string | null => {
@@ -98,6 +151,8 @@ export default function ComparePage() {
   const [myMS, setMyMS] = useState<Record<string, KoScore>>({})
   const [otherMS, setOtherMS] = useState<Record<string, KoScore>>({})
   const [realKo, setRealKo] = useState<Record<string, { homeTeam: string; awayTeam: string } & KoScore>>({})
+  // Slot de 16avos (estructura oficial) de cada equipo KO — para hallar el rival predicho.
+  const [r16SlotOf, setR16SlotOf] = useState<Record<string, number>>({})
   const [detail, setDetail] = useState<{ round: string; team: string } | null>(null)
 
   useEffect(() => {
@@ -181,6 +236,19 @@ export default function ComparePage() {
           rk[`${m.stage}|${m.away_team}`] = rec
         }
         setRealKo(rk)
+
+        // Slot de 16avos por equipo (los cruces reales M73..M88 son fijos: grupos decididos).
+        const so: Record<string, number> = {}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape de match
+        for (const m of ((matchesData?.matches ?? []) as any[])) {
+          if (m.stage !== 'Dieciseisavos') continue
+          const idx = Number(String(m.group_name).replace('M', '')) - 73
+          if (idx >= 0 && idx < 16) {
+            so[m.home_team] = R32_TO_R16_SLOT[idx]
+            so[m.away_team] = R32_TO_R16_SLOT[idx]
+          }
+        }
+        setR16SlotOf(so)
       })
       .catch(err => {
         console.error('Error fetching comparisons:', err)
@@ -565,15 +633,16 @@ export default function ComparePage() {
             const sr = SCORE_ROUND[detail.round]
             const stage = STAGE_FOR[detail.round]
             const prevStage = PREV_STAGE_FOR[detail.round]
-            const mine = myMS[`${sr}|${detail.team}`]
-            const theirs = otherMS[`${sr}|${detail.team}`]
+            // Marcadores ORIENTADOS al equipo clickeado (goles del equipo primero + rival predicho).
+            const mineO = orientScore(myMS[`${sr}|${detail.team}`], detail.round, detail.team, myBracket, r16SlotOf)
+            const theirsO = orientScore(otherMS[`${sr}|${detail.team}`], detail.round, detail.team, otherBracket, r16SlotOf)
             const real = realKo[`${stage}|${detail.team}`] ?? null
             // Partido por el que CLASIFICÓ (ronda previa, culminado en su mayoría).
             // Para 'champion' es la propia final (misma que `real`): no se duplica.
             const prev = prevStage !== stage ? (realKo[`${prevStage}|${detail.team}`] ?? null) : null
             const prevWinner = prev ? winnerOf(prev) : null
-            const meExact = isExact(mine, real)
-            const themExact = isExact(theirs, real)
+            const meExact = exactVsReal(mineO, real, detail.team)
+            const themExact = exactVsReal(theirsO, real, detail.team)
             const fmtMatch = (m: { homeTeam: string; awayTeam: string } & KoScore) =>
               `${m.homeTeam} ${m.home}-${m.away} ${m.awayTeam}${m.home === m.away && m.homePen != null ? ` (${m.homePen}-${m.awayPen} pen)` : ''}`
             return (
@@ -622,12 +691,12 @@ export default function ComparePage() {
                   <div className="grid grid-cols-2 gap-3 mt-3">
                     <div className={`p-3 rounded-xl border text-center ${meExact ? 'bg-gold/[0.06] border-gold/25' : 'bg-ink-950/60 border-white/8'}`}>
                       <span className="text-[9px] text-ca font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1">Tu marcador</span>
-                      <span className="font-display text-white">{fmtScore(mine)}</span>
+                      <span className="font-display text-white text-xs">{fmtOriented(detail.team, mineO)}</span>
                       {meExact && <span className="chip text-gold border-gold/30 bg-gold/10 ml-1">+2</span>}
                     </div>
                     <div className={`p-3 rounded-xl border text-center ${themExact ? 'bg-gold/[0.06] border-gold/25' : 'bg-ink-950/60 border-white/8'}`}>
                       <span className="text-[9px] text-us font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1 truncate">{username}</span>
-                      <span className="font-display text-white">{fmtScore(theirs)}</span>
+                      <span className="font-display text-white text-xs">{fmtOriented(detail.team, theirsO)}</span>
                       {themExact && <span className="chip text-gold border-gold/30 bg-gold/10 ml-1">+2</span>}
                     </div>
                   </div>
