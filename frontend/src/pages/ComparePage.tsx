@@ -27,12 +27,36 @@ type KoScore = { home: number | null; away: number | null; homePen: number | nul
 // campeón es el del partido de la final, en el bundle 'finalist').
 const SCORE_ROUND: Record<string, string> = { round16: 'round16', quarter: 'quarter', semi: 'semi', finalist: 'finalist', champion: 'finalist' }
 const STAGE_FOR: Record<string, string> = { round16: 'Octavos', quarter: 'Cuartos', semi: 'Semifinales', finalist: 'Final', champion: 'Final' }
+// Ronda PREVIA: el partido por el que el equipo CLASIFICÓ a esta instancia (es el que
+// valida el pick; para round16 son los 16avos, ya culminados en su mayoría).
+const PREV_STAGE_FOR: Record<string, string> = { round16: 'Dieciseisavos', quarter: 'Octavos', semi: 'Cuartos', finalist: 'Semifinales', champion: 'Final' }
 const ROUND_LABEL: Record<string, string> = { round16: 'Octavos', quarter: 'Cuartos', semi: 'Semifinal', finalist: 'Final', champion: 'Final' }
+const STAGE_LABEL: Record<string, string> = { Dieciseisavos: '16avos', Octavos: 'Octavos', Cuartos: 'Cuartos', Semifinales: 'Semifinal', Final: 'Final' }
 
 const fmtScore = (s: KoScore | null | undefined) =>
   s && s.home != null && s.away != null
     ? `${s.home}-${s.away}${s.home === s.away && s.homePen != null ? ` (${s.homePen}-${s.awayPen} pen)` : ''}`
     : '—'
+
+// +2 si el marcador predicho es EXACTO contra el real (incl. la tanda si fue a penales).
+const isExact = (pred: KoScore | null | undefined, real: KoScore | null | undefined): boolean => {
+  if (!pred || !real || pred.home == null || pred.away == null || real.home == null || real.away == null) return false
+  if (pred.home !== real.home || pred.away !== real.away) return false
+  if (real.home === real.away) {
+    if (real.homePen == null || real.awayPen == null) return false
+    return pred.homePen === real.homePen && pred.awayPen === real.awayPen
+  }
+  return true
+}
+
+// Ganador de un partido real (mayor marcador; empate → penales). null si indeciso.
+const winnerOf = (m: { homeTeam: string; awayTeam: string } & KoScore): string | null => {
+  if (m.home == null || m.away == null) return null
+  if (m.home > m.away) return m.homeTeam
+  if (m.away > m.home) return m.awayTeam
+  if (m.homePen == null || m.awayPen == null || m.homePen === m.awayPen) return null
+  return m.homePen > m.awayPen ? m.homeTeam : m.awayTeam
+}
 
 type Prediction = {
   id: string
@@ -540,9 +564,18 @@ export default function ComparePage() {
           {detail && (() => {
             const sr = SCORE_ROUND[detail.round]
             const stage = STAGE_FOR[detail.round]
+            const prevStage = PREV_STAGE_FOR[detail.round]
             const mine = myMS[`${sr}|${detail.team}`]
             const theirs = otherMS[`${sr}|${detail.team}`]
-            const real = realKo[`${stage}|${detail.team}`]
+            const real = realKo[`${stage}|${detail.team}`] ?? null
+            // Partido por el que CLASIFICÓ (ronda previa, culminado en su mayoría).
+            // Para 'champion' es la propia final (misma que `real`): no se duplica.
+            const prev = prevStage !== stage ? (realKo[`${prevStage}|${detail.team}`] ?? null) : null
+            const prevWinner = prev ? winnerOf(prev) : null
+            const meExact = isExact(mine, real)
+            const themExact = isExact(theirs, real)
+            const fmtMatch = (m: { homeTeam: string; awayTeam: string } & KoScore) =>
+              `${m.homeTeam} ${m.home}-${m.away} ${m.awayTeam}${m.home === m.away && m.homePen != null ? ` (${m.homePen}-${m.awayPen} pen)` : ''}`
             return (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setDetail(null)}>
                 <div className="bg-panel border border-white/12 rounded-2xl p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
@@ -552,33 +585,50 @@ export default function ComparePage() {
                       <div className="min-w-0">
                         <p className="font-display text-white uppercase truncate">{detail.team}</p>
                         <p className="text-[10px] text-gray-500 font-condensed font-extrabold uppercase tracking-wider">
-                          Partido de {ROUND_LABEL[detail.round]}
+                          Pick de {ROUND_LABEL[detail.round]}
                         </p>
                       </div>
                     </div>
                     <button onClick={() => setDetail(null)} className="text-gray-500 hover:text-white cursor-pointer text-lg leading-none">✕</button>
                   </div>
 
-                  {real ? (
-                    <div className="mb-4 text-center">
-                      <span className="text-[9px] text-gray-500 font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1">Resultado real</span>
-                      <span className="scoreboard px-3 py-1 rounded-lg text-base">
-                        {real.homeTeam} {real.home}-{real.away} {real.awayTeam}
-                        {real.home === real.away && real.homePen != null ? ` (${real.homePen}-${real.awayPen} pen)` : ''}
+                  {/* Cómo clasificó: partido de la ronda previa (valida el pick) */}
+                  {prev && (
+                    <div className="mb-3 text-center">
+                      <span className="text-[9px] text-gray-500 font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1">
+                        Clasificación · {STAGE_LABEL[prevStage] ?? prevStage}
                       </span>
+                      <span className="scoreboard px-3 py-1 rounded-lg text-sm">{fmtMatch(prev)}</span>
+                      {prevWinner && (
+                        <span className={`block mt-1 text-[10px] font-condensed font-extrabold uppercase tracking-wider ${prevWinner === detail.team ? 'text-mx' : 'text-ca'}`}>
+                          {prevWinner === detail.team ? '✓ Clasificó' : '✗ Eliminado'}
+                        </span>
+                      )}
                     </div>
-                  ) : (
-                    <p className="mb-4 text-center text-[11px] text-gray-500 italic">Este partido aún no se juega.</p>
                   )}
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-xl border bg-ink-950/60 border-white/8 text-center">
+                  {/* Partido de ESTA ronda: resultado real (si se jugó) + marcadores predichos */}
+                  <div className="mb-1 text-center">
+                    <span className="text-[9px] text-gray-500 font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1">
+                      Partido de {STAGE_LABEL[stage] ?? stage}
+                    </span>
+                    {real ? (
+                      <span className="scoreboard px-3 py-1 rounded-lg text-base">{fmtMatch(real)}</span>
+                    ) : (
+                      <p className="text-[11px] text-gray-500 italic">Aún no se juega.</p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div className={`p-3 rounded-xl border text-center ${meExact ? 'bg-gold/[0.06] border-gold/25' : 'bg-ink-950/60 border-white/8'}`}>
                       <span className="text-[9px] text-ca font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1">Tu marcador</span>
                       <span className="font-display text-white">{fmtScore(mine)}</span>
+                      {meExact && <span className="chip text-gold border-gold/30 bg-gold/10 ml-1">+2</span>}
                     </div>
-                    <div className="p-3 rounded-xl border bg-ink-950/60 border-white/8 text-center">
+                    <div className={`p-3 rounded-xl border text-center ${themExact ? 'bg-gold/[0.06] border-gold/25' : 'bg-ink-950/60 border-white/8'}`}>
                       <span className="text-[9px] text-us font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1 truncate">{username}</span>
                       <span className="font-display text-white">{fmtScore(theirs)}</span>
+                      {themExact && <span className="chip text-gold border-gold/30 bg-gold/10 ml-1">+2</span>}
                     </div>
                   </div>
                   <p className="text-[10px] text-gray-500 mt-3 text-center">
