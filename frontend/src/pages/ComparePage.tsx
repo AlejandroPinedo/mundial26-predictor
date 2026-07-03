@@ -162,7 +162,7 @@ export default function ComparePage() {
               mine: myKo.get(code) ?? null,
               theirs: otherKo.get(code) ?? null,
             }
-          }).filter((r) => r.mine || r.theirs), // solo si al menos uno predijo marcador
+          }), // se muestran todos los 16avos jugados (con su marcador real), aunque nadie predijo
         )
       })
       .catch(err => {
