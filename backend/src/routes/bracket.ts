@@ -252,20 +252,28 @@ bracketRouter.get('/user/:username', authMiddleware, async (c) => {
     )
     const preds = emptyPreds()
     for (const row of r.rows) if (preds[row.round]) preds[row.round].push(row.team)
-    return c.json({ username, predictions: preds })
+    // El Oráculo no tiene marcadores exactos predichos (su bracket es solo avance).
+    return c.json({ username, predictions: preds, koScores: [] })
   }
 
   const userRes = await db.query('SELECT id FROM users WHERE username = $1', [username])
   if (!userRes.rows[0]) return c.json({ error: 'Usuario no encontrado' }, 404)
+  const targetId = userRes.rows[0].id
 
   const r = await db.query(
     `SELECT round, regexp_replace(team, '^[0-9]+:', '') AS team
      FROM bracket_predictions WHERE user_id = $1 ORDER BY round, team`,
-    [userRes.rows[0].id],
+    [targetId],
   )
   const preds = emptyPreds()
   for (const row of r.rows) if (preds[row.round]) preds[row.round].push(row.team)
-  return c.json({ username, predictions: preds })
+
+  // Marcadores exactos predichos (para validar el bonus +2 en el comparador).
+  const koScoresRes = await db.query(
+    'SELECT code, home_score, away_score, home_pen, away_pen FROM bracket_ko_scores WHERE user_id = $1',
+    [targetId],
+  )
+  return c.json({ username, predictions: preds, koScores: koScoresRes.rows })
 })
 
 bracketRouter.get('/results', async (c) => {
