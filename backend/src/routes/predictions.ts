@@ -9,6 +9,24 @@ import { computeGroupStandings } from '../utils/groupStandings.js'
 
 export const predictionsRouter = new Hono<{ Variables: AppVariables }>()
 
+// Bonus de MARCADOR EXACTO (+2) en 16avos: los cruces son fijos (salen de grupos),
+// así que se compara directo el marcador predicho (bracket_ko_scores) contra el real
+// (matches, stage Dieciseisavos). Si el partido fue a penales, exige acertar también
+// la tanda. Octavos+ requiere además validar el cruce → se suma en un follow-up.
+// Se usa como LEFT JOIN: `${EXACT_SCORE_BONUS_SQL} ex ON u.id = ex.user_id`.
+const EXACT_SCORE_BONUS_SQL = `
+       LEFT JOIN (
+         SELECT s.user_id, SUM(2)::int AS bonus
+         FROM bracket_ko_scores s
+         JOIN matches m ON m.group_name = 'M' || s.code AND m.stage = 'Dieciseisavos'
+         WHERE m.home_score IS NOT NULL AND m.away_score IS NOT NULL
+           AND s.home_score = m.home_score AND s.away_score = m.away_score
+           AND (m.home_score <> m.away_score
+                OR (m.home_pen IS NOT NULL AND m.away_pen IS NOT NULL
+                    AND s.home_pen = m.home_pen AND s.away_pen = m.away_pen))
+         GROUP BY s.user_id
+       )`
+
 predictionsRouter.get('/matches', async (c) => {
   const result = await db.query('SELECT * FROM matches ORDER BY match_date ASC')
   return c.json({ matches: result.rows })
@@ -88,7 +106,7 @@ predictionsRouter.get('/leaderboard', async (c) => {
       `SELECT
          u.username,
          COUNT(p.id) as total_predictions,
-         COALESCE(SUM(p.points), 0) + COALESCE(bp.points, 0) + COALESCE(sb.bonus, 0) as total_points
+         COALESCE(SUM(p.points), 0) + COALESCE(bp.points, 0) + COALESCE(sb.bonus, 0) + COALESCE(ex.bonus, 0) as total_points
        FROM users u
        LEFT JOIN predictions p ON u.id = p.user_id
        LEFT JOIN (
@@ -113,7 +131,8 @@ predictionsRouter.get('/leaderboard', async (c) => {
          JOIN ko_shootouts k ON sp.round = k.round AND sp.team_a = k.team_a AND sp.team_b = k.team_b
          GROUP BY sp.user_id
        ) sb ON u.id = sb.user_id
-       GROUP BY u.id, u.username, bp.points, sb.bonus
+       ${EXACT_SCORE_BONUS_SQL} ex ON u.id = ex.user_id
+       GROUP BY u.id, u.username, bp.points, sb.bonus, ex.bonus
        ORDER BY total_points DESC`
     )
 
@@ -171,6 +190,17 @@ predictionsRouter.get('/stats', authMiddleware, async (c) => {
         FROM bracket_predictions bp
         JOIN bracket_results br ON bp.round = br.round AND (bp.team = br.team OR split_part(bp.team, ':', 2) = br.team)
         WHERE bp.user_id = $1
+      ), 0) + COALESCE((
+        -- Bonus de marcador exacto (+2) en 16avos.
+        SELECT SUM(2)
+        FROM bracket_ko_scores s
+        JOIN matches m ON m.group_name = 'M' || s.code AND m.stage = 'Dieciseisavos'
+        WHERE s.user_id = $1
+          AND m.home_score IS NOT NULL AND m.away_score IS NOT NULL
+          AND s.home_score = m.home_score AND s.away_score = m.away_score
+          AND (m.home_score <> m.away_score
+               OR (m.home_pen IS NOT NULL AND m.away_pen IS NOT NULL
+                   AND s.home_pen = m.home_pen AND s.away_pen = m.away_pen))
       ), 0) as total_points,
       SUM(CASE WHEN p.points = 3 THEN 1 ELSE 0 END) as exact_scores,
       SUM(CASE WHEN p.points >= 1 THEN 1 ELSE 0 END) as correct_results,
@@ -183,7 +213,7 @@ predictionsRouter.get('/stats', authMiddleware, async (c) => {
     `WITH user_points AS (
        SELECT 
          u.id as user_id,
-         COALESCE(SUM(p.points), 0) + COALESCE(bp.points, 0) as pts
+         COALESCE(SUM(p.points), 0) + COALESCE(bp.points, 0) + COALESCE(ex.bonus, 0) as pts
        FROM users u
        LEFT JOIN predictions p ON u.id = p.user_id
        LEFT JOIN (
@@ -201,7 +231,8 @@ predictionsRouter.get('/stats', authMiddleware, async (c) => {
          JOIN bracket_results br ON bp.round = br.round AND (bp.team = br.team OR split_part(bp.team, ':', 2) = br.team)
          GROUP BY bp.user_id
        ) bp ON u.id = bp.user_id
-       GROUP BY u.id, bp.points
+       ${EXACT_SCORE_BONUS_SQL} ex ON u.id = ex.user_id
+       GROUP BY u.id, bp.points, ex.bonus
      )
      SELECT COUNT(*) + 1 as rank
      FROM user_points
