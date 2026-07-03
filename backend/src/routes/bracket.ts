@@ -195,7 +195,12 @@ bracketRouter.get('/my', authMiddleware, async (c) => {
     [userId],
   )
 
-  return c.json({ predictions, scores, shootoutBonus, koScores: koScoresRes.rows })
+  // Marcador predicho POR (ronda, equipo) — para el detalle al hacer click en un pick.
+  const matchScores = result.rows
+    .filter((r) => r.home_score !== null)
+    .map((r) => ({ round: r.round, team: plainTeam(r.team), home: r.home_score, away: r.away_score, homePen: r.home_pen, awayPen: r.away_pen }))
+
+  return c.json({ predictions, scores, shootoutBonus, koScores: koScoresRes.rows, matchScores })
 })
 
 // Guarda los marcadores EXACTOS predichos de partidos KO (para el bonus +2). SOLO
@@ -252,8 +257,8 @@ bracketRouter.get('/user/:username', authMiddleware, async (c) => {
     )
     const preds = emptyPreds()
     for (const row of r.rows) if (preds[row.round]) preds[row.round].push(row.team)
-    // El Oráculo no tiene marcadores exactos predichos (su bracket es solo avance).
-    return c.json({ username, predictions: preds, koScores: [] })
+    // El Oráculo no tiene marcadores predichos (su bracket es solo avance).
+    return c.json({ username, predictions: preds, koScores: [], matchScores: [] })
   }
 
   const userRes = await db.query('SELECT id FROM users WHERE username = $1', [username])
@@ -273,7 +278,18 @@ bracketRouter.get('/user/:username', authMiddleware, async (c) => {
     'SELECT code, home_score, away_score, home_pen, away_pen FROM bracket_ko_scores WHERE user_id = $1',
     [targetId],
   )
-  return c.json({ username, predictions: preds, koScores: koScoresRes.rows })
+
+  // Marcador predicho POR (ronda, equipo) — para el detalle al hacer click en un pick.
+  const msRes = await db.query(
+    `SELECT round, regexp_replace(team, '^[0-9]+:', '') AS team, home_score, away_score, home_pen, away_pen
+     FROM bracket_predictions WHERE user_id = $1 AND home_score IS NOT NULL`,
+    [targetId],
+  )
+  const matchScores = msRes.rows.map((r) => ({
+    round: r.round, team: r.team, home: r.home_score, away: r.away_score, homePen: r.home_pen, awayPen: r.away_pen,
+  }))
+
+  return c.json({ username, predictions: preds, koScores: koScoresRes.rows, matchScores })
 })
 
 bracketRouter.get('/results', async (c) => {
