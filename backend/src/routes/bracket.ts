@@ -189,7 +189,52 @@ bracketRouter.get('/my', authMiddleware, async (c) => {
   )
   const shootoutBonus = (bonusRes.rows[0]?.n ?? 0) * SHOOTOUT_BONUS
 
-  return c.json({ predictions, scores, shootoutBonus })
+  // Marcadores exactos predichos de partidos KO (para restaurarlos al recargar).
+  const koScoresRes = await db.query(
+    'SELECT code, home_score, away_score, home_pen, away_pen FROM bracket_ko_scores WHERE user_id = $1',
+    [userId],
+  )
+
+  return c.json({ predictions, scores, shootoutBonus, koScores: koScoresRes.rows })
+})
+
+// Guarda los marcadores EXACTOS predichos de partidos KO (para el bonus +2). SOLO
+// acepta partidos que AÚN NO empezaron (los ya jugados quedan bloqueados). Upsert por
+// código de partido. La eliminatoria a penales guarda también la tanda (home/away_pen).
+bracketRouter.post('/scores', authMiddleware, async (c) => {
+  const userId = c.get('userId')
+  const { scores } = await c.req.json() // [{ code, home, away, homePen, awayPen }]
+  if (!Array.isArray(scores)) return c.json({ error: 'scores debe ser un arreglo' }, 400)
+
+  const codes = [...new Set(scores.map((s) => Number(s.code)).filter((n) => Number.isInteger(n)))]
+  if (codes.length === 0) return c.json({ saved: 0 })
+
+  // Kickoffs de los partidos referenciados → bloquear los ya empezados.
+  const { rows: koMatches } = await db.query(
+    'SELECT group_name, match_date FROM matches WHERE group_name = ANY($1)',
+    [codes.map((n) => `M${n}`)],
+  )
+  const kickoffByCode = new Map<number, Date>()
+  for (const m of koMatches) kickoffByCode.set(Number(m.group_name.slice(1)), new Date(m.match_date))
+
+  const now = new Date()
+  let saved = 0
+  for (const s of scores) {
+    const code = Number(s.code)
+    const kickoff = kickoffByCode.get(code)
+    if (!kickoff || now >= kickoff) continue // no sembrado o ya empezó → bloqueado
+    if (s.home == null || s.away == null) continue
+    const draw = Number(s.home) === Number(s.away)
+    await db.query(
+      `INSERT INTO bracket_ko_scores (user_id, code, home_score, away_score, home_pen, away_pen)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (user_id, code)
+       DO UPDATE SET home_score = $3, away_score = $4, home_pen = $5, away_pen = $6`,
+      [userId, code, Number(s.home), Number(s.away), draw ? s.homePen ?? null : null, draw ? s.awayPen ?? null : null],
+    )
+    saved++
+  }
+  return c.json({ saved })
 })
 
 // Bracket de OTRO usuario (o del Oráculo) para el comparador del ranking. Devuelve
