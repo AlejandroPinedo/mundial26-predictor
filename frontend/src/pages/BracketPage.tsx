@@ -528,7 +528,19 @@ export default function BracketPage() {
         const pickSets = toSets(m?.predictions)
         const resultSets = toSets(r?.results)
 
-        if (m.scores) setScores(m.scores as BracketScores)
+        // Marcadores: octavos+ vienen en m.scores; los de 16avos en m.koScores
+        // (código M(73+idx) → clave round32_${idx}). Se combinan para restaurar todos.
+        const allScores: BracketScores = { ...((m.scores as BracketScores) ?? {}) }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape de la fila koScores
+        for (const k of (m.koScores ?? []) as any[]) {
+          const idx = Number(k.code) - 73
+          if (idx >= 0 && idx < 16) {
+            allScores[`round32_${idx}`] = {
+              home: k.home_score, away: k.away_score, homePen: k.home_pen, awayPen: k.away_pen,
+            }
+          }
+        }
+        setScores(allScores)
 
         // Compute R32 Matchups dynamically
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape de calculateRoundOf32 (pre-existente)
@@ -733,6 +745,27 @@ export default function BracketPage() {
           })
         })
       )
+
+      // Marcadores EXACTOS de 16avos (para el bonus +2). round32_${idx} → código M(73+idx).
+      // El backend solo acepta partidos que aún no empezaron (los jugados se ignoran).
+      const koScores = []
+      for (let idx = 0; idx < 16; idx++) {
+        const s = scores[`round32_${idx}`]
+        if (s && s.home !== null && s.away !== null) {
+          const draw = s.home === s.away
+          koScores.push({
+            code: 73 + idx,
+            home: s.home,
+            away: s.away,
+            homePen: draw ? s.homePen ?? null : null,
+            awayPen: draw ? s.awayPen ?? null : null,
+          })
+        }
+      }
+      if (koScores.length > 0) {
+        await apiFetch('/bracket/scores', { method: 'POST', body: JSON.stringify({ scores: koScores }) })
+      }
+
       toast.success('Bracket guardado con éxito')
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Error al guardar')

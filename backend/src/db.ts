@@ -84,3 +84,20 @@ db.query(`
 `).catch(err => {
   console.error('Error creating bracket_shootout_picks table:', err)
 })
+
+// bracket_ko_scores = marcador EXACTO que el usuario predijo para cada partido KO,
+// keyed por el código oficial (73..104 → M73..M104). Alimenta el bonus de marcador
+// exacto (+2). Separado de bracket_predictions (que es de AVANCE) para no mezclar.
+db.query(`
+  CREATE TABLE IF NOT EXISTS bracket_ko_scores (
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    code INTEGER NOT NULL,
+    home_score INTEGER,
+    away_score INTEGER,
+    home_pen INTEGER,
+    away_pen INTEGER,
+    PRIMARY KEY (user_id, code)
+  );
+`).catch(err => {
+  console.error('Error creating bracket_ko_scores table:', err)
+})
