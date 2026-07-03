@@ -162,7 +162,9 @@ export default function ComparePage() {
               mine: myKo.get(code) ?? null,
               theirs: otherKo.get(code) ?? null,
             }
-          }), // se muestran todos los 16avos jugados (con su marcador real), aunque nadie predijo
+          }).filter((r) => isExactKo(r.mine, r.real) || isExactKo(r.theirs, r.real)),
+          // SOLO los partidos donde alguien acertó el marcador exacto (muestra el +2).
+          // Si nadie acertó, la sección no se renderiza (koRows vacío).
         )
       })
       .catch(err => {
