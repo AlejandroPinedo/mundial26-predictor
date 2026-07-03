@@ -21,19 +21,15 @@ const BRACKET_ROUNDS = [
 type BracketPreds = Record<string, string[]>
 
 type KoScore = { home: number | null; away: number | null; homePen: number | null; awayPen: number | null }
-type KoRow = { code: number; home: string; away: string; real: KoScore; mine: KoScore | null; theirs: KoScore | null }
 
-// +2 si el marcador predicho es EXACTO (incl. la tanda si el real fue a penales).
-const isExactKo = (pred: KoScore | null, real: KoScore): boolean => {
-  if (!pred || pred.home == null || pred.away == null || real.home == null || real.away == null) return false
-  if (pred.home !== real.home || pred.away !== real.away) return false
-  if (real.home === real.away) {
-    if (real.homePen == null || real.awayPen == null) return false
-    return pred.homePen === real.homePen && pred.awayPen === real.awayPen
-  }
-  return true
-}
-const fmtScore = (s: KoScore | null) =>
+// Sección (ronda de avance) → ronda de bracket_predictions que guarda el marcador de
+// ESE partido, y su stage real. round16=octavos … campeón=final (el marcador del
+// campeón es el del partido de la final, en el bundle 'finalist').
+const SCORE_ROUND: Record<string, string> = { round16: 'round16', quarter: 'quarter', semi: 'semi', finalist: 'finalist', champion: 'finalist' }
+const STAGE_FOR: Record<string, string> = { round16: 'Octavos', quarter: 'Cuartos', semi: 'Semifinales', finalist: 'Final', champion: 'Final' }
+const ROUND_LABEL: Record<string, string> = { round16: 'Octavos', quarter: 'Cuartos', semi: 'Semifinal', finalist: 'Final', champion: 'Final' }
+
+const fmtScore = (s: KoScore | null | undefined) =>
   s && s.home != null && s.away != null
     ? `${s.home}-${s.away}${s.home === s.away && s.homePen != null ? ` (${s.homePen}-${s.awayPen} pen)` : ''}`
     : '—'
@@ -74,7 +70,11 @@ export default function ComparePage() {
   const [myBracket, setMyBracket] = useState<BracketPreds>({})
   const [otherBracket, setOtherBracket] = useState<BracketPreds>({})
   const [bracketResults, setBracketResults] = useState<BracketPreds>({})
-  const [koRows, setKoRows] = useState<KoRow[]>([])
+  // Marcador predicho por (ronda|equipo) de cada quien, y resultado real por (stage|equipo).
+  const [myMS, setMyMS] = useState<Record<string, KoScore>>({})
+  const [otherMS, setOtherMS] = useState<Record<string, KoScore>>({})
+  const [realKo, setRealKo] = useState<Record<string, { homeTeam: string; awayTeam: string } & KoScore>>({})
+  const [detail, setDetail] = useState<{ round: string; team: string } | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -138,32 +138,25 @@ export default function ComparePage() {
         setOtherBracket(norm(otherBr?.predictions))
         setBracketResults(norm(brRes?.results))
 
-        // Marcadores exactos de 16avos (bonus +2): real vs predicho de cada quien.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- filas de koScores
-        const koMap = (arr: any[] = []) => {
-          const m = new Map<number, KoScore>()
-          for (const k of arr) m.set(Number(k.code), { home: k.home_score, away: k.away_score, homePen: k.home_pen, awayPen: k.away_pen })
+        // Marcador predicho por (ronda|equipo) para el detalle al hacer click en un pick.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- filas de matchScores
+        const msMap = (arr: any[] = []) => {
+          const m: Record<string, KoScore> = {}
+          for (const s of arr) m[`${s.round}|${s.team}`] = { home: s.home, away: s.away, homePen: s.homePen, awayPen: s.awayPen }
           return m
         }
-        const myKo = koMap(myBr?.koScores)
-        const otherKo = koMap(otherBr?.koScores)
+        setMyMS(msMap(myBr?.matchScores))
+        setOtherMS(msMap(otherBr?.matchScores))
+        // Resultado REAL de los partidos KO, por (stage|equipo), para el detalle.
+        const rk: Record<string, { homeTeam: string; awayTeam: string } & KoScore> = {}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape de match
-        const dieci = ((matchesData?.matches ?? []) as any[])
-          .filter((m) => m.stage === 'Dieciseisavos' && m.home_score !== null)
-          .sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime())
-        setKoRows(
-          dieci.map((m) => {
-            const code = Number(String(m.group_name).replace('M', ''))
-            return {
-              code,
-              home: m.home_team,
-              away: m.away_team,
-              real: { home: m.home_score, away: m.away_score, homePen: m.home_pen, awayPen: m.away_pen },
-              mine: myKo.get(code) ?? null,
-              theirs: otherKo.get(code) ?? null,
-            }
-          }), // se muestran todos los 16avos jugados (con su marcador real), aunque nadie predijo
-        )
+        for (const m of ((matchesData?.matches ?? []) as any[])) {
+          if (m.home_score == null || /grupo|group/i.test(m.stage ?? '')) continue
+          const rec = { homeTeam: m.home_team, awayTeam: m.away_team, home: m.home_score, away: m.away_score, homePen: m.home_pen, awayPen: m.away_pen }
+          rk[`${m.stage}|${m.home_team}`] = rec
+          rk[`${m.stage}|${m.away_team}`] = rec
+        }
+        setRealKo(rk)
       })
       .catch(err => {
         console.error('Error fetching comparisons:', err)
@@ -484,6 +477,7 @@ export default function ComparePage() {
               <h2 className="font-display text-xl md:text-2xl text-white uppercase mb-1">Bracket · Eliminatoria</h2>
               <p className="text-[11px] text-gray-500 mb-5 font-medium">
                 Equipos que cada quien predijo que avanzan. En <span className="text-mx">verde</span>, aciertos según los resultados.
+                Toca un equipo para ver el marcador predicho de su partido.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {BRACKET_ROUNDS.map(r => {
@@ -497,16 +491,18 @@ export default function ComparePage() {
                         {teams.map(t => {
                           const ok = correct.has(t)
                           return (
-                            <span
+                            <button
                               key={t}
-                              className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium border ${
+                              onClick={() => setDetail({ round: r.key, team: t })}
+                              title="Ver marcador predicho de este partido"
+                              className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium border cursor-pointer transition-colors hover:border-gold/45 ${
                                 ok ? 'bg-mx/10 border-mx/30 text-mx' : 'bg-ink-950/60 border-white/8 text-gray-300'
                               }`}
                             >
                               <Flag team={t} className="h-3 flex-shrink-0" />
                               <span>{t}</span>
                               {ok && <span className="text-mx">✓</span>}
-                            </span>
+                            </button>
                           )
                         })}
                       </div>
@@ -540,48 +536,58 @@ export default function ComparePage() {
             </div>
           )}
 
-          {/* Marcadores exactos de 16avos: real vs predicho de cada quien (+2 si acierta) */}
-          {koRows.length > 0 && (
-            <div className="mt-10 fade-up-3">
-              <h2 className="font-display text-xl md:text-2xl text-white uppercase mb-1">Marcadores · 16avos</h2>
-              <p className="text-[11px] text-gray-500 mb-5 font-medium">
-                Marcador exacto por partido. <span className="text-gold">+2</span> si aciertas el marcador (y la tanda, si fue a penales).
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {koRows.map((r) => {
-                  const meOk = isExactKo(r.mine, r.real)
-                  const themOk = isExactKo(r.theirs, r.real)
-                  return (
-                    <div key={r.code} className="bg-panel border border-white/8 rounded-2xl p-4">
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Flag team={r.home} className="h-4 flex-shrink-0" />
-                          <span className="truncate uppercase text-white text-sm font-condensed font-bold">{r.home}</span>
-                        </div>
-                        <span className="scoreboard px-2.5 py-1 rounded-lg text-sm flex-shrink-0">{fmtScore(r.real)}</span>
-                        <div className="flex items-center gap-2 min-w-0 justify-end">
-                          <span className="truncate uppercase text-white text-sm font-condensed font-bold text-right">{r.away}</span>
-                          <Flag team={r.away} className="h-4 flex-shrink-0" />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className={`p-3 rounded-xl border ${meOk ? 'bg-gold/[0.06] border-gold/25' : 'bg-ink-950/60 border-white/8'}`}>
-                          <span className="text-[9px] text-ca font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1">Tú</span>
-                          <span className="font-display text-white text-sm">{fmtScore(r.mine)}</span>
-                          {meOk && <span className="chip text-gold border-gold/30 bg-gold/10 ml-1">+2</span>}
-                        </div>
-                        <div className={`p-3 rounded-xl border ${themOk ? 'bg-gold/[0.06] border-gold/25' : 'bg-ink-950/60 border-white/8'}`}>
-                          <span className="text-[9px] text-us font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1 truncate">{username}</span>
-                          <span className="font-display text-white text-sm">{fmtScore(r.theirs)}</span>
-                          {themOk && <span className="chip text-gold border-gold/30 bg-gold/10 ml-1">+2</span>}
-                        </div>
+          {/* Detalle de la predicción de un partido (al hacer click en un equipo del bracket) */}
+          {detail && (() => {
+            const sr = SCORE_ROUND[detail.round]
+            const stage = STAGE_FOR[detail.round]
+            const mine = myMS[`${sr}|${detail.team}`]
+            const theirs = otherMS[`${sr}|${detail.team}`]
+            const real = realKo[`${stage}|${detail.team}`]
+            return (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setDetail(null)}>
+                <div className="bg-panel border border-white/12 rounded-2xl p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-start justify-between mb-4 gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Flag team={detail.team} className="h-5 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-display text-white uppercase truncate">{detail.team}</p>
+                        <p className="text-[10px] text-gray-500 font-condensed font-extrabold uppercase tracking-wider">
+                          Partido de {ROUND_LABEL[detail.round]}
+                        </p>
                       </div>
                     </div>
-                  )
-                })}
+                    <button onClick={() => setDetail(null)} className="text-gray-500 hover:text-white cursor-pointer text-lg leading-none">✕</button>
+                  </div>
+
+                  {real ? (
+                    <div className="mb-4 text-center">
+                      <span className="text-[9px] text-gray-500 font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1">Resultado real</span>
+                      <span className="scoreboard px-3 py-1 rounded-lg text-base">
+                        {real.homeTeam} {real.home}-{real.away} {real.awayTeam}
+                        {real.home === real.away && real.homePen != null ? ` (${real.homePen}-${real.awayPen} pen)` : ''}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="mb-4 text-center text-[11px] text-gray-500 italic">Este partido aún no se juega.</p>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 rounded-xl border bg-ink-950/60 border-white/8 text-center">
+                      <span className="text-[9px] text-ca font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1">Tu marcador</span>
+                      <span className="font-display text-white">{fmtScore(mine)}</span>
+                    </div>
+                    <div className="p-3 rounded-xl border bg-ink-950/60 border-white/8 text-center">
+                      <span className="text-[9px] text-us font-condensed font-extrabold uppercase tracking-[0.15em] block mb-1 truncate">{username}</span>
+                      <span className="font-display text-white">{fmtScore(theirs)}</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-gray-500 mt-3 text-center">
+                    Marcador exacto acertado = <span className="text-gold">+2</span> (se acredita al jugarse el partido).
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </>
       )}
     </div>
