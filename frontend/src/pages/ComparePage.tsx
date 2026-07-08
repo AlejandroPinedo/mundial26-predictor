@@ -7,7 +7,7 @@ import { getPointsBadge } from '../utils/points'
 import { LIMA_TZ } from '../utils/dates'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
-import { parseTeamName, R32_TO_R16_SLOT } from '../utils/bracketStructure'
+import { parseTeamName } from '../utils/bracketStructure'
 
 // Rondas del bracket (equipos que cada usuario predijo que ALCANZAN esa instancia).
 const BRACKET_ROUNDS = [
@@ -40,7 +40,6 @@ const STAGE_LABEL: Record<string, string> = { Dieciseisavos: '16avos', Octavos: 
 // El rival predicho sale del pick "hermano" en la estructura oficial (slot de 16avos).
 type Oriented = { tg: number; og: number; tp: number | null; op: number | null; partner: string | null }
 
-const NEXT_ROUND: Record<string, string | null> = { round16: 'quarter', quarter: 'semi', semi: 'finalist', finalist: 'champion', champion: null }
 // Tamaño del grupo de slots de 16avos que alimenta UN participante de la ronda.
 const SLOT_SPAN: Record<string, number> = { round16: 1, quarter: 2, semi: 4, finalist: 8, champion: 8 }
 
