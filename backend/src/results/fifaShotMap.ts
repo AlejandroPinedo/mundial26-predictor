@@ -160,6 +160,7 @@ export async function computeShotMap(): Promise<ShotMapPayload> {
       const away = tmap[String(m.Away?.IdTeam)] || ''
       for (const ev of tl.Event ?? []) {
         if (!SHOT_TYPES.has(ev.Type)) continue
+        if (ev.Period === 11 || !ev.MatchMinute) continue
         const isPen = PEN_TYPES.has(ev.Type)
         let px = ev.PositionX
         let py = ev.PositionY
