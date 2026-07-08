@@ -724,7 +724,7 @@ export default function BracketPage() {
             .filter((t): t is string => !!t)
 
           // Build scores payload
-          const matchCount = Math.ceil(teams.length / 2)
+          const matchCount = Math.floor(predictions[round as keyof typeof predictions].length / 2)
           const scorePayload = []
           for (let i = 0; i < matchCount; i++) {
             const s = scores[`${round}_${i}`]

@@ -52,28 +52,28 @@ const orientScore = (
   slotOf: Record<string, number>,
 ): Oriented | null => {
   if (!raw || raw.home == null || raw.away == null) return null
-  const nxt = NEXT_ROUND[round]
-  // ¿El equipo gana este partido según el bracket de este usuario? (campeón: ganó la final)
-  const adv = nxt == null ? true : (bracket[nxt] ?? []).includes(team)
-  const [wG, lG] = raw.home >= raw.away ? [raw.home, raw.away] : [raw.away, raw.home]
+  const span = SLOT_SPAN[round]
+  const s = slotOf[team]
+  if (s == null || span == null) return null
+
+  const isHome = Math.floor(s / span) % 2 === 0
+  const tg = isHome ? raw.home : raw.away
+  const og = isHome ? raw.away : raw.home
+
   let tp: number | null = null
   let op: number | null = null
   if (raw.home === raw.away && raw.homePen != null && raw.awayPen != null) {
-    const [wP, lP] = raw.homePen >= raw.awayPen ? [raw.homePen, raw.awayPen] : [raw.awayPen, raw.homePen]
-    tp = adv ? wP : lP
-    op = adv ? lP : wP
+    tp = isHome ? raw.homePen : raw.awayPen
+    op = isHome ? raw.awayPen : raw.homePen
   }
-  const span = SLOT_SPAN[round]
-  const s = slotOf[team]
-  let partner: string | null = null
-  if (s != null && span != null) {
-    const sr = round === 'champion' ? 'finalist' : round
-    const idx = Math.floor(s / span)
-    partner = (bracket[sr] ?? []).find(
-      (t) => t !== team && slotOf[t] != null && Math.floor(slotOf[t] / span) === (idx ^ 1),
-    ) ?? null
-  }
-  return { tg: adv ? wG : lG, og: adv ? lG : wG, tp, op, partner }
+
+  const sr = round === 'champion' ? 'finalist' : round
+  const idx = Math.floor(s / span)
+  const partner = (bracket[sr] ?? []).find(
+    (t) => t !== team && slotOf[t] != null && Math.floor(slotOf[t] / span) === (idx ^ 1),
+  ) ?? null
+
+  return { tg, og, tp, op, partner }
 }
 
 // +2 si el marcador orientado coincide EXACTO con el real (mismo rival, mismos goles
@@ -151,8 +151,9 @@ export default function ComparePage() {
   const [myMS, setMyMS] = useState<Record<string, KoScore>>({})
   const [otherMS, setOtherMS] = useState<Record<string, KoScore>>({})
   const [realKo, setRealKo] = useState<Record<string, { homeTeam: string; awayTeam: string } & KoScore>>({})
-  // Slot de 16avos (estructura oficial) de cada equipo KO — para hallar el rival predicho.
-  const [r16SlotOf, setR16SlotOf] = useState<Record<string, number>>({})
+  // Slot de 16avos (estructura oficial) de cada equipo KO por usuario — para hallar el rival predicho.
+  const [mySlotOf, setMySlotOf] = useState<Record<string, number>>({})
+  const [otherSlotOf, setOtherSlotOf] = useState<Record<string, number>>({})
   const [detail, setDetail] = useState<{ round: string; team: string } | null>(null)
 
   useEffect(() => {
@@ -209,7 +210,17 @@ export default function ComparePage() {
         const norm = (obj: Record<string, string[]> = {}): BracketPreds => {
           const out: BracketPreds = {}
           for (const k of Object.keys(obj)) {
-            out[k] = (obj[k] || []).map((t) => parseTeamName(t)).filter((t): t is string => !!t)
+            const list = obj[k] || []
+            // Sort by slot prefix if present to prevent moving on reload
+            const sortedList = [...list].sort((a, b) => {
+              const slotA = a.indexOf(':') > 0 ? Number(a.split(':')[0]) : NaN
+              const slotB = b.indexOf(':') > 0 ? Number(b.split(':')[0]) : NaN
+              if (!isNaN(slotA) && !isNaN(slotB)) return slotA - slotB
+              if (!isNaN(slotA)) return -1
+              if (!isNaN(slotB)) return 1
+              return a.localeCompare(b)
+            })
+            out[k] = sortedList.map((t) => parseTeamName(t)).filter((t): t is string => !!t)
           }
           return out
         }
@@ -237,18 +248,25 @@ export default function ComparePage() {
         }
         setRealKo(rk)
 
-        // Slot de 16avos por equipo (los cruces reales M73..M88 son fijos: grupos decididos).
-        const so: Record<string, number> = {}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape de match
-        for (const m of ((matchesData?.matches ?? []) as any[])) {
-          if (m.stage !== 'Dieciseisavos') continue
-          const idx = Number(String(m.group_name).replace('M', '')) - 73
-          if (idx >= 0 && idx < 16) {
-            so[m.home_team] = R32_TO_R16_SLOT[idx]
-            so[m.away_team] = R32_TO_R16_SLOT[idx]
-          }
+        const buildSlotMap = (predictions: Record<string, string[]> | undefined): Record<string, number> => {
+          const map: Record<string, number> = {}
+          if (!predictions || !predictions.round16) return map
+          predictions.round16.forEach((item, index) => {
+            const colon = item.indexOf(':')
+            if (colon > 0) {
+              const slot = Number(item.slice(0, colon))
+              const team = item.slice(colon + 1)
+              if (!isNaN(slot) && team) {
+                map[team] = slot
+              }
+            } else if (item) {
+              map[item] = index
+            }
+          })
+          return map
         }
-        setR16SlotOf(so)
+        setMySlotOf(buildSlotMap(myBr?.predictions))
+        setOtherSlotOf(buildSlotMap(otherBr?.predictions))
       })
       .catch(err => {
         console.error('Error fetching comparisons:', err)
@@ -634,8 +652,8 @@ export default function ComparePage() {
             const stage = STAGE_FOR[detail.round]
             const prevStage = PREV_STAGE_FOR[detail.round]
             // Marcadores ORIENTADOS al equipo clickeado (goles del equipo primero + rival predicho).
-            const mineO = orientScore(myMS[`${sr}|${detail.team}`], detail.round, detail.team, myBracket, r16SlotOf)
-            const theirsO = orientScore(otherMS[`${sr}|${detail.team}`], detail.round, detail.team, otherBracket, r16SlotOf)
+            const mineO = orientScore(myMS[`${sr}|${detail.team}`], detail.round, detail.team, myBracket, mySlotOf)
+            const theirsO = orientScore(otherMS[`${sr}|${detail.team}`], detail.round, detail.team, otherBracket, otherSlotOf)
             const real = realKo[`${stage}|${detail.team}`] ?? null
             // Partido por el que CLASIFICÓ (ronda previa, culminado en su mayoría).
             // Para 'champion' es la propia final (misma que `real`): no se duplica.

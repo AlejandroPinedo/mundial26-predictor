@@ -100,12 +100,30 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
       }
     }
 
+    // Reconstruct the slot array of this round to pair teams in their actual matches
+    const totalSlots = ROUND_SLOTS[round]
+    const slotsArray = Array<string | null>(totalSlots).fill(null)
+    for (let idx = 0; idx < teams.length; idx++) {
+      const team = teams[idx]
+      let slot = idx
+      const colon = team.indexOf(':')
+      if (colon > 0) {
+        const parsedSlot = Number(team.slice(0, colon))
+        if (!isNaN(parsedSlot)) {
+          slot = parsedSlot
+        }
+      }
+      if (slot >= 0 && slot < totalSlots) {
+        slotsArray[slot] = team
+      }
+    }
+
     // Una llave (teams[2i] vs teams[2i+1]) es "tanda predicha" si el usuario puso
     // empate en los 90' + penales. Se guarda el par en orden canónico.
     const pickRows: string[] = []
     const pickParams: unknown[] = [userId, round]
-    for (let i = 0; i < Math.ceil(teams.length / 2); i++) {
-      const a = teams[2 * i], b = teams[2 * i + 1]
+    for (let i = 0; i < totalSlots / 2; i++) {
+      const a = slotsArray[2 * i], b = slotsArray[2 * i + 1]
       const s = scoreMap[i]
       if (a && b && s && s.home === s.away && s.homePen !== null && s.awayPen !== null) {
         // Nombres PLANOS para casar con ko_shootouts (que no lleva prefijo de slot).
@@ -127,7 +145,18 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
     const rowPlaceholders: string[] = []
     teams.forEach((team: string, idx: number) => {
       if (blockedRound16.has(plainTeam(team))) return // 16avo ya jugado: no se guarda como pick
-      const matchIndex = Math.floor(idx / 2)
+      
+      // Parse slot index from prefix, fallback to idx
+      let slot = idx
+      const colon = team.indexOf(':')
+      if (colon > 0) {
+        const parsedSlot = Number(team.slice(0, colon))
+        if (!isNaN(parsedSlot)) {
+          slot = parsedSlot
+        }
+      }
+      
+      const matchIndex = Math.floor(slot / 2)
       const score = scoreMap[matchIndex]
       const base = params.length + 1
       params.push(team, score?.home ?? null, score?.away ?? null, score?.homePen ?? null, score?.awayPen ?? null)
@@ -148,7 +177,10 @@ bracketRouter.post('/predict', authMiddleware, async (c) => {
 bracketRouter.get('/my', authMiddleware, async (c) => {
   const userId = c.get('userId')
   const result = await db.query(
-    'SELECT round, team, home_score, away_score, home_pen, away_pen FROM bracket_predictions WHERE user_id = $1 ORDER BY round, team',
+    `SELECT round, team, home_score, away_score, home_pen, away_pen
+     FROM bracket_predictions
+     WHERE user_id = $1
+     ORDER BY round, (substring(team from '^[0-9]+'))::integer ASC NULLS LAST, team`,
     [userId]
   )
   const predictions: Record<string, string[]> = {
@@ -253,7 +285,7 @@ bracketRouter.get('/user/:username', authMiddleware, async (c) => {
   // El Pez Oráculo no es un usuario: su bracket congelado vive en oracle_bracket.
   if (username === ORACLE_NAME) {
     const r = await db.query(
-      `SELECT round, regexp_replace(team, '^[0-9]+:', '') AS team FROM oracle_bracket ORDER BY round, team`,
+      `SELECT round, team FROM oracle_bracket ORDER BY round, (substring(team from '^[0-9]+'))::integer ASC NULLS LAST, team`,
     )
     const preds = emptyPreds()
     for (const row of r.rows) if (preds[row.round]) preds[row.round].push(row.team)
@@ -266,8 +298,10 @@ bracketRouter.get('/user/:username', authMiddleware, async (c) => {
   const targetId = userRes.rows[0].id
 
   const r = await db.query(
-    `SELECT round, regexp_replace(team, '^[0-9]+:', '') AS team
-     FROM bracket_predictions WHERE user_id = $1 ORDER BY round, team`,
+    `SELECT round, team
+     FROM bracket_predictions
+     WHERE user_id = $1
+     ORDER BY round, (substring(team from '^[0-9]+'))::integer ASC NULLS LAST, team`,
     [targetId],
   )
   const preds = emptyPreds()
@@ -282,7 +316,9 @@ bracketRouter.get('/user/:username', authMiddleware, async (c) => {
   // Marcador predicho POR (ronda, equipo) — para el detalle al hacer click en un pick.
   const msRes = await db.query(
     `SELECT round, regexp_replace(team, '^[0-9]+:', '') AS team, home_score, away_score, home_pen, away_pen
-     FROM bracket_predictions WHERE user_id = $1 AND home_score IS NOT NULL`,
+     FROM bracket_predictions
+     WHERE user_id = $1 AND home_score IS NOT NULL
+     ORDER BY round, (substring(team from '^[0-9]+'))::integer ASC NULLS LAST`,
     [targetId],
   )
   const matchScores = msRes.rows.map((r) => ({
