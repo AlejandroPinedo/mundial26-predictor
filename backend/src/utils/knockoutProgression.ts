@@ -4,8 +4,8 @@
 //
 // Cableado OFICIAL — paridad estricta con frontend/src/utils/bracketStructure.ts
 // (R32_TO_R16_SLOT + sus comentarios). Números de partido oficiales FIFA (M73..M104):
-//   Octavos:  M89=W73/74 M90=W75/76 M91=W77/78 M92=W79/80
-//             M93=W81/82 M94=W83/84 M95=W85/86 M96=W87/88
+//   Octavos:  M89=W74/77 M90=W73/75 M91=W76/78 M92=W79/80
+//             M93=W83/84 M94=W81/82 M95=W86/88 M96=W85/87
 //   Cuartos:  M97=W89/90 M98=W93/94 M99=W91/92 M100=W95/96
 //   Semis:    M101=W97/98 M102=W99/100
 //   3er:      M103=L101/L102     Final: M104=W101/W102
@@ -23,14 +23,14 @@ const W = (from: number): Feed => ({ from, take: 'W' })
 const L = (from: number): Feed => ({ from, take: 'L' })
 
 export const KO_TREE: KoNode[] = [
-  { code: 89, stage: 'Octavos', a: W(73), b: W(74) },
-  { code: 90, stage: 'Octavos', a: W(75), b: W(76) },
-  { code: 91, stage: 'Octavos', a: W(77), b: W(78) },
+  { code: 89, stage: 'Octavos', a: W(74), b: W(77) },
+  { code: 90, stage: 'Octavos', a: W(73), b: W(75) },
+  { code: 91, stage: 'Octavos', a: W(76), b: W(78) },
   { code: 92, stage: 'Octavos', a: W(79), b: W(80) },
-  { code: 93, stage: 'Octavos', a: W(81), b: W(82) },
-  { code: 94, stage: 'Octavos', a: W(83), b: W(84) },
-  { code: 95, stage: 'Octavos', a: W(85), b: W(86) },
-  { code: 96, stage: 'Octavos', a: W(87), b: W(88) },
+  { code: 93, stage: 'Octavos', a: W(83), b: W(84) },
+  { code: 94, stage: 'Octavos', a: W(81), b: W(82) },
+  { code: 95, stage: 'Octavos', a: W(86), b: W(88) },
+  { code: 96, stage: 'Octavos', a: W(85), b: W(87) },
   { code: 97, stage: 'Cuartos', a: W(89), b: W(90) },
   { code: 98, stage: 'Cuartos', a: W(93), b: W(94) },
   { code: 99, stage: 'Cuartos', a: W(91), b: W(92) },
