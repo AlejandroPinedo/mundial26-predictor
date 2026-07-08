@@ -20,9 +20,9 @@ const FIFA_BASE = 'https://api.fifa.com/api/v3'
 const COMP = '17' // FIFA World Cup
 const SEASON = '285023' // 2026
 
-const SHOT_TYPES = new Set([0, 12, 41])
+const SHOT_TYPES = new Set([0, 12, 41, 60])
 const GOAL_TYPES = new Set([0, 41])
-const PEN_TYPE = 41
+const PEN_TYPES = new Set([41, 60])
 
 const PITCH_L = 105
 const PITCH_W = 68
@@ -160,10 +160,11 @@ export async function computeShotMap(): Promise<ShotMapPayload> {
       const away = tmap[String(m.Away?.IdTeam)] || ''
       for (const ev of tl.Event ?? []) {
         if (!SHOT_TYPES.has(ev.Type)) continue
+        const isPen = PEN_TYPES.has(ev.Type)
         let px = ev.PositionX
         let py = ev.PositionY
         if (px == null || py == null) {
-          if (ev.Type === PEN_TYPE) {
+          if (isPen) {
             px = PEN_SPOT_X
             py = 50
           } else continue
@@ -174,7 +175,7 @@ export async function computeShotMap(): Promise<ShotMapPayload> {
           x: r1(x),
           y: r1(y),
           goal: GOAL_TYPES.has(ev.Type),
-          pen: ev.Type === PEN_TYPE,
+          pen: isPen,
           dist: distM(x, y),
           inBox: insideBox(x, y),
           team: tmap[String(ev.IdTeam)] || '',
