@@ -37,9 +37,9 @@ os.makedirs(CACHE, exist_ok=True)
 #   12 -> "Attempt at Goal"  (remate sin gol)
 #   41 -> "Penalty Goal"     (penal convertido; trae coords en el punto de penal)
 # Se EXCLUYEN: 34 "Own goal", 57 "Goal Prevention" (acción defensiva), 6 "Penalty Awarded".
-SHOT_TYPES = {0, 12, 41}
+SHOT_TYPES = {0, 12, 41, 60}
 GOAL_TYPES = {0, 41}
-PEN_TYPE = 41
+PEN_TYPES = {41, 60}
 PITCH_L, PITCH_W = 105.0, 68.0     # metros (para reportar distancias)
 
 # Área grande en coords 0-100 (16.5m profundidad, 40.3m ancho)
@@ -97,9 +97,10 @@ def extract_shots(match, events):
     for ev in events:
         if ev.get("Type") not in SHOT_TYPES:
             continue
+        is_pen = ev.get("Type") in PEN_TYPES
         px, py = ev.get("PositionX"), ev.get("PositionY")
         if px is None or py is None:
-            if ev.get("Type") == PEN_TYPE:
+            if is_pen:
                 px, py = 100 - 11 / PITCH_L * 100, 50.0   # punto de penal (determinista)
             else:
                 continue
@@ -115,7 +116,7 @@ def extract_shots(match, events):
             "y": round(y, 2),
             "dist_m": round(dist_m(x, y), 2),
             "is_goal": int(ev.get("Type") in GOAL_TYPES),
-            "is_penalty": int(ev.get("Type") == PEN_TYPE),
+            "is_penalty": int(is_pen),
             "inside_box": int(inside_box(x, y)),
             "type": (ev.get("TypeLocalized") or [{}])[0].get("Description", ""),
         })
