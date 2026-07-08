@@ -50,30 +50,30 @@ describe('loserOf', () => {
 describe('resolveKnockout', () => {
   it('resuelve un octavo desde los ganadores de sus dos 16avos', () => {
     const map = byCode([
-      [73, koMatch('Argentina', 'Uruguay', 2, 0)],
-      [74, koMatch('Alemania', 'Paraguay', 1, 1, 5, 4)], // Alemania por penales
+      [74, koMatch('Alemania', 'Paraguay', 1, 1, 5, 4)], // Alemania por penales (W74)
+      [77, koMatch('Francia', 'Suecia', 3, 0)], // Francia gana (W77)
     ])
-    expect(find(resolveKnockout(map), 89)).toMatchObject({ home: 'Argentina', away: 'Alemania' })
+    expect(find(resolveKnockout(map), 89)).toMatchObject({ home: 'Alemania', away: 'Francia' })
   })
 
   it('deja null si algún feeder aún no tiene ganador', () => {
-    const map = byCode([[73, koMatch('Argentina', 'Uruguay', 2, 0)]]) // falta M74
-    expect(find(resolveKnockout(map), 89)).toMatchObject({ home: 'Argentina', away: null })
+    const map = byCode([[74, koMatch('Alemania', 'Paraguay', 2, 0)]]) // falta M77
+    expect(find(resolveKnockout(map), 89)).toMatchObject({ home: 'Alemania', away: null })
   })
 
   it('propaga en cadena 16avos → octavos → cuartos', () => {
     const map = byCode([
-      [73, koMatch('A', 'B', 1, 0)],
-      [74, koMatch('C', 'D', 1, 0)],
-      [75, koMatch('E', 'F', 1, 0)],
-      [76, koMatch('G', 'H', 1, 0)],
-      [89, koMatch('A', 'C', 2, 1)], // ganador A → alimenta M97
-      [90, koMatch('E', 'G', 0, 2)], // ganador G → alimenta M97
+      [74, koMatch('C', 'D', 1, 0)], // W74 = C
+      [77, koMatch('I', 'J', 1, 0)], // W77 = I
+      [73, koMatch('A', 'B', 1, 0)], // W73 = A
+      [75, koMatch('E', 'F', 1, 0)], // W75 = E
+      [89, koMatch('C', 'I', 2, 1)], // M89 = C vs I, winner C
+      [90, koMatch('A', 'E', 0, 2)], // M90 = A vs E, winner E
     ])
     const rs = resolveKnockout(map)
-    expect(find(rs, 89)).toMatchObject({ home: 'A', away: 'C' })
-    expect(find(rs, 90)).toMatchObject({ home: 'E', away: 'G' })
-    expect(find(rs, 97)).toMatchObject({ home: 'A', away: 'G' }) // W89 vs W90
+    expect(find(rs, 89)).toMatchObject({ home: 'C', away: 'I' })
+    expect(find(rs, 90)).toMatchObject({ home: 'A', away: 'E' })
+    expect(find(rs, 97)).toMatchObject({ home: 'C', away: 'E' }) // W89 vs W90
   })
 
   it('el 3er puesto toma los PERDEDORES de las semis', () => {
