@@ -97,6 +97,8 @@ def extract_shots(match, events):
     for ev in events:
         if ev.get("Type") not in SHOT_TYPES:
             continue
+        if ev.get("Period") == 11 or not ev.get("MatchMinute"):
+            continue
         is_pen = ev.get("Type") in PEN_TYPES
         px, py = ev.get("PositionX"), ev.get("PositionY")
         if px is None or py is None:
