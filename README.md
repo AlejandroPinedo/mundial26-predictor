@@ -44,7 +44,7 @@ The full design brief that guided the redesign lives in [`docs/REDESIGN_PROMPT.m
 | **Leaderboard** | Global ranking with 30s auto-refresh and top-3 podium — the Pez Oráculo competes here as a non-player "IA" benchmark |
 | **Private groups** | Invite-code leagues with their own leaderboard and group chat |
 | **Head-to-head** | Side-by-side prediction comparison between two players |
-| **Stats** | Community insights dashboard (popular picks, hot matches) |
+| **Stats** | Community insights dashboard: shot map, pool analytics, and Oracle vs reality charts |
 | **Calendar** | Matches by date with inline prediction |
 | **Teams** | Gallery of all 48 national teams by group |
 | **Stadiums** | The 16 tournament venues with city and capacity |
@@ -95,6 +95,79 @@ mundial26-predictor/          ← monorepo
 ├── docs/                     ← design brief and plans
 └── .github/workflows/        ← CI pipeline (tests on every PR)
 ```
+
+---
+
+## Stats — Estadísticas
+
+The Stats page (`/estadisticas`) is built from three independent data sources, each with its own fetch path:
+
+### 1. Shot map — datos oficiales FIFA
+
+**Source:** FIFA's public REST API (`api.fifa.com/api/v3`) — no token required.
+
+**Pipeline:**
+
+1. A daily GitHub Actions job (`shot-map.yml`) runs `npm run sync:shotmap` → `backend/scripts/sync-shotmap.ts`, which calls `computeShotMap()` in `backend/src/results/fifaShotMap.ts`.
+2. `computeShotMap()` fetches the full match calendar for the 2026 edition (competition `17`, season `285023`), filters for completed matches (`MatchStatus === 0`), and then fetches each match's **timeline** endpoint sequentially (to be polite to the FIFA API). Shot events are identified by type: `0` (Goal), `12` (Attempt at Goal), `41` (Penalty Goal), `60` (Penalty attempt).
+3. Each shot's absolute coordinates (`PositionX`, `PositionY` — pitch scale 0–100) are **folded toward the attacking end** (`x < 50 → mirror`), so both teams' shots always map to the same half. Penalty events without coordinates default to the canonical penalty-spot position.
+4. Per shot, the pipeline computes: Euclidean distance to goal (in metres, using real pitch dimensions 105 × 68 m), whether the shot is inside the penalty box (16.5 m × 40.32 m), and the phase label translated to Spanish.
+5. **Player name canonicalisation:** FIFA sometimes uses multiple spellings for the same player across timelines (e.g. "VINI JR." vs "VINICIUS JUNIOR"). Names are normalised by `IdPlayer`: the longest variant wins, keyed by ID to avoid merging distinct players sharing a surname.
+6. The resulting `ShotMapPayload` — an array of all shots with metadata plus pre-computed aggregate stats — is persisted as a single JSONB row in the `shot_map_cache` table (upsert on `id = 1`).
+7. In addition to the daily job, the cron endpoint (`POST /cron/sync-results`) **also triggers a shot-map refresh** whenever at least one match result is ingested or confirmed in that tick — so the map updates close to the final whistle without hammering the FIFA API on every ping.
+8. The backend endpoint `GET /football/shot-map` reads from `shot_map_cache` with a **5-minute in-memory cache** on top (stale-while-error).
+
+**Frontend aggregations** (`frontend/src/components/charts/ShotInsights.tsx`) are all computed client-side from the flat `shots[]` array — no extra endpoints:
+- **Conversión por distancia**: 6 distance bins (0–6, 6–11, 11–16, 16–22, 22–30, 30+ m), conversion rate line + shot-volume bars.
+- **¿Cuándo caen los goles?**: Goals split into 7 × 15-minute bins (added-time mapped via `effectiveMinute()`).
+- **Eficacia goleadora**: Teams ranked by non-penalty conversion %, minimum 4 shots.
+- **Dentro vs fuera del área**: Three donuts — inside box, outside box, and penalties.
+- **Zonas de remate**: 7 × 5 heat-grid; depth axis = distance to goal, lateral axis = pitch width; goal count overlaid per cell.
+
+The interactive `ShotMap.tsx` canvas (the pitch view with individual shot dots) renders the same dataset with client-side filters (team, stage).
+
+---
+
+### 2. Pool insights — agregaciones de la comunidad
+
+**Source:** `GET /predictions/global-insights` — runs 9 SQL queries against the `predictions` and `bracket_predictions` tables in Supabase (public endpoint, no auth required).
+
+| Query | What it computes |
+|---|---|
+| `mostPredictedChampions` | Top-5 bracket champions by pick count; strips the slot prefix (`0:Argentina → Argentina`) |
+| `averageScores` | `AVG(predicted_home)` and `AVG(predicted_away)` across all predictions |
+| `popularScores` | Top-5 most-predicted (home, away) score pairs |
+| `hotMatches` | Top-5 matches by number of predictions |
+| `totalPredictions` | Simple `COUNT(*)` |
+| `averagePoints` | `AVG(points)` where points have been awarded |
+| `pointsDistribution` | Count of predictions per points value (0 / 1 / 3) |
+| `predictedGoalsDistribution` | `UNION ALL` of `predicted_home` and `predicted_away`, grouped by value → goals histogram |
+| `bracketRounds` | Distinct teams still alive per bracket round (embudo) |
+| `activity` | `COUNT(*)` grouped by `EXTRACT(HOUR ...)` and `EXTRACT(DOW ...)` from `created_at` |
+| `crowdFavorites` | Most-voted scoreline per completed match (window `SUM(COUNT(*)) OVER (PARTITION BY match_id)`), used in the Crowd vs Oracle table |
+
+**Frontend** (`frontend/src/components/charts/PoolInsights.tsx`) renders four charts from this payload plus the raw `matches[]` list:
+- **¿Qué tan difícil es acertar?** — bar chart of 0 / 1 / 3 point distribution.
+- **Lo que la gente predice vs lo que pasa** — side-by-side goal-count histograms: pool-predicted (from DB) vs actual goals (derived client-side from `matches[]`), capped at 6+.
+- **Embudo del bracket** — funnel of distinct teams per round.
+- **Cuándo pronostica la comunidad** — hourly bar chart + day-of-week bar chart.
+
+---
+
+### 3. Oracle insights — modelo ML vs realidad
+
+**Source:** The same `GET /predictions/matches` payload that the match cards use (no new endpoints), plus `crowdFavorites` from `global-insights`.
+
+All ML computations are done **client-side** in `frontend/src/components/charts/OracleInsights.tsx`:
+
+1. Matches are sorted chronologically and fed through a **live Elo walk**: for each match, `predictMatch()` is called with the Elo state *before* that match, then `updateElo()` advances the ratings with the actual result. Future matches use the current post-tournament Elo. This mirrors exactly how the frozen Oracle picks were generated — no peeking.
+2. From this `rows[]` array of `{ match, pred }` pairs, five charts are rendered:
+   - **Goles por fase** — average goals per match, grouped by stage (sorted by first match date, not by string).
+   - **¿Cómo terminan los partidos?** — donut of 1X2 real outcomes.
+   - **Calibración del Pez Oráculo** — scatter plot of confidence bin (x) vs actual hit rate (y), with bubble size ∝ sample size; a 45° dashed "perfect calibration" diagonal is the reference.
+   - **Pronóstico del Oráculo** — stacked 1X2 probability bars for the next 8 upcoming matches.
+   - **Termómetro de sorpresas** — top-6 most surprising results, ranked by `1 − P(actual outcome)`.
+   - **La masa vs el Oráculo vs la realidad** — table showing the crowd's most-voted score vs the Oracle's modal score vs the real result, with ✓/1X2/✗ markers.
 
 ---
 
