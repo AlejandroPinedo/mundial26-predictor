@@ -120,10 +120,14 @@ export default function LandingPage() {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3.5 mb-6 w-full sm:w-auto fade-up-4">
-          <Link to="/register" className="btn-gold text-base sm:min-w-[230px]">Jugar gratis <Icon name="chevronRight" size={16} /></Link>
-          <Link to="/login" className="btn-ghost text-base sm:min-w-[180px]">Iniciar sesión</Link>
+        <div className="flex flex-col sm:flex-row gap-3.5 mb-4 w-full sm:w-auto fade-up-4">
+          <Link to="/home" className="btn-gold text-base sm:min-w-[230px]">Entrar al Mundial <Icon name="chevronRight" size={16} /></Link>
+          <Link to="/stats" className="btn-ghost text-base sm:min-w-[180px]">Ver estadísticas</Link>
         </div>
+
+        <p className="text-gray-500 text-[11px] font-condensed font-extrabold tracking-[0.2em] uppercase mb-6 fade-up-4">
+          ¿Quieres predecir y competir? <Link to="/register" className="text-gold hover:underline">Crea una cuenta gratis</Link>
+        </p>
 
         <Link to="/rules"
           className="text-gray-500 hover:text-gold text-[11px] font-condensed font-extrabold tracking-[0.2em] uppercase transition-colors inline-flex items-center gap-1 fade-up-4">
