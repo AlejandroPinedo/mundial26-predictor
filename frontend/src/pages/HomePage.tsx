@@ -30,7 +30,7 @@ type Entry = { username: string; total_points: string }
 type Stats = { total_predictions: string; total_points: string }
 
 export default function HomePage() {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const { days, hours, minutes, seconds, started } = useCountdown()
   const [nextMatches, setNextMatches] = useState<Match[]>([])
   const [leaderboard, setLeaderboard] = useState<Entry[]>([])
@@ -42,7 +42,7 @@ export default function HomePage() {
     const load = (silent = false) => Promise.all([
       apiFetch('/predictions/matches'),
       apiFetch('/predictions/leaderboard'),
-      apiFetch('/predictions/stats'),
+      token ? apiFetch('/predictions/stats') : Promise.resolve(null),
     ]).then(([m, l, s]) => {
       const now = new Date()
       const upcoming = m.matches
@@ -55,13 +55,13 @@ export default function HomePage() {
       setLastResultCount(playedCount)
       setNextMatches(upcoming)
       setLeaderboard(l.leaderboard.slice(0, 5))
-      setStats(s.stats)
+      setStats(s?.stats ?? null)
     }).finally(() => setLoading(false))
 
     load()
     const interval = setInterval(() => load(true), 30_000)
     return () => clearInterval(interval)
-  }, [])
+  }, [token])
 
   const myRank = leaderboard.findIndex(e => e.username === user?.username) + 1
   // Remove unused Spinner import - using Skeleton instead
@@ -83,9 +83,20 @@ export default function HomePage() {
           </div>
 
           <h1 className="font-display text-3xl sm:text-5xl md:text-7xl text-white leading-none uppercase tracking-tight truncate">
-            {user?.username}
+            {user?.username ?? 'Mundial 2026'}
           </h1>
-          <p className="text-gray-500 text-sm mt-2 mb-7 font-sans">Tu zona de predicciones del Mundial 2026</p>
+          <p className="text-gray-500 text-sm mt-2 mb-7 font-sans">
+            {user ? 'Tu zona de predicciones del Mundial 2026' : 'Explora partidos, estadísticas y el ranking global'}
+          </p>
+          {!user && (
+            <div className="flex flex-wrap gap-3 mb-7">
+              <Link to="/register" className="btn-gold text-sm">
+                Crear cuenta y predecir
+                <Icon name="chevronRight" size={15} />
+              </Link>
+              <Link to="/login" className="btn-ghost text-sm">Iniciar sesión</Link>
+            </div>
+          )}
 
           {started ? (
             <div className="flex items-center gap-3 mb-7 px-4 py-2.5 rounded-xl w-fit bg-gold/10 border border-gold/25">
