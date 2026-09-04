@@ -55,6 +55,17 @@ function Protected({ children }: { children: React.ReactNode }) {
   )
 }
 
+// Igual que Protected, pero sin exigir sesión — para rutas accesibles desde la landing sin login.
+function Public({ children }: { children: React.ReactNode }) {
+  return (
+    <AppShell>
+      <Suspense fallback={<PageLoader />}>
+        {children}
+      </Suspense>
+    </AppShell>
+  )
+}
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -82,7 +93,7 @@ export default function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/rules" element={<RulesPage />} />
               <Route path="/auth/callback" element={<OAuthCallbackPage />} />
-              <Route path="/home" element={<Protected><HomePage /></Protected>} />
+              <Route path="/home" element={<Public><HomePage /></Public>} />
               <Route path="/matches" element={<Protected><MatchesPage /></Protected>} />
               <Route path="/my" element={<Protected><MyPredictionsPage /></Protected>} />
               <Route path="/leaderboard" element={<Protected><LeaderboardPage /></Protected>} />
@@ -95,7 +106,7 @@ export default function App() {
               <Route path="/calendar" element={<Protected><CalendarPage /></Protected>} />
               <Route path="/stadiums" element={<Protected><StadiumsPage /></Protected>} />
               <Route path="/compare/:username" element={<Protected><ComparePage /></Protected>} />
-              <Route path="/stats" element={<Protected><StatsPage /></Protected>} />
+              <Route path="/stats" element={<Public><StatsPage /></Public>} />
               <Route path="/simulator" element={<Protected><SimulatorPage /></Protected>} />
               <Route path="/standings" element={<Protected><StandingsPage /></Protected>} />
               <Route path="/scorers" element={<Protected><ScorersPage /></Protected>} />
